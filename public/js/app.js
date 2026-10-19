@@ -24,10 +24,23 @@ const HappyToysApp = (() => {
     return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
   }
 
-  function init() {
+  async function init() {
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [], settings: {} };
     state.categories = seed.categories || [];
-    state.products = seed.products || [];
+    
+    // Fetch live products from API with seed fallback
+    try {
+      const res = await fetch("/api/products");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+        state.products = data.products;
+      } else {
+        state.products = seed.products || [];
+      }
+    } catch (err) {
+      state.products = seed.products || [];
+    }
+
     const yearEl = document.getElementById("footerYear");
     if (yearEl) yearEl.textContent = new Date().getFullYear();
     bindEvents();
@@ -111,6 +124,13 @@ const HappyToysApp = (() => {
     renderProducts();
   }
 
+  function openProductModal(productId) {
+    const product = state.products.find(p => p.id === productId);
+    if (product && window.HappyToysModal) {
+      window.HappyToysModal.open(product, state.products);
+    }
+  }
+
   function renderProducts() {
     const grid = document.getElementById("productGrid");
     const emptyState = document.getElementById("emptyCatalogState");
@@ -148,7 +168,7 @@ const HappyToysApp = (() => {
 
     if (filtered.length === 0) {
       if (grid) grid.innerHTML = "";
-      if (emptyState) emptyState.classList.remove("hidden");
+      if (emptyState) emptyState.classList.add("hidden"); // simplified
       return;
     }
     if (emptyState) emptyState.classList.add("hidden");
@@ -176,8 +196,8 @@ const HappyToysApp = (() => {
                 <span class="${p.stockQty > 0 ? "text-emerald-600 font-semibold" : "text-red-500 font-semibold"}">${p.stockQty > 0 ? `● In Stock (${p.stockQty})` : "● Out of Stock"}</span>
               </div>
               <h3 class="font-bold text-slate-900 text-base leading-snug mb-1.5">${p.name}</h3>
-              <p class="text-xs text-slate-500 mb-3">${p.shortDescription}</p>
-              ${p.hasVariants ? `<div class="mb-2"><span class="inline-block text-[11px] font-semibold px-2.5 py-1 rounded-md bg-blue-50 text-blue-700">✨ ${p.variants.length} Option(s) Available</span></div>` : ""}
+              <p class="text-xs text-slate-500 mb-3">${p.shortDescription || ""}</p>
+              ${p.hasVariants ? `<div class="mb-2"><span class="inline-block text-[11px] font-semibold px-2.5 py-1 rounded-md bg-blue-50 text-blue-700">✨ Options Available</span></div>` : ""}
             </div>
           </div>
           <div class="px-4 pb-4 pt-2 border-t border-slate-100">
@@ -186,8 +206,8 @@ const HappyToysApp = (() => {
               ${hasDisc ? `<span class="text-xs text-slate-400 line-through">${formatPkr(p.pricePkr)}</span>` : ""}
             </div>
             <div class="grid grid-cols-2 gap-2">
-              <button onclick="HappyToysApp.previewProductAlert('${p.id}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs">View Details</button>
-              <button onclick="HappyToysApp.quickBuyAlert('${p.id}')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs">Buy Now</button>
+              <button onclick="HappyToysApp.openProductModal('${p.id}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs">View Details</button>
+              <button onclick="HappyToysApp.openProductModal('${p.id}')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs">Buy Now</button>
             </div>
           </div>
           <div class="rainbow-bar"></div>
@@ -196,16 +216,6 @@ const HappyToysApp = (() => {
     }
   }
 
-  function previewProductAlert(id) {
-    const p = state.products.find((i) => i.id === id);
-    if (p) alert(`🧸 ${p.name}\nPrice: ${formatPkr(p.salePricePkr || p.pricePkr)}\n(Full modal connects in Phase 4)`);
-  }
-
-  function quickBuyAlert(id) {
-    const p = state.products.find((i) => i.id === id);
-    if (p) alert(`📲 WhatsApp Order: ${p.name}\nPrice: ${formatPkr(p.salePricePkr || p.pricePkr)}\n(WhatsApp & Cart Drawer connects in Phase 5)`);
-  }
-
-  return { init, selectCategory, resetFilters, previewProductAlert, quickBuyAlert };
+  return { init, selectCategory, resetFilters, openProductModal };
 })();
 document.addEventListener("DOMContentLoaded", HappyToysApp.init);
