@@ -1,0 +1,15 @@
+name = "happy-toys-store"
+main = "functions/api/_middleware.js"
+compatibility_date = "2026-10-19"
+
+[vars]
+ENVIRONMENT = "production"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "happy-toys-db"
+database_id = "local-dev-id"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "happy-toys-images"
