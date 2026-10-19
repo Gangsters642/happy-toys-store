@@ -39,7 +39,7 @@
       <div class="flex items-center gap-2 sm:gap-3">
         <button id="toggleEmptyStateBtn" class="hidden sm:inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border border-slate-300 text-slate-600 hover:bg-slate-100">🧪 Test Empty Mode</button>
         <a href="admin.html" class="text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700">Admin</a>
-        <button id="openCartBtn" class="relative inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm shadow-sm">
+        <button id="openCartBtn" onclick="HappyToysCart.openDrawer()" class="relative inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition">
           <span>🛒 Cart</span>
           <span id="cartCountBadge" class="px-1.5 py-0.5 text-[11px] rounded-full bg-amber-400 text-slate-900 font-bold">0</span>
         </button>
@@ -140,6 +140,7 @@
 
   <script src="js/data-seed.js"></script>
   <script src="js/product-modal.js"></script>
+  <script src="js/cart-whatsapp.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -1,4 +1,3 @@
-// public/js/product-modal.js - Interactive Product Detail Modal & Related Recommendations
 const HappyToysModal = (() => {
   let currentProduct = null;
   let selectedVariant = null;
@@ -24,23 +23,15 @@ const HappyToysModal = (() => {
     const activePrice = selectedVariant ? (selectedVariant.salePricePkr || selectedVariant.pricePkr) : (hasDiscount ? product.salePricePkr : product.pricePkr);
     const activeStock = selectedVariant ? selectedVariant.stockQty : product.stockQty;
 
-    // Find Related Products ("You May Also Like")
     const related = allProducts
       .filter(p => p.id !== product.id && p.isPublished && (p.category === product.category || (p.tags && product.tags && p.tags.some(t => product.tags.includes(t)))))
       .slice(0, 4);
-    
-    // Fallback if not enough related
-    if (related.length < 2) {
-      const extras = allProducts.filter(p => p.id !== product.id && p.isPublished).slice(0, 4);
-      extras.forEach(e => { if (!related.some(r => r.id === e.id)) related.push(e); });
-    }
 
     modalEl.innerHTML = `
       <div class="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl my-8 relative overflow-hidden">
         <button onclick="HappyToysModal.close()" class="absolute top-5 right-5 p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold z-10">✕</button>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <!-- Image Gallery -->
           <div>
             <div class="rounded-2xl overflow-hidden bg-slate-100 mb-3 border aspect-square">
               <img id="modalMainImg" src="${gallery[0]}" alt="${product.name}" class="w-full h-full object-cover" />
@@ -56,7 +47,6 @@ const HappyToysModal = (() => {
             ` : ""}
           </div>
 
-          <!-- Product Details -->
           <div class="flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between text-xs text-slate-400 font-semibold mb-1">
@@ -66,11 +56,9 @@ const HappyToysModal = (() => {
               <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-2">${product.name}</h2>
               <div class="flex items-baseline gap-2.5 mb-4">
                 <span id="modalDisplayPrice" class="text-2xl font-extrabold text-blue-700">${formatPkr(activePrice)}</span>
-                ${hasDiscount && !selectedVariant ? `<span class="text-sm text-slate-400 line-through">${formatPkr(product.pricePkr)}</span>` : ""}
               </div>
-              <p class="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed">${product.fullDescription || product.shortDescription}</p>
+              <p class="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed">${product.fullDescription || product.shortDescription || ""}</p>
 
-              <!-- Variant Selector -->
               ${product.hasVariants && product.variants?.length > 0 ? `
                 <div class="mb-5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
                   <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Select Option / Variant:</label>
@@ -85,19 +73,17 @@ const HappyToysModal = (() => {
               ` : ""}
             </div>
 
-            <!-- Action Buttons -->
             <div class="space-y-2 pt-4 border-t border-slate-200">
               <button onclick="HappyToysModal.addToCartAndCheckout()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow transition flex items-center justify-center gap-2">
-                <span>📲 Order via WhatsApp</span>
+                <span>📲 Buy Now (WhatsApp)</span>
               </button>
               <button onclick="HappyToysModal.addToCartOnly()" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs transition">
-                Add to Cart
+                🛒 Add to Cart Drawer
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Related Products ("You May Also Like") -->
         ${related.length > 0 ? `
           <div class="pt-6 border-t border-slate-200">
             <h3 class="font-bold text-base text-slate-900 mb-3">You May Also Like</h3>
@@ -145,13 +131,15 @@ const HappyToysModal = (() => {
     const variantText = selectedVariant ? ` [Option: ${selectedVariant.name}]` : "";
     const price = selectedVariant ? (selectedVariant.salePricePkr || selectedVariant.pricePkr) : (currentProduct.salePricePkr || currentProduct.pricePkr);
     const msg = `Hello Happy Toys Store! I want to order:\n\n*${currentProduct.name}*${variantText}\nSKU: ${currentProduct.sku}\nPrice: ${formatPkr(price)}\n\nPlease confirm availability and delivery details.`;
-    const whatsappNum = "923000000000"; // Configurable in settings
+    const whatsappNum = "923000000000";
     window.open(`https://wa.me/${whatsappNum}?text=` + encodeURIComponent(msg), "_blank");
   }
 
   function addToCartOnly() {
     if (!currentProduct) return;
-    alert(`Added "${currentProduct.name}"${selectedVariant ? " (" + selectedVariant.name + ")" : ""} to cart! (Cart Drawer connects in Phase 5)`);
+    if (window.HappyToysCart) {
+      window.HappyToysCart.addItem(currentProduct, selectedVariant, 1);
+    }
     close();
   }
 
