@@ -1,0 +1,10 @@
+{
+  "name": "happy-toys-store",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Happy Toys Store - E-Commerce Platform on Cloudflare",
+  "scripts": {
+    "validate:phase1": "node scripts/validate-phase1.mjs",
+    "serve": "python3 -m http.server 8080 --directory public"
+  }
+}
