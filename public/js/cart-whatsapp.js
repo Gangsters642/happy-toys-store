@@ -1,5 +1,5 @@
 const HappyToysCart = (() => {
-  const KEY = "hts_cart_items_v3";
+  const KEY = "hts_cart_items_v4";
   const WA = "923707116317";
   let cart = [];
 
@@ -21,8 +21,8 @@ const HappyToysCart = (() => {
     const el = document.getElementById("cartCountBadge");
     if (el) {
       el.textContent = count;
-      el.style.transform = "scale(1.35)";
-      setTimeout(() => { el.style.transform = "scale(1)"; }, 220);
+      el.style.transform = "scale(1.3)";
+      setTimeout(() => { el.style.transform = "scale(1)"; }, 200);
     }
   }
 
@@ -43,14 +43,18 @@ const HappyToysCart = (() => {
   function addToCart(id, size = null, price = null, qty = 1) {
     const p = window.HappyToysApp ? window.HappyToysApp.getProductById(id) : null;
     if (!p) return;
-    const sz = size || (p.variants && p.variants.length ? p.variants[0].size : "Standard");
-    const pr = price !== null ? Number(price) : (p.variants && p.variants.length ? Number(p.variants[0].pricePkr) : Number(p.pricePkr));
+    const sz = size || (p.hasVariants && p.variants && p.variants.length ? p.variants[0].size : "Standard");
+    const pr = price !== null ? Number(price) : (p.hasVariants && p.variants && p.variants.length ? Number(p.variants[0].pricePkr) : Number(p.pricePkr));
     const k = `${p.id}_${sz}`;
-    const item = cart.find(x => x.k === k);
-    if (item) item.qty += Number(qty);
-    else cart.push({ k, id: p.id, name: p.name, size: sz, pricePkr: pr, mainImage: p.mainImage, qty: Number(qty) });
+    
+    const existing = cart.find(x => x.k === k);
+    if (existing) {
+      existing.qty += Number(qty);
+    } else {
+      cart.push({ k, id: p.id, name: p.name, size: sz, pricePkr: pr, mainImage: p.mainImage, qty: Number(qty) });
+    }
     save();
-    toast(`${p.name} (${sz}) कार्ट में जुड़ गया!`);
+    toast(`${p.name} (${sz}) added to Cart successfully!`);
   }
 
   function changeQty(k, d) {
@@ -71,7 +75,7 @@ const HappyToysCart = (() => {
       <aside class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-10 flex flex-col justify-between">
         <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-amber-50">
           <span class="toy-title-font text-lg text-slate-900">🛒 Your Toy Cart</span>
-          <button onclick="HappyToysCart.closeDrawer()" class="w-8 h-8 rounded-full bg-white font-black text-slate-700 shadow">✕</button>
+          <button type="button" onclick="HappyToysCart.closeDrawer()" class="w-8 h-8 rounded-full bg-white font-black text-slate-700 shadow">✕</button>
         </div>
         <div id="htsCartList" class="p-4 overflow-y-auto flex-1 space-y-3"></div>
         <div class="p-4 border-t border-slate-200 bg-slate-50 space-y-3">
@@ -79,7 +83,7 @@ const HappyToysCart = (() => {
             <span class="font-extrabold text-sm text-slate-600">Total Amount:</span>
             <span id="htsCartTotal" class="text-2xl font-black text-blue-600">PKR 0</span>
           </div>
-          <button onclick="HappyToysCart.checkoutWhatsApp()" class="btn-vip-gradient w-full py-3.5 rounded-2xl text-white font-black text-base shadow-lg">💬 Order All on WhatsApp</button>
+          <button type="button" onclick="HappyToysCart.checkoutWhatsApp()" class="btn-vip-gradient w-full py-3.5 rounded-2xl text-white font-black text-base shadow-lg cursor-pointer">💬 Order All on WhatsApp</button>
         </div>
       </aside>`;
     document.body.appendChild(d);
@@ -91,7 +95,7 @@ const HappyToysCart = (() => {
     const tot = document.getElementById("htsCartTotal");
     if (!list || !tot) return;
     if (!cart.length) {
-      list.innerHTML = `<div class="py-16 text-center text-slate-400 font-bold">🧸 कार्ट खाली है!</div>`;
+      list.innerHTML = `<div class="py-16 text-center text-slate-400 font-bold">🧸 Your cart is empty!</div>`;
       tot.textContent = "PKR 0";
       return;
     }
@@ -107,9 +111,9 @@ const HappyToysCart = (() => {
           <div class="text-blue-600 font-black text-sm mt-0.5">${fmt(sub)}</div>
         </div>
         <div class="flex items-center gap-1.5 bg-white border rounded-xl px-2 py-1">
-          <button onclick="HappyToysCart.changeQty('${i.k}',-1)" class="w-6 h-6 bg-slate-100 rounded font-black">-</button>
+          <button type="button" onclick="HappyToysCart.changeQty('${i.k}',-1)" class="w-6 h-6 bg-slate-100 rounded font-black">-</button>
           <span class="text-xs font-black px-1">${i.qty}</span>
-          <button onclick="HappyToysCart.changeQty('${i.k}',1)" class="w-6 h-6 bg-amber-400 rounded font-black">+</button>
+          <button type="button" onclick="HappyToysCart.changeQty('${i.k}',1)" class="w-6 h-6 bg-amber-400 rounded font-black">+</button>
         </div>
       </div>`;
     }).join("");

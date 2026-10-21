@@ -1,25 +1,21 @@
 const HappyToysModal = (() => {
-  let prod = null, curSize = "Small", curPrice = 0, qty = 1;
+  let prod = null, curSize = "Standard", curPrice = 0, qty = 1;
   const WA = "923707116317";
   function fmt(n) { return "PKR " + Number(n || 0).toLocaleString("en-PK"); }
-
-  function getVariants(p) {
-    if (p.variants && Array.isArray(p.variants) && p.variants.length > 0) return p.variants;
-    const base = Number(p.pricePkr || 1500);
-    return [
-      { size: "Small", pricePkr: base },
-      { size: "Medium", pricePkr: Math.round(base * 1.25) },
-      { size: "Big", pricePkr: Math.round(base * 1.5) }
-    ];
-  }
 
   function open(p) {
     if (!p) return;
     prod = p;
     qty = 1;
-    const vars = getVariants(p);
-    curSize = vars[0].size;
-    curPrice = Number(vars[0].pricePkr);
+
+    const hasVar = p.hasVariants && Array.isArray(p.variants) && p.variants.length > 0;
+    if (hasVar) {
+      curSize = p.variants[0].size;
+      curPrice = Number(p.variants[0].pricePkr);
+    } else {
+      curSize = "Standard";
+      curPrice = Number(p.pricePkr || 1500);
+    }
 
     let pg = document.getElementById("htsSeparateProductPage");
     if (!pg) {
@@ -40,21 +36,37 @@ const HappyToysModal = (() => {
     if (!prod) return;
     const total = curPrice * qty;
     const link = `${location.origin}/#product=${prod.id}`;
-    const msg = `Hello *Happy Toys Store*! 🧸\nI want to order this product:\n\n*🧸 Product:* ${prod.name}\n*📏 Size:* ${curSize}\n*🔢 Quantity:* ${qty}\n*💰 Total Price:* ${fmt(total)}\n*📝 Details:* ${prod.shortDescription || "Premium Kids Toy"}\n\n*🔗 Product Link:* ${link}`;
+    const msg = `Hello *Happy Toys Store*! 🧸\nI want to order this product:\n\n*🧸 Product:* ${prod.name}\n*📏 Size/Variant:* ${curSize}\n*🔢 Quantity:* ${qty}\n*💰 Total Price:* ${fmt(total)}\n*📝 Details:* ${prod.shortDescription || "Premium Kids Toy"}\n\n*🔗 Product Link:* ${link}`;
     window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, "_blank");
   }
 
   function render() {
     const pg = document.getElementById("htsSeparateProductPage");
     if (!pg || !prod) return;
-    const vars = getVariants(prod);
+    
+    const hasVar = prod.hasVariants && Array.isArray(prod.variants) && prod.variants.length > 0;
     const total = curPrice * qty;
+
+    const sizeBoxHtml = hasVar ? `
+      <div class="bg-amber-50/70 p-4 rounded-2xl border-2 border-amber-200 space-y-2">
+        <span class="text-xs font-black text-slate-800 uppercase block">📏 Select Size / Variant:</span>
+        <div class="grid grid-cols-3 gap-2">
+          ${prod.variants.map(v => {
+            const act = v.size === curSize ? "bg-blue-600 text-white border-blue-600 shadow-md" : "bg-white text-slate-800 border-amber-300";
+            return `<button type="button" onclick="HappyToysModal.setSize('${v.size}',${v.pricePkr})" class="py-2.5 px-1 rounded-2xl border-2 font-black text-center transition ${act}">
+              <div class="text-xs">${v.size}</div>
+              <div class="text-[10px] ${v.size === curSize ? 'text-amber-200' : 'text-blue-600'}">${fmt(v.pricePkr)}</div>
+            </button>`;
+          }).join("")}
+        </div>
+      </div>
+    ` : "";
 
     pg.innerHTML = `
       <div class="sticky top-0 z-20 bg-white border-b border-slate-200 px-4 h-15 py-3 flex items-center justify-between shadow-xs">
-        <button onclick="HappyToysModal.close()" class="px-3.5 py-2 rounded-xl bg-amber-100 text-amber-900 font-black text-xs flex items-center gap-1">← Back to Store</button>
+        <button type="button" onclick="HappyToysModal.close()" class="px-3.5 py-2 rounded-xl bg-amber-100 text-amber-900 font-black text-xs flex items-center gap-1 cursor-pointer">← Back to Store</button>
         <span class="toy-title-font text-sm text-amber-500 truncate max-w-[180px]">${prod.name}</span>
-        <button onclick="HappyToysModal.close(); HappyToysCart.openDrawer();" class="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-black text-xs">🛒 Cart</button>
+        <button type="button" onclick="HappyToysModal.close(); HappyToysCart.openDrawer();" class="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-black text-xs cursor-pointer">🛒 Cart</button>
       </div>
 
       <div class="max-w-3xl mx-auto w-full p-4 pb-32 space-y-4">
@@ -76,31 +88,20 @@ const HappyToysModal = (() => {
 
           <div class="bg-blue-50/80 p-4 rounded-2xl border-2 border-blue-200 flex items-center justify-between">
             <div>
-              <span class="text-[11px] font-black text-slate-500 uppercase block">Price (${curSize} Size)</span>
+              <span class="text-[11px] font-black text-slate-500 uppercase block">Price (${curSize})</span>
               <span class="text-3xl font-black text-blue-600">${fmt(total)}</span>
             </div>
             <span class="bg-emerald-100 text-emerald-700 font-black text-xs px-3 py-1 rounded-full">✓ In Stock</span>
           </div>
 
-          <div class="bg-amber-50/70 p-4 rounded-2xl border-2 border-amber-200 space-y-2">
-            <span class="text-xs font-black text-slate-800 uppercase block">📏 Select Size (Click to change price):</span>
-            <div class="grid grid-cols-3 gap-2.5">
-              ${vars.map(v => {
-                const act = v.size === curSize ? "bg-blue-600 text-white border-blue-600 scale-105 shadow-md" : "bg-white text-slate-800 border-amber-300";
-                return `<button onclick="HappyToysModal.setSize('${v.size}',${v.pricePkr})" class="py-2.5 px-2 rounded-2xl border-2 font-black text-center transition ${act}">
-                  <div class="text-xs">${v.size}</div>
-                  <div class="text-[11px] ${v.size === curSize ? 'text-amber-300' : 'text-blue-600'}">${fmt(v.pricePkr)}</div>
-                </button>`;
-              }).join("")}
-            </div>
-          </div>
+          ${sizeBoxHtml}
 
           <div class="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
             <span class="text-xs font-black text-slate-700 uppercase">🔢 Quantity:</span>
             <div class="flex items-center gap-3">
-              <button onclick="HappyToysModal.setQty(-1)" class="w-9 h-9 rounded-xl bg-white border font-black text-lg">-</button>
+              <button type="button" onclick="HappyToysModal.setQty(-1)" class="w-9 h-9 rounded-xl bg-white border font-black text-lg cursor-pointer">-</button>
               <span class="text-base font-black">${qty}</span>
-              <button onclick="HappyToysModal.setQty(1)" class="w-9 h-9 rounded-xl bg-amber-400 font-black text-lg">+</button>
+              <button type="button" onclick="HappyToysModal.setQty(1)" class="w-9 h-9 rounded-xl bg-amber-400 font-black text-lg cursor-pointer">+</button>
             </div>
           </div>
 
@@ -113,8 +114,8 @@ const HappyToysModal = (() => {
 
       <div class="fixed bottom-0 left-0 right-0 z-30 bg-white border-t-2 border-amber-300 p-3 shadow-2xl">
         <div class="max-w-3xl mx-auto flex items-center gap-2.5">
-          <button onclick="HappyToysCart.addToCart('${prod.id}', '${curSize}', ${curPrice}, ${qty})" class="py-3.5 px-4 rounded-2xl bg-amber-400 hover:bg-amber-500 text-white font-black text-xs shadow-md shrink-0">🛒 Add to Cart</button>
-          <button onclick="HappyToysModal.buyWhatsApp()" class="btn-vip-gradient flex-1 py-3.5 px-4 rounded-2xl text-white font-black text-sm shadow-xl animate-bounce">💬 Buy Now on WhatsApp (${fmt(total)})</button>
+          <button type="button" onclick="HappyToysCart.addToCart('${prod.id}', '${curSize}', ${curPrice}, ${qty})" class="py-3.5 px-3 rounded-2xl bg-amber-400 hover:bg-amber-500 text-white font-black text-xs shadow-md shrink-0 cursor-pointer">🛒 Add to Cart</button>
+          <button type="button" onclick="HappyToysModal.buyWhatsApp()" class="btn-vip-gradient flex-1 py-3.5 px-3 rounded-2xl text-white font-black text-xs sm:text-sm shadow-xl animate-bounce text-center cursor-pointer">💬 Buy Now (${fmt(total)})</button>
         </div>
       </div>`;
   }
