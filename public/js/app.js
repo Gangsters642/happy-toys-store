@@ -21,28 +21,49 @@ const HappyToysApp = (() => {
       state.products = seed.products || [];
     }
 
-    // Attempt to load video if URL is present in settings
+    // --- AGGRESSIVE VIDEO AUTOPLAY LOGIC ---
     const videoPlayer = document.getElementById("splashVideoPlayer");
     const overlay = document.getElementById("videoOverlay");
-    if(appSettings.introVideoUrl && videoPlayer) {
-        videoPlayer.classList.remove("hidden");
-        // Ensure properties for mobile autoplay
+    const gradient = document.getElementById("splashGradient");
+    
+    if (appSettings.introVideoUrl && videoPlayer) {
+        // Ensure properties needed for mobile autoplay are strictly set
         videoPlayer.muted = true;
-        videoPlayer.setAttribute("playsinline", "");
+        videoPlayer.defaultMuted = true;
+        videoPlayer.setAttribute("playsinline", "playsinline");
+        videoPlayer.setAttribute("webkit-playsinline", "webkit-playsinline");
         
         videoPlayer.src = appSettings.introVideoUrl;
         
-        videoPlayer.oncanplay = () => {
-            videoPlayer.classList.remove("opacity-0");
-            videoPlayer.classList.add("opacity-100");
-            if(overlay) overlay.classList.remove("hidden");
-        };
+        // Remove hidden class immediately so it occupies space
+        videoPlayer.classList.remove("hidden");
         
-        videoPlayer.onerror = () => {
-            console.error("Video failed to load.");
-            videoPlayer.classList.add("hidden");
-            if(overlay) overlay.classList.add("hidden");
-        };
+        // Attempt to play immediately
+        const playPromise = videoPlayer.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                // Video started playing successfully
+                console.log("Video autoplay started.");
+                videoPlayer.classList.remove("opacity-0");
+                videoPlayer.classList.add("opacity-100");
+                if(overlay) {
+                    overlay.classList.remove("hidden");
+                    // Ensure the overlay is dark enough to see white text, but transparent enough for video
+                    overlay.style.backgroundColor = "rgba(15, 23, 42, 0.6)"; 
+                }
+                if(gradient) gradient.classList.add("hidden"); // Remove solid background
+            }).catch(error => {
+                console.warn("Autoplay blocked, attempting fallback load event.", error);
+                // Fallback: If autoplay is blocked, wait for data to load and try again or show first frame
+                videoPlayer.addEventListener('loadeddata', () => {
+                   videoPlayer.classList.remove("opacity-0");
+                   videoPlayer.classList.add("opacity-100");
+                   if(overlay) overlay.classList.remove("hidden");
+                   if(gradient) gradient.classList.add("hidden");
+                });
+            });
+        }
     }
 
     bindEvents();
@@ -67,8 +88,10 @@ const HappyToysApp = (() => {
         }
 
         var particleCount = 50 * (timeLeft / duration);
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+        if(typeof confetti === 'function') {
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+        }
       }, 250);
   }
 
@@ -87,14 +110,10 @@ const HappyToysApp = (() => {
         splash.classList.add("hidden");
         document.body.classList.remove("splash-active");
         
-        // Show main content with animation
         mainContent.classList.remove("opacity-0", "h-0", "overflow-hidden");
         mainContent.classList.add("store-reveal");
         
-        // Fire confetti!
-        if(typeof confetti === 'function') {
-            fireConfetti();
-        }
+        fireConfetti();
       }, 800);
     }
   }
