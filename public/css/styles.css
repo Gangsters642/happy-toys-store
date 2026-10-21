@@ -10,3 +10,25 @@ h1, h2, h3, .brand-font { font-family: 'Fredoka', sans-serif; }
 .toy-card:hover .toy-card-img { transform: scale(1.04); }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+/* Yellow Alignment & Scale Up on Tap */
+.toy-card {
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.25s ease !important;
+}
+.toy-card:active, .toy-card.card-selected-yellow {
+  border: 3px solid #f59e0b !important;
+  box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.45), 0 20px 35px rgba(245, 158, 11, 0.3) !important;
+  transform: scale(1.05) translateY(-6px) !important;
+  z-index: 20 !important;
+}
+@keyframes reanimate3D {
+  0% { opacity: 0; transform: perspective(600px) rotateY(35deg) translateY(40px) scale(0.85); }
+  100% { opacity: 1; transform: perspective(600px) rotateY(0deg) translateY(0) scale(1); }
+}
+.reanimate-3d-card {
+  animation: reanimate3D 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+.card-rainbow-strip {
+  height: 5px;
+  width: 100%;
+  background: linear-gradient(90deg, #ef4444 0% 16.6%, #f59e0b 16.6% 33.3%, #10b981 33.3% 50%, #3b82f6 50% 66.6%, #6366f1 66.6% 83.3%, #ec4899 83.3% 100%);
+}
