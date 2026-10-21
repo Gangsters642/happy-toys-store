@@ -343,6 +343,40 @@
   }
 </style>
   
+<style id="hts-3d-fix-styles">
+  .hts-3d-grid {
+    perspective: 1200px;
+    transform-style: preserve-3d;
+  }
+  .toy-card-3d {
+    opacity: 0;
+    transform: perspective(1000px) translate3d(0, 70px, -110px) rotateX(30deg) rotateY(-8deg) scale(0.82);
+    transform-origin: center top;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+  }
+  .toy-card-3d.animate-3d-in {
+    animation: htsCard3DReveal 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .toy-card-visible {
+    opacity: 1;
+    transform: none;
+  }
+  @keyframes htsCard3DReveal {
+    0% {
+      opacity: 0;
+      transform: perspective(1000px) translate3d(0, 70px, -110px) rotateX(30deg) rotateY(-8deg) scale(0.82);
+    }
+    68% {
+      opacity: 1;
+      transform: perspective(1000px) translate3d(0, -6px, 18px) rotateX(-4deg) rotateY(2deg) scale(1.03);
+    }
+    100% {
+      opacity: 1;
+      transform: perspective(1000px) translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) scale(1);
+    }
+  }
+</style>
 </head>
 <body class="min-h-screen flex flex-col splash-active bg-slate-50">
 

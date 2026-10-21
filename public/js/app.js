@@ -6,7 +6,8 @@ const HappyToysApp = (() => {
     searchQuery: "",
     favorites: []
   };
-  let scrollObserver = null;
+  let isStoreEntered = false;
+  let videoWatchdog = null;
 
   function formatPkr(amount) {
     return "PKR " + Number(amount || 0).toLocaleString("en-PK");
@@ -40,17 +41,26 @@ const HappyToysApp = (() => {
           <span class="absolute bottom-[15%] right-[4%] w-2.5 h-2.5 rounded-full bg-amber-400"></span>
         </div>
 
-        <!-- 1. Top Full-Width Video Frame (Fixed mute/pause bug) -->
+        <!-- 1. Top Full-Width Video Frame (GPU Accelerated & Continuous Play) -->
         <div class="hts-video-frame-3d z-10">
-          <video id="splashVideoPlayer" playsinline autoplay muted loop preload="auto" class="w-full h-full object-cover">
+          <video id="splashVideoPlayer" 
+                 src="${videoSrc}" 
+                 playsinline 
+                 webkit-playsinline 
+                 autoplay 
+                 muted 
+                 loop 
+                 preload="auto" 
+                 class="w-full h-full object-cover"
+                 style="transform: translate3d(0,0,0); backface-visibility: hidden; will-change: transform;">
             <source src="${videoSrc}" type="video/mp4" />
           </video>
 
-          <button id="unmuteNoticeBtn" class="absolute bottom-3 left-3 z-20 bg-black/70 text-white text-[11px] font-bold px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-1.5 shadow-md">
+          <button id="unmuteNoticeBtn" type="button" class="absolute bottom-3 left-3 z-20 bg-black/75 text-white text-[11px] font-bold px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-1.5 shadow-md active:scale-95 transition">
             <span>🔊</span> <span>Tap for Sound</span>
           </button>
 
-          <button onclick="HappyToysApp.enterStore()" aria-label="Close Intro" class="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-slate-100/90 hover:bg-white text-slate-600 flex items-center justify-center shadow-md font-bold text-base active:scale-90 transition">
+          <button type="button" onclick="HappyToysApp.enterStore()" aria-label="Close Intro" class="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-slate-100/90 hover:bg-white text-slate-600 flex items-center justify-center shadow-md font-bold text-base active:scale-90 transition">
             ✕
           </button>
         </div>
@@ -96,7 +106,7 @@ const HappyToysApp = (() => {
 
         <!-- 5. Instant Enter Store Button -->
         <div class="z-10 w-full pt-1">
-          <button onclick="HappyToysApp.enterStore()" class="hts-enter-btn-3d">
+          <button type="button" onclick="HappyToysApp.enterStore()" class="hts-enter-btn-3d">
             <span>Enter Store</span>
             <svg class="w-5 h-5 stroke-current" fill="none" stroke-width="2.6" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -106,6 +116,88 @@ const HappyToysApp = (() => {
 
       </div>
     `;
+  }
+
+  function setupVideoWithSound() {
+    const videoEl = document.getElementById("splashVideoPlayer");
+    const unmuteBtn = document.getElementById("unmuteNoticeBtn");
+    if (!videoEl) return;
+
+    // 1. Force strict mobile-compatible muted playback first
+    videoEl.muted = true;
+    videoEl.defaultMuted = true;
+    videoEl.playsInline = true;
+    videoEl.setAttribute("playsinline", "");
+    videoEl.setAttribute("webkit-playsinline", "");
+
+    const safePlay = () => {
+      if (isStoreEntered) return;
+      const playPromise = videoEl.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // If browser blocks unmuted playback, fallback to muted so video NEVER pauses
+          videoEl.muted = true;
+          videoEl.play().catch(() => {});
+        });
+      }
+    };
+
+    safePlay();
+
+    // 2. Auto-Resume Watchdog: If layout shift or browser pauses video, resume immediately
+    videoEl.addEventListener("pause", () => {
+      if (!isStoreEntered && !videoEl.ended) {
+        safePlay();
+      }
+    });
+
+    videoEl.addEventListener("stalled", safePlay);
+    videoEl.addEventListener("waiting", safePlay);
+
+    if (videoWatchdog) clearInterval(videoWatchdog);
+    videoWatchdog = setInterval(() => {
+      if (isStoreEntered) {
+        clearInterval(videoWatchdog);
+        return;
+      }
+      if (videoEl.paused && !videoEl.ended) {
+        safePlay();
+      }
+    }, 350);
+
+    // 3. Unmute ONLY on explicit button click (prevents touchstart freeze bug)
+    if (unmuteBtn) {
+      unmuteBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        videoEl.muted = false;
+        videoEl.volume = 1.0;
+        const p = videoEl.play();
+        if (p !== undefined) {
+          p.then(() => {
+            unmuteBtn.classList.add("hidden");
+          }).catch(() => {
+            videoEl.muted = true;
+            videoEl.play().catch(() => {});
+          });
+        } else {
+          unmuteBtn.classList.add("hidden");
+        }
+      });
+    }
+  }
+
+  // Trigger one-by-one 3D card animation right when store becomes visible
+  function trigger3DProductReveal() {
+    const cards = document.querySelectorAll("#productGrid .toy-card-3d");
+    cards.forEach((card, index) => {
+      card.classList.remove("animate-3d-in");
+      card.style.animationDelay = "0s";
+      // Force browser reflow so animation triggers freshly every time
+      void card.offsetWidth;
+      card.style.animationDelay = `${(index * 0.11).toFixed(2)}s`;
+      card.classList.add("animate-3d-in");
+    });
   }
 
   function loadFavorites() {
@@ -126,7 +218,7 @@ const HappyToysApp = (() => {
       state.favorites.push(productId);
     }
     localStorage.setItem("hts_favorites", JSON.stringify(state.favorites));
-    renderProducts();
+    renderProducts(false);
 
     if (fromModal) {
       const modalBtn = document.getElementById(`modalFavBtn-${productId}`);
@@ -137,53 +229,6 @@ const HappyToysApp = (() => {
         }
       }
     }
-  }
-
-  function setupVideoWithSound() {
-    const videoEl = document.getElementById("splashVideoPlayer");
-    const unmuteBtn = document.getElementById("unmuteNoticeBtn");
-    if (!videoEl) return;
-
-    // Fix video freezing bug: Ensure muted autoplay first so mobile browsers never block it
-    videoEl.muted = true;
-    videoEl.play().catch(() => {});
-
-    if (unmuteBtn) {
-      unmuteBtn.classList.remove("hidden");
-      const enableAudio = () => {
-        videoEl.muted = false;
-        videoEl.volume = 1.0;
-        videoEl.play().catch(() => {});
-        unmuteBtn.classList.add("hidden");
-        document.removeEventListener("click", enableAudio);
-        document.removeEventListener("touchstart", enableAudio);
-      };
-
-      unmuteBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        enableAudio();
-      });
-      document.addEventListener("click", enableAudio, { once: true });
-      document.addEventListener("touchstart", enableAudio, { once: true });
-    }
-  }
-
-  function initScrollAnimations() {
-    if (scrollObserver) scrollObserver.disconnect();
-
-    scrollObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("is-visible");
-        }
-      });
-    }, { threshold: 0.05 });
-
-    const cards = document.querySelectorAll(".toy-card-reveal");
-    cards.forEach((card, index) => {
-      card.style.transitionDelay = `${(index % 4) * 60}ms`;
-      scrollObserver.observe(card);
-    });
   }
 
   async function init() {
@@ -204,7 +249,7 @@ const HappyToysApp = (() => {
 
     bindEvents();
     renderCategories();
-    renderProducts();
+    renderProducts(false);
     checkForDirectProductLink();
 
     try {
@@ -212,9 +257,12 @@ const HappyToysApp = (() => {
       if (storeRes.ok) {
         const liveData = await storeRes.json();
         if (liveData.products && liveData.products.length > 0) {
+          const changed = JSON.stringify(liveData.products) !== JSON.stringify(state.products);
           state.products = liveData.products;
           localStorage.setItem("hts_custom_products", JSON.stringify(liveData.products));
-          renderProducts();
+          if (changed) {
+            renderProducts(isStoreEntered);
+          }
           checkForDirectProductLink();
         }
       }
@@ -235,21 +283,26 @@ const HappyToysApp = (() => {
   }
 
   function fireEnterStoreConfetti() {
-    // Fixed Confetti bug: Robust trigger supporting multiple canvas-confetti versions
     try {
       if (typeof confetti === "function") {
-        confetti({ particleCount: 160, spread: 100, origin: { y: 0.6 }, zIndex: 99999 });
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, zIndex: 99999 });
         setTimeout(() => {
-          confetti({ particleCount: 100, angle: 60, spread: 70, origin: { x: 0, y: 0.7 }, zIndex: 99999 });
-          confetti({ particleCount: 100, angle: 120, spread: 70, origin: { x: 1, y: 0.7 }, zIndex: 99999 });
-        }, 250);
+          confetti({ particleCount: 90, angle: 60, spread: 70, origin: { x: 0, y: 0.7 }, zIndex: 99999 });
+          confetti({ particleCount: 90, angle: 120, spread: 70, origin: { x: 1, y: 0.7 }, zIndex: 99999 });
+        }, 220);
       }
-    } catch (e) {
-      console.log("Confetti trigger:", e);
-    }
+    } catch (e) {}
   }
 
   function enterStore() {
+    if (isStoreEntered) return;
+    isStoreEntered = true;
+
+    if (videoWatchdog) {
+      clearInterval(videoWatchdog);
+      videoWatchdog = null;
+    }
+
     const splash = document.getElementById("vipSplashScreen");
     const video = document.getElementById("splashVideoPlayer");
     const mainContent = document.getElementById("mainStoreContent");
@@ -259,7 +312,6 @@ const HappyToysApp = (() => {
       video.muted = true;
     }
 
-    // Fixed delay bug: Instant responsive transition
     if (splash) {
       splash.style.transition = "opacity 0.25s ease, transform 0.25s ease";
       splash.style.opacity = "0";
@@ -268,13 +320,18 @@ const HappyToysApp = (() => {
         splash.classList.add("hidden");
         splash.style.setProperty("display", "none", "important");
         document.body.classList.remove("splash-active");
+
         if (mainContent) {
           mainContent.classList.remove("opacity-0", "h-0", "overflow-hidden");
           mainContent.classList.add("store-reveal");
         }
+
+        // Trigger the 3D one-by-one product animation NOW when user enters store!
+        trigger3DProductReveal();
         fireEnterStoreConfetti();
-        initScrollAnimations();
-      }, 250);
+      }, 220);
+    } else {
+      trigger3DProductReveal();
     }
   }
 
@@ -315,7 +372,7 @@ const HappyToysApp = (() => {
     state.activeCategory = slug;
     document.getElementById("categoryDrawerContainer")?.classList.add("hidden");
     renderCategories();
-    renderProducts();
+    renderProducts(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -323,7 +380,7 @@ const HappyToysApp = (() => {
     state.activeCategory = "all";
     state.searchQuery = "";
     renderCategories();
-    renderProducts();
+    renderProducts(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -356,11 +413,11 @@ const HappyToysApp = (() => {
     return { icon: "🧸", label: catSlug.replace(/-/g, " ") };
   }
 
-  function renderProducts() {
+  function renderProducts(animate3D = true) {
     const grid = document.getElementById("productGrid");
     if (!grid) return;
 
-    grid.className = "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 -mx-2 sm:mx-0";
+    grid.className = "hts-3d-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 -mx-2 sm:mx-0";
 
     const activeCatObj = state.categories.find(c => c.slug === state.activeCategory);
     if (document.getElementById("activeCategoryHeading")) {
@@ -391,16 +448,15 @@ const HappyToysApp = (() => {
       { score: "4.5", count: 62 }
     ];
 
-    // Added staggered 3D animation class for initial store entry
     grid.innerHTML = filtered.map((p, idx) => {
       const badge = badges[idx % badges.length];
       const reviewInfo = sampleRatings[idx % sampleRatings.length];
       const catInfo = getCategoryDisplay(p.category);
       const isFavorited = state.favorites.includes(p.id);
-      const animDelay = (idx * 0.07).toFixed(2);
+      const immediateClass = (!animate3D && isStoreEntered) ? "toy-card-visible" : "toy-card-3d";
 
       return `
-      <article class="toy-card-reveal w-full overflow-hidden bg-white rounded-[1.35rem] p-2 sm:p-3 border border-slate-100 shadow-[0_4px_18px_-4px_rgba(15,23,42,0.08)] flex flex-col justify-between transition-all duration-500 transform translate-y-6 opacity-0 animate-fade-in-up" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
+      <article class="${immediateClass} w-full overflow-hidden bg-white rounded-[1.35rem] p-2 sm:p-3 border border-slate-100 shadow-[0_6px_20px_-4px_rgba(15,23,42,0.1)] flex flex-col justify-between">
         
         <div class="w-full">
           <div class="relative aspect-[1.04/1] w-full rounded-2xl overflow-hidden bg-slate-50 cursor-pointer group" onclick="HappyToysApp.openProductModal('${p.id}')">
@@ -484,7 +540,9 @@ const HappyToysApp = (() => {
       </article>`;
     }).join("");
 
-    initScrollAnimations();
+    if (animate3D && isStoreEntered) {
+      trigger3DProductReveal();
+    }
   }
 
   return {
