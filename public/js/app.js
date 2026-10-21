@@ -28,7 +28,7 @@ const HappyToysApp = (() => {
     splash.innerHTML = `
       <div class="splash-card-3d relative select-none">
         
-        <!-- Decorative 3D Confetti Dots Inside Card -->
+        <!-- Decorative 3D Confetti Dots -->
         <div class="pointer-events-none absolute inset-0 overflow-hidden z-0 opacity-80">
           <span class="absolute top-[42%] left-[5%] w-2.5 h-2.5 rounded-sm bg-sky-400 rotate-12"></span>
           <span class="absolute top-[46%] right-[6%] w-3 h-2 rounded-sm bg-blue-500 -rotate-12"></span>
@@ -40,24 +40,22 @@ const HappyToysApp = (() => {
           <span class="absolute bottom-[15%] right-[4%] w-2.5 h-2.5 rounded-full bg-amber-400"></span>
         </div>
 
-        <!-- 1. Top Full-Width Video Frame with Close (X) Button -->
+        <!-- 1. Top Full-Width Video Frame (Fixed mute/pause bug) -->
         <div class="hts-video-frame-3d z-10">
-          <video id="splashVideoPlayer" playsinline autoplay loop class="w-full h-full object-cover">
+          <video id="splashVideoPlayer" playsinline autoplay muted loop preload="auto" class="w-full h-full object-cover">
             <source src="${videoSrc}" type="video/mp4" />
           </video>
 
-          <!-- Unmute Pill Notice (If Browser Blocks Autoplay Audio) -->
-          <button id="unmuteNoticeBtn" class="hidden absolute bottom-3 left-3 z-20 bg-black/70 text-white text-[11px] font-bold px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-1.5 shadow-md">
+          <button id="unmuteNoticeBtn" class="absolute bottom-3 left-3 z-20 bg-black/70 text-white text-[11px] font-bold px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-1.5 shadow-md">
             <span>🔊</span> <span>Tap for Sound</span>
           </button>
 
-          <!-- Top-Right Close Button -->
           <button onclick="HappyToysApp.enterStore()" aria-label="Close Intro" class="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-slate-100/90 hover:bg-white text-slate-600 flex items-center justify-center shadow-md font-bold text-base active:scale-90 transition">
             ✕
           </button>
         </div>
 
-        <!-- 2. Store Heading & Subtitle -->
+        <!-- 2. Store Heading -->
         <div class="z-10 text-center px-2 mt-1">
           <h1 class="hts-title-3d uppercase">HAPPY TOYS STORE</h1>
           <p class="text-slate-500 font-bold text-xs sm:text-sm mt-1 flex items-center justify-center gap-1.5">
@@ -67,7 +65,7 @@ const HappyToysApp = (() => {
           </p>
         </div>
 
-        <!-- 3. Center 3D Teddy Bear Avatar Circle -->
+        <!-- 3. Teddy Avatar -->
         <div class="z-10 my-1">
           <div class="hts-teddy-badge-3d overflow-hidden">
             ${
@@ -78,25 +76,25 @@ const HappyToysApp = (() => {
           </div>
         </div>
 
-        <!-- 4. Three 3D Feature Cards Row -->
+        <!-- 4. Feature Cards -->
         <div class="z-10 grid grid-cols-3 gap-2.5 w-full my-1">
           <div class="hts-feature-card-3d bg-[#EFF6FF] border border-sky-100">
-            <span class="text-2xl leading-none drop-shadow-xs">🛡️</span>
+            <span class="text-2xl leading-none">🛡️</span>
             <span class="text-[10px] sm:text-[11px] font-black text-[#0369A1] tracking-tight text-center leading-tight uppercase">PREMIUM QUALITY</span>
           </div>
 
           <div class="hts-feature-card-3d bg-[#FEFCE8] border border-amber-100">
-            <span class="text-2xl leading-none drop-shadow-xs">🚀</span>
+            <span class="text-2xl leading-none">🚀</span>
             <span class="text-[10px] sm:text-[11px] font-black text-[#B45309] tracking-tight text-center leading-tight uppercase">FAST DELIVERY</span>
           </div>
 
           <div class="hts-feature-card-3d bg-[#FDF2F8] border border-pink-100">
-            <span class="text-2xl leading-none drop-shadow-xs">😊</span>
+            <span class="text-2xl leading-none">😊</span>
             <span class="text-[10px] sm:text-[11px] font-black text-[#BE185D] tracking-tight text-center leading-tight uppercase">HAPPY KIDS</span>
           </div>
         </div>
 
-        <!-- 5. Bottom 3D Orange Enter Store CTA Button -->
+        <!-- 5. Instant Enter Store Button -->
         <div class="z-10 w-full pt-1">
           <button onclick="HappyToysApp.enterStore()" class="hts-enter-btn-3d">
             <span>Enter Store</span>
@@ -146,28 +144,27 @@ const HappyToysApp = (() => {
     const unmuteBtn = document.getElementById("unmuteNoticeBtn");
     if (!videoEl) return;
 
-    videoEl.muted = false;
-    videoEl.volume = 1.0;
+    // Fix video freezing bug: Ensure muted autoplay first so mobile browsers never block it
+    videoEl.muted = true;
+    videoEl.play().catch(() => {});
 
-    const playPromise = videoEl.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        videoEl.muted = true;
+    if (unmuteBtn) {
+      unmuteBtn.classList.remove("hidden");
+      const enableAudio = () => {
+        videoEl.muted = false;
+        videoEl.volume = 1.0;
         videoEl.play().catch(() => {});
-        if (unmuteBtn) unmuteBtn.classList.remove("hidden");
+        unmuteBtn.classList.add("hidden");
+        document.removeEventListener("click", enableAudio);
+        document.removeEventListener("touchstart", enableAudio);
+      };
 
-        const enableAudio = () => {
-          videoEl.muted = false;
-          videoEl.volume = 1.0;
-          videoEl.play().catch(() => {});
-          if (unmuteBtn) unmuteBtn.classList.add("hidden");
-          document.removeEventListener("click", enableAudio);
-          document.removeEventListener("touchstart", enableAudio);
-        };
-
-        document.addEventListener("click", enableAudio, { once: true });
-        document.addEventListener("touchstart", enableAudio, { once: true });
+      unmuteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        enableAudio();
       });
+      document.addEventListener("click", enableAudio, { once: true });
+      document.addEventListener("touchstart", enableAudio, { once: true });
     }
   }
 
@@ -180,11 +177,11 @@ const HappyToysApp = (() => {
           entry.target.classList.add("is-visible");
         }
       });
-    }, { threshold: 0.08 });
+    }, { threshold: 0.05 });
 
     const cards = document.querySelectorAll(".toy-card-reveal");
     cards.forEach((card, index) => {
-      card.style.transitionDelay = `${(index % 4) * 50}ms`;
+      card.style.transitionDelay = `${(index % 4) * 60}ms`;
       scrollObserver.observe(card);
     });
   }
@@ -238,8 +235,17 @@ const HappyToysApp = (() => {
   }
 
   function fireEnterStoreConfetti() {
-    if (typeof confetti === "function") {
-      confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 }, zIndex: 200 });
+    // Fixed Confetti bug: Robust trigger supporting multiple canvas-confetti versions
+    try {
+      if (typeof confetti === "function") {
+        confetti({ particleCount: 160, spread: 100, origin: { y: 0.6 }, zIndex: 99999 });
+        setTimeout(() => {
+          confetti({ particleCount: 100, angle: 60, spread: 70, origin: { x: 0, y: 0.7 }, zIndex: 99999 });
+          confetti({ particleCount: 100, angle: 120, spread: 70, origin: { x: 1, y: 0.7 }, zIndex: 99999 });
+        }, 250);
+      }
+    } catch (e) {
+      console.log("Confetti trigger:", e);
     }
   }
 
@@ -253,10 +259,11 @@ const HappyToysApp = (() => {
       video.muted = true;
     }
 
+    // Fixed delay bug: Instant responsive transition
     if (splash) {
-      splash.style.transition = "opacity 0.45s ease, transform 0.45s ease";
+      splash.style.transition = "opacity 0.25s ease, transform 0.25s ease";
       splash.style.opacity = "0";
-      splash.style.transform = "scale(1.03)";
+      splash.style.transform = "scale(1.02)";
       setTimeout(() => {
         splash.classList.add("hidden");
         splash.style.setProperty("display", "none", "important");
@@ -267,7 +274,7 @@ const HappyToysApp = (() => {
         }
         fireEnterStoreConfetti();
         initScrollAnimations();
-      }, 450);
+      }, 250);
     }
   }
 
@@ -384,14 +391,16 @@ const HappyToysApp = (() => {
       { score: "4.5", count: 62 }
     ];
 
+    // Added staggered 3D animation class for initial store entry
     grid.innerHTML = filtered.map((p, idx) => {
       const badge = badges[idx % badges.length];
       const reviewInfo = sampleRatings[idx % sampleRatings.length];
       const catInfo = getCategoryDisplay(p.category);
       const isFavorited = state.favorites.includes(p.id);
+      const animDelay = (idx * 0.07).toFixed(2);
 
       return `
-      <article class="toy-card-reveal w-full overflow-hidden bg-white rounded-[1.35rem] p-2 sm:p-3 border border-slate-100 shadow-[0_4px_18px_-4px_rgba(15,23,42,0.08)] flex flex-col justify-between transition-all duration-300">
+      <article class="toy-card-reveal w-full overflow-hidden bg-white rounded-[1.35rem] p-2 sm:p-3 border border-slate-100 shadow-[0_4px_18px_-4px_rgba(15,23,42,0.08)] flex flex-col justify-between transition-all duration-500 transform translate-y-6 opacity-0 animate-fade-in-up" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
         
         <div class="w-full">
           <div class="relative aspect-[1.04/1] w-full rounded-2xl overflow-hidden bg-slate-50 cursor-pointer group" onclick="HappyToysApp.openProductModal('${p.id}')">
