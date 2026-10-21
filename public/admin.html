@@ -13,7 +13,6 @@
 </head>
 <body class="bg-slate-50 min-h-screen">
 
-  <!-- ADMIN LOGIN MODAL -->
   <div id="adminLoginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border-2 border-amber-300">
       <h2 class="toy-title-font text-2xl text-amber-500 text-center mb-2">🧸 Admin Login</h2>
@@ -25,7 +24,6 @@
     </div>
   </div>
 
-  <!-- TOP NAVBAR -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -34,13 +32,12 @@
       </div>
       <div class="flex items-center gap-3">
         <a href="index.html" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black transition">← View Store</a>
-        <button id="adminLogoutBtn" class="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-black transition">Logout</button>
+        <button type="button" id="adminLogoutBtn" class="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-black transition">Logout</button>
       </div>
     </div>
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-8 space-y-8">
-    <!-- SPLASH VIDEO SETTINGS -->
     <section class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
       <h2 class="text-lg font-black text-slate-900 mb-1">🎬 VIP Splash Intro Video</h2>
       <p class="text-xs text-slate-500 mb-4">Upload an MP4 video from gallery or paste a direct video URL.</p>
@@ -48,20 +45,19 @@
         <div class="space-y-3">
           <input type="file" id="splashMediaUpload" accept="video/*,image/*" class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
           <input type="text" id="adminIntroGifUrl" placeholder="Or paste direct .mp4 video URL..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm" />
-          <button id="saveMediaBtn" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-sm transition">Save Splash Video</button>
+          <button type="button" id="saveMediaBtn" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-sm transition">Save Splash Video</button>
         </div>
         <div id="splashPreview" class="hidden bg-slate-100 rounded-2xl p-2 border border-slate-200"></div>
       </div>
     </section>
 
-    <!-- PRODUCTS LIST -->
     <section class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
       <div class="flex items-center justify-between mb-6">
         <div>
           <h2 class="text-lg font-black text-slate-900">🧸 Store Products</h2>
-          <p class="text-xs text-slate-500">Add or edit toys and their Small / Medium / Big size prices</p>
+          <p class="text-xs text-slate-500">Add or edit toys and their size variant prices</p>
         </div>
-        <button id="openAddProductModalBtn" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-md transition">+ Add New Toy</button>
+        <button type="button" id="openAddProductModalBtn" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-md transition">+ Add New Toy</button>
       </div>
 
       <div class="overflow-x-auto">
@@ -69,8 +65,8 @@
           <thead>
             <tr class="border-b border-slate-200 text-[11px] font-black text-slate-400 uppercase">
               <th class="py-3 px-4">Product</th>
-              <th class="py-3 px-4">Category / Sizes</th>
-              <th class="py-3 px-4">Base Price</th>
+              <th class="py-3 px-4">Category / Variants</th>
+              <th class="py-3 px-4">Price</th>
               <th class="py-3 px-4">Stock</th>
               <th class="py-3 px-4 text-right">Actions</th>
             </tr>
@@ -81,12 +77,11 @@
     </section>
   </main>
 
-  <!-- ADD / EDIT PRODUCT MODAL -->
   <div id="productModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-5">
         <h3 id="productModalTitle" class="text-lg font-black text-slate-900">Add New Toy Product</h3>
-        <button id="closeProductModalBtn" class="text-slate-400 hover:text-slate-700 text-xl font-bold">✕</button>
+        <button type="button" id="closeProductModalBtn" class="text-slate-400 hover:text-slate-700 text-xl font-bold">✕</button>
       </div>
 
       <form id="productForm" class="space-y-4">
@@ -114,35 +109,35 @@
             <input type="number" id="prodStock" value="10" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold" />
           </div>
           <div>
-            <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">DEFAULT PRICE (PKR) *</label>
+            <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">BASE PRICE (PKR) *</label>
             <input type="number" id="prodPrice" required placeholder="e.g. 2000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold" />
           </div>
         </div>
 
-        <!-- NEW: SIZE VARIANTS SECTION -->
+        <!-- SIZE VARIANTS TOGGLE & PRICING INPUTS -->
         <div class="bg-amber-50/70 border-2 border-amber-200 rounded-2xl p-3.5 space-y-3">
           <label class="flex items-center justify-between cursor-pointer">
             <div>
               <span class="text-xs font-black text-slate-900 block">📏 Enable Size Variants?</span>
-              <span class="text-[11px] text-slate-500 font-bold">Small, Medium, Big sizes with different prices</span>
+              <span class="text-[11px] text-slate-500 font-bold">Small, Medium, Big sizes</span>
             </div>
             <input type="checkbox" id="prodHasVariants" class="w-5 h-5 accent-amber-500 rounded cursor-pointer" />
           </label>
 
-          <div id="variantPricesContainer" class="hidden pt-2 border-t border-amber-200/80 space-y-2.5">
-            <p class="text-[11px] font-extrabold text-amber-800">Set Price (PKR) for each size (leave blank to skip a size):</p>
+          <div id="variantPricesContainer" class="hidden pt-2 border-t border-amber-200 space-y-2">
+            <p class="text-[11px] font-extrabold text-amber-900">Enter price for each size:</p>
             <div class="grid grid-cols-3 gap-2">
               <div>
-                <label class="block text-[10px] font-black text-slate-700 uppercase mb-1">Small (PKR)</label>
-                <input type="number" id="varPriceSmall" placeholder="e.g. 1500" class="w-full px-2.5 py-2 rounded-xl border border-amber-300 bg-white text-xs font-bold" />
+                <label class="block text-[10px] font-black text-slate-700">Small (PKR)</label>
+                <input type="number" id="varPriceSmall" placeholder="1500" class="w-full p-2 rounded-xl border border-amber-300 text-xs font-bold bg-white" />
               </div>
               <div>
-                <label class="block text-[10px] font-black text-slate-700 uppercase mb-1">Medium (PKR)</label>
-                <input type="number" id="varPriceMedium" placeholder="e.g. 2000" class="w-full px-2.5 py-2 rounded-xl border border-amber-300 bg-white text-xs font-bold" />
+                <label class="block text-[10px] font-black text-slate-700">Medium (PKR)</label>
+                <input type="number" id="varPriceMedium" placeholder="2000" class="w-full p-2 rounded-xl border border-amber-300 text-xs font-bold bg-white" />
               </div>
               <div>
-                <label class="block text-[10px] font-black text-slate-700 uppercase mb-1">Big / Large</label>
-                <input type="number" id="varPriceBig" placeholder="e.g. 2800" class="w-full px-2.5 py-2 rounded-xl border border-amber-300 bg-white text-xs font-bold" />
+                <label class="block text-[10px] font-black text-slate-700">Big (PKR)</label>
+                <input type="number" id="varPriceBig" placeholder="2800" class="w-full p-2 rounded-xl border border-amber-300 text-xs font-bold bg-white" />
               </div>
             </div>
           </div>
@@ -150,7 +145,7 @@
 
         <div>
           <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">DESCRIPTION</label>
-          <textarea id="prodShortDesc" rows="3" placeholder="Enter full details, features, age group..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm"></textarea>
+          <textarea id="prodShortDesc" rows="3" placeholder="Enter toy details..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm"></textarea>
         </div>
 
         <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 space-y-2">
@@ -160,13 +155,13 @@
         </div>
 
         <div class="flex justify-end pt-2">
-          <button type="submit" class="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm shadow-lg transition">Save Toy</button>
+          <button type="submit" class="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm shadow-lg transition cursor-pointer">Save Toy</button>
         </div>
       </form>
     </div>
   </div>
 
-  <script src="js/data-seed.js"></script>
-  <script src="js/admin.js?v=9"></script>
+  <script src="js/data-seed.js?v=13"></script>
+  <script src="js/admin.js?v=13"></script>
 </body>
 </html>

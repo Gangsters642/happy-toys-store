@@ -1,5 +1,5 @@
 const HappyToysCart = (() => {
-  const KEY = "hts_cart_items_v4";
+  const KEY = "hts_cart_items_v5";
   const WA = "923707116317";
   let cart = [];
 

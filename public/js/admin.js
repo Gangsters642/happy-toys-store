@@ -68,6 +68,38 @@ const HappyToysAdmin = (() => {
     reader.readAsDataURL(file);
   }
 
+  function editProduct(id) {
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById("productModalTitle").textContent = "Edit Toy Product";
+    document.getElementById("editProductId").value = p.id;
+    document.getElementById("prodName").value = p.name || "";
+    document.getElementById("prodSku").value = p.sku || "";
+    document.getElementById("prodCategory").value = p.category || "educational-toys";
+    document.getElementById("prodStock").value = p.stockQty ?? 10;
+    document.getElementById("prodPrice").value = p.pricePkr || "";
+    document.getElementById("prodShortDesc").value = p.shortDescription || "";
+    document.getElementById("prodMainImage").value = p.mainImage || "";
+    document.getElementById("imagePreviewContainer").innerHTML = p.mainImage ? `<img src="${p.mainImage}" class="w-16 h-16 rounded-xl object-cover border" />` : "";
+
+    const hasVar = Boolean(p.hasVariants && p.variants && p.variants.length > 0);
+    const cb = document.getElementById("prodHasVariants");
+    const ctn = document.getElementById("variantPricesContainer");
+    cb.checked = hasVar;
+    ctn.classList.toggle("hidden", !hasVar);
+
+    const getVar = (sz) => {
+      if (!p.variants) return "";
+      const f = p.variants.find(v => v.size.toLowerCase() === sz.toLowerCase());
+      return f ? f.pricePkr : "";
+    };
+    document.getElementById("varPriceSmall").value = getVar("Small");
+    document.getElementById("varPriceMedium").value = getVar("Medium");
+    document.getElementById("varPriceBig").value = getVar("Big");
+
+    document.getElementById("productModal")?.classList.remove("hidden");
+  }
+
   function init() {
     if (token) {
       document.getElementById("adminLoginModal")?.classList.add("hidden");
@@ -91,21 +123,10 @@ const HappyToysAdmin = (() => {
       location.reload();
     });
 
-    document.getElementById("splashMediaUpload")?.addEventListener("change", (e) => {
-      const f = e.target.files[0];
-      if (!f) return;
-      const r = new FileReader();
-      r.onload = (ev) => { window.tempMediaData = ev.target.result; };
-      r.readAsDataURL(f);
-    });
-
-    document.getElementById("saveMediaBtn")?.addEventListener("click", async () => {
-      const urlInput = document.getElementById("adminIntroGifUrl")?.value.trim();
-      const media = window.tempMediaData || urlInput;
-      if (!media) return alert("Select video first!");
-      await HTS_DB.set("splashMedia", media);
-      await fetch("/api/video", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ videoData: media }) });
-      alert("Video Saved!");
+    const cb = document.getElementById("prodHasVariants");
+    const ctn = document.getElementById("variantPricesContainer");
+    cb?.addEventListener("change", () => {
+      ctn.classList.toggle("hidden", !cb.checked);
     });
 
     const modal = document.getElementById("productModal");
@@ -113,6 +134,8 @@ const HappyToysAdmin = (() => {
       document.getElementById("productForm")?.reset();
       document.getElementById("editProductId").value = "";
       document.getElementById("imagePreviewContainer").innerHTML = "";
+      cb.checked = false;
+      ctn.classList.add("hidden");
       modal?.classList.remove("hidden");
     });
     document.getElementById("closeProductModalBtn")?.addEventListener("click", () => modal?.classList.add("hidden"));
@@ -130,14 +153,17 @@ const HappyToysAdmin = (() => {
       e.preventDefault();
       const id = document.getElementById("editProductId").value || `prod-${Date.now()}`;
       const basePrice = Number(document.getElementById("prodPrice").value);
-      const sPrice = Number(document.getElementById("varPriceSmall")?.value || 0);
-      const mPrice = Number(document.getElementById("varPriceMedium")?.value || 0);
-      const bPrice = Number(document.getElementById("varPriceBig")?.value || 0);
+      const hasVar = cb.checked;
 
       let variants = [];
-      if (sPrice > 0) variants.push({ size: "Small", pricePkr: sPrice });
-      if (mPrice > 0) variants.push({ size: "Medium", pricePkr: mPrice });
-      if (bPrice > 0) variants.push({ size: "Big", pricePkr: bPrice });
+      if (hasVar) {
+        const s = Number(document.getElementById("varPriceSmall").value || 0);
+        const m = Number(document.getElementById("varPriceMedium").value || 0);
+        const b = Number(document.getElementById("varPriceBig").value || 0);
+        if (s > 0) variants.push({ size: "Small", pricePkr: s });
+        if (m > 0) variants.push({ size: "Medium", pricePkr: m });
+        if (b > 0) variants.push({ size: "Big", pricePkr: b });
+      }
 
       const newProduct = {
         id,
@@ -160,7 +186,7 @@ const HappyToysAdmin = (() => {
       await saveProductsEverywhere(products);
       modal?.classList.add("hidden");
       renderTable();
-      alert("✅ Toy Saved!");
+      alert("✅ Toy & Variants Saved!");
     });
   }
 
@@ -170,17 +196,19 @@ const HappyToysAdmin = (() => {
     tbody.innerHTML = products.map(p => `
       <tr class="border-b border-slate-100">
         <td class="py-3 px-4"><div class="flex items-center gap-3"><img src="${p.mainImage}" class="w-10 h-10 rounded-xl object-cover border"/><span class="font-bold text-slate-900">${p.name}</span></div></td>
-        <td class="py-3 px-4 text-xs text-slate-500">${p.category}</td>
+        <td class="py-3 px-4 text-xs text-slate-500">${p.category} ${p.hasVariants ? '(<span class="text-amber-600 font-bold">Variants Active</span>)' : ''}</td>
         <td class="py-3 px-4 font-bold text-slate-800">${formatPkr(p.pricePkr)}</td>
         <td class="py-3 px-4 font-semibold text-emerald-600">${p.stockQty}</td>
-        <td class="py-3 px-4 text-right">
-          <button onclick="HappyToysAdmin.deleteProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-bold">Delete</button>
+        <td class="py-3 px-4 text-right space-x-2">
+          <button type="button" onclick="HappyToysAdmin.editProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold">Edit</button>
+          <button type="button" onclick="HappyToysAdmin.deleteProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-bold">Delete</button>
         </td>
       </tr>`).join("");
   }
 
   return {
     init,
+    editProduct,
     deleteProduct: async (id) => {
       if (!confirm("Delete this toy?")) return;
       await saveProductsEverywhere(products.filter(p => p.id !== id));
