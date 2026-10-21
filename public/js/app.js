@@ -1,116 +1,44 @@
-const HTS_DB = (() => {
-  const dbName = "HappyToysDB";
-  const storeName = "mediaStore";
-  const initDB = () => new Promise((resolve, reject) => {
-    const req = indexedDB.open(dbName, 1);
-    req.onupgradeneeded = (e) => e.target.result.createObjectStore(storeName);
-    req.onsuccess = (e) => resolve(e.target.result);
-    req.onerror = (e) => reject(e.target.error);
-  });
-  return {
-    get: async (key) => {
-      try {
-        const db = await initDB();
-        return new Promise((resolve) => {
-          const tx = db.transaction(storeName, "readonly");
-          const req = tx.objectStore(storeName).get(key);
-          req.onsuccess = () => resolve(req.result);
-          req.onerror = () => resolve(null);
-        });
-      } catch (e) { return null; }
-    }
-  };
-})();
-
 const HappyToysApp = (() => {
   let state = { categories: [], products: [], activeCategory: "all", searchQuery: "" };
 
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
 
-  function playSplashMedia(mediaSource) {
-    if (!mediaSource) return;
-    const isVideo = mediaSource.startsWith("data:video") || mediaSource.endsWith(".mp4") || mediaSource.includes("video");
-    const videoEl = document.getElementById("splashVideoPlayer");
-    const imgEl = document.getElementById("splashImgPlayer");
-    const placeholder = document.getElementById("splashMediaPlaceholder");
-
-    if (placeholder) placeholder.classList.add("hidden");
-
-    if (isVideo && videoEl) {
-      if (videoEl.src !== mediaSource) {
-        videoEl.src = mediaSource;
-        videoEl.classList.remove("hidden");
-        videoEl.play().catch(() => {});
-      }
-    } else if (imgEl) {
-      imgEl.src = mediaSource;
-      imgEl.classList.remove("hidden");
-    }
-  }
-
   async function init() {
+    // Play video immediately without waiting for any API
+    const videoEl = document.getElementById("splashVideoPlayer");
+    if (videoEl) {
+      videoEl.play().catch(() => {});
+    }
+
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
     state.categories = seed.categories || [];
 
-    // 1. Check local storage first (so admin's own phone restores saved items immediately)
-    let localProducts = null;
+    // Load cached products immediately for 0ms product render
     const savedLocal = localStorage.getItem("hts_custom_products");
     if (savedLocal) {
-      try { localProducts = JSON.parse(savedLocal); } catch (e) {}
+      try { state.products = JSON.parse(savedLocal); } catch (e) {}
     }
-
-    const localVideo = await HTS_DB.get("splashMedia");
-    const appSettings = JSON.parse(localStorage.getItem("hts_settings") || "{}");
-    const localMediaSource = localVideo || appSettings.introGifUrl || "";
-
-    if (localProducts && localProducts.length > 0) {
-      state.products = localProducts;
-    } else {
+    if (!state.products || state.products.length === 0) {
       state.products = seed.products || [];
-    }
-
-    if (localMediaSource) {
-      playSplashMedia(localMediaSource);
     }
 
     bindEvents();
     renderCategories();
     renderProducts();
 
-    // 2. Sync with Live Cloudflare KV Database for ALL devices
+    // Sync latest products in background
     try {
       const storeRes = await fetch("/api/store");
       if (storeRes.ok) {
         const liveData = await storeRes.json();
         if (liveData.products && liveData.products.length > 0) {
           state.products = liveData.products;
+          localStorage.setItem("hts_custom_products", JSON.stringify(liveData.products));
           renderProducts();
-        } else if (localProducts && localProducts.length > 0) {
-          // Auto-upload local products from admin's phone to Live Server!
-          await fetch("/api/store", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ products: localProducts })
-          });
-        }
-      }
-
-      const videoRes = await fetch("/api/video");
-      if (videoRes.ok) {
-        const liveVid = await videoRes.json();
-        if (liveVid.videoData) {
-          playSplashMedia(liveVid.videoData);
-        } else if (localMediaSource) {
-          // Auto-upload local video from admin's phone to Live Server!
-          await fetch("/api/video", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ videoData: localMediaSource })
-          });
         }
       }
     } catch (err) {
-      console.log("Offline or syncing:", err);
+      console.log("Background sync:", err);
     }
   }
 
