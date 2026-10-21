@@ -12,6 +12,104 @@ const HappyToysApp = (() => {
     return "PKR " + Number(amount || 0).toLocaleString("en-PK");
   }
 
+  function upgradeSplashScreenUI() {
+    const splash = document.getElementById("vipSplashScreen");
+    if (!splash) return;
+
+    const existingVideo = document.getElementById("splashVideoPlayer");
+    const videoSrc =
+      existingVideo?.querySelector("source")?.getAttribute("src") ||
+      existingVideo?.getAttribute("src") ||
+      "/videos/splash.mp4";
+
+    const existingTeddyImg = splash.querySelector("img");
+    const teddyImgSrc = existingTeddyImg ? existingTeddyImg.getAttribute("src") : "";
+
+    splash.innerHTML = `
+      <div class="splash-card-3d relative select-none">
+        
+        <!-- Decorative 3D Confetti Dots Inside Card -->
+        <div class="pointer-events-none absolute inset-0 overflow-hidden z-0 opacity-80">
+          <span class="absolute top-[42%] left-[5%] w-2.5 h-2.5 rounded-sm bg-sky-400 rotate-12"></span>
+          <span class="absolute top-[46%] right-[6%] w-3 h-2 rounded-sm bg-blue-500 -rotate-12"></span>
+          <span class="absolute top-[55%] left-[8%] w-2.5 h-2 rounded-full bg-amber-400"></span>
+          <span class="absolute top-[52%] right-[12%] w-2.5 h-2.5 rounded-sm bg-purple-400 rotate-45"></span>
+          <span class="absolute top-[61%] left-[18%] w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span class="absolute top-[60%] right-[18%] w-2.5 h-2 rounded-sm bg-rose-400 -rotate-12"></span>
+          <span class="absolute bottom-[14%] left-[4%] w-2.5 h-2 rounded-sm bg-purple-500 rotate-12"></span>
+          <span class="absolute bottom-[15%] right-[4%] w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+        </div>
+
+        <!-- 1. Top Full-Width Video Frame with Close (X) Button -->
+        <div class="hts-video-frame-3d z-10">
+          <video id="splashVideoPlayer" playsinline autoplay loop class="w-full h-full object-cover">
+            <source src="${videoSrc}" type="video/mp4" />
+          </video>
+
+          <!-- Unmute Pill Notice (If Browser Blocks Autoplay Audio) -->
+          <button id="unmuteNoticeBtn" class="hidden absolute bottom-3 left-3 z-20 bg-black/70 text-white text-[11px] font-bold px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-1.5 shadow-md">
+            <span>🔊</span> <span>Tap for Sound</span>
+          </button>
+
+          <!-- Top-Right Close Button -->
+          <button onclick="HappyToysApp.enterStore()" aria-label="Close Intro" class="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-slate-100/90 hover:bg-white text-slate-600 flex items-center justify-center shadow-md font-bold text-base active:scale-90 transition">
+            ✕
+          </button>
+        </div>
+
+        <!-- 2. Store Heading & Subtitle -->
+        <div class="z-10 text-center px-2 mt-1">
+          <h1 class="hts-title-3d uppercase">HAPPY TOYS STORE</h1>
+          <p class="text-slate-500 font-bold text-xs sm:text-sm mt-1 flex items-center justify-center gap-1.5">
+            <span>✨</span>
+            <span>Best Toys for Every Smile</span>
+            <span>✨</span>
+          </p>
+        </div>
+
+        <!-- 3. Center 3D Teddy Bear Avatar Circle -->
+        <div class="z-10 my-1">
+          <div class="hts-teddy-badge-3d overflow-hidden">
+            ${
+              teddyImgSrc
+                ? `<img src="${teddyImgSrc}" alt="Happy Toys" class="w-14 h-14 object-contain drop-shadow" />`
+                : `<span class="text-5xl leading-none select-none drop-shadow">🧸</span>`
+            }
+          </div>
+        </div>
+
+        <!-- 4. Three 3D Feature Cards Row -->
+        <div class="z-10 grid grid-cols-3 gap-2.5 w-full my-1">
+          <div class="hts-feature-card-3d bg-[#EFF6FF] border border-sky-100">
+            <span class="text-2xl leading-none drop-shadow-xs">🛡️</span>
+            <span class="text-[10px] sm:text-[11px] font-black text-[#0369A1] tracking-tight text-center leading-tight uppercase">PREMIUM QUALITY</span>
+          </div>
+
+          <div class="hts-feature-card-3d bg-[#FEFCE8] border border-amber-100">
+            <span class="text-2xl leading-none drop-shadow-xs">🚀</span>
+            <span class="text-[10px] sm:text-[11px] font-black text-[#B45309] tracking-tight text-center leading-tight uppercase">FAST DELIVERY</span>
+          </div>
+
+          <div class="hts-feature-card-3d bg-[#FDF2F8] border border-pink-100">
+            <span class="text-2xl leading-none drop-shadow-xs">😊</span>
+            <span class="text-[10px] sm:text-[11px] font-black text-[#BE185D] tracking-tight text-center leading-tight uppercase">HAPPY KIDS</span>
+          </div>
+        </div>
+
+        <!-- 5. Bottom 3D Orange Enter Store CTA Button -->
+        <div class="z-10 w-full pt-1">
+          <button onclick="HappyToysApp.enterStore()" class="hts-enter-btn-3d">
+            <span>Enter Store</span>
+            <svg class="w-5 h-5 stroke-current" fill="none" stroke-width="2.6" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </button>
+        </div>
+
+      </div>
+    `;
+  }
+
   function loadFavorites() {
     try {
       const saved = JSON.parse(localStorage.getItem("hts_favorites") || "[]");
@@ -92,6 +190,7 @@ const HappyToysApp = (() => {
   }
 
   async function init() {
+    upgradeSplashScreenUI();
     setupVideoWithSound();
     loadFavorites();
 
@@ -155,15 +254,20 @@ const HappyToysApp = (() => {
     }
 
     if (splash) {
+      splash.style.transition = "opacity 0.45s ease, transform 0.45s ease";
       splash.style.opacity = "0";
+      splash.style.transform = "scale(1.03)";
       setTimeout(() => {
         splash.classList.add("hidden");
+        splash.style.setProperty("display", "none", "important");
         document.body.classList.remove("splash-active");
-        mainContent.classList.remove("opacity-0", "h-0", "overflow-hidden");
-        mainContent.classList.add("store-reveal");
+        if (mainContent) {
+          mainContent.classList.remove("opacity-0", "h-0", "overflow-hidden");
+          mainContent.classList.add("store-reveal");
+        }
         fireEnterStoreConfetti();
         initScrollAnimations();
-      }, 700);
+      }, 450);
     }
   }
 
@@ -249,7 +353,6 @@ const HappyToysApp = (() => {
     const grid = document.getElementById("productGrid");
     if (!grid) return;
 
-    // Expand grid width on mobile (-mx-2) so cards are wider and aligned side-by-side
     grid.className = "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 -mx-2 sm:mx-0";
 
     const activeCatObj = state.categories.find(c => c.slug === state.activeCategory);
@@ -290,19 +393,15 @@ const HappyToysApp = (() => {
       return `
       <article class="toy-card-reveal w-full overflow-hidden bg-white rounded-[1.35rem] p-2 sm:p-3 border border-slate-100 shadow-[0_4px_18px_-4px_rgba(15,23,42,0.08)] flex flex-col justify-between transition-all duration-300">
         
-        <!-- Top Image & Details -->
         <div class="w-full">
-          <!-- Square/4:3 Image Box -->
           <div class="relative aspect-[1.04/1] w-full rounded-2xl overflow-hidden bg-slate-50 cursor-pointer group" onclick="HappyToysApp.openProductModal('${p.id}')">
             <img src="${p.mainImage}" alt="${p.name}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
             
-            <!-- Top-Left Yellow Badge -->
             <span class="absolute top-2 left-2 bg-[#FACC15] text-slate-900 text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1 leading-tight">
               <span>${badge.icon}</span>
               <span>${badge.text}</span>
             </span>
 
-            <!-- Top-Right Red Heart Circle -->
             <button onclick="HappyToysApp.toggleFavorite('${p.id}', event)" 
                     aria-label="Favorite"
                     class="absolute top-2 right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/95 hover:bg-white flex items-center justify-center shadow-md active:scale-90 transition">
@@ -311,7 +410,6 @@ const HappyToysApp = (() => {
               </svg>
             </button>
 
-            <!-- Rainbow Bottom Strip -->
             <div class="absolute bottom-0 inset-x-0 h-1 flex">
               <span class="flex-1 bg-rose-500"></span>
               <span class="flex-1 bg-amber-400"></span>
@@ -321,20 +419,16 @@ const HappyToysApp = (() => {
             </div>
           </div>
 
-          <!-- Product Text Details -->
           <div class="pt-2.5 px-0.5">
-            <!-- 1. Product Name -->
             <h3 class="font-extrabold text-[#0F172A] text-[13.5px] sm:text-base leading-tight line-clamp-1 cursor-pointer hover:text-blue-600 transition" onclick="HappyToysApp.openProductModal('${p.id}')">
               ${p.name}
             </h3>
 
-            <!-- 2. Small Category Icon & Name -->
             <div class="flex items-center gap-1.5 mt-1 text-[11px] sm:text-xs text-[#475569] font-semibold">
               <span class="text-xs sm:text-sm leading-none shrink-0">${catInfo.icon}</span>
               <span class="capitalize truncate">${catInfo.label}</span>
             </div>
 
-            <!-- 3. Star Rating & Reviews -->
             <div class="flex items-center gap-1 mt-1 text-[11px] sm:text-xs">
               <svg class="w-3.5 h-3.5 text-amber-400 fill-current shrink-0" viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
@@ -343,7 +437,6 @@ const HappyToysApp = (() => {
               <span class="text-[#64748B] font-medium truncate">(${p.reviewsCount || reviewInfo.count} reviews)</span>
             </div>
 
-            <!-- 4. Price in Blue -->
             <div class="mt-1.5 mb-2">
               <span class="text-[16px] sm:text-xl font-black text-[#0066FF] tracking-tight block leading-none">
                 ${formatPkr(p.pricePkr)}
@@ -352,9 +445,7 @@ const HappyToysApp = (() => {
           </div>
         </div>
 
-        <!-- 5. Locked Inside-Card Grid Row: [ ♡ ] [ 🛒 Add to Cart ] [ 🛍️ Buy Now ] -->
         <div class="grid grid-cols-[28px_1.18fr_1fr] sm:grid-cols-[36px_1.15fr_1fr] items-center gap-1 sm:gap-1.5 w-full pt-0.5">
-          <!-- Favorite Outline Heart Button -->
           <button onclick="HappyToysApp.toggleFavorite('${p.id}', event)" 
                   aria-label="Save Favorite"
                   class="w-[28px] h-[28px] sm:w-9 sm:h-9 rounded-lg sm:rounded-xl border border-slate-200 bg-white hover:bg-rose-50 flex items-center justify-center shrink-0 active:scale-90 transition">
@@ -363,7 +454,6 @@ const HappyToysApp = (() => {
             </svg>
           </button>
 
-          <!-- Add to Cart Button (Fits 100% Inside Card) -->
           <button onclick="event.stopPropagation(); HappyToysCart.addToCart('${p.id}');" 
                   class="w-full min-w-0 h-[28px] sm:h-9 px-1 sm:px-2.5 rounded-full bg-[#F59E0B] hover:bg-amber-600 text-white font-extrabold text-[8.8px] sm:text-xs tracking-tight active:scale-95 transition flex items-center justify-center gap-1 overflow-hidden">
             <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-current shrink-0" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
@@ -372,7 +462,6 @@ const HappyToysApp = (() => {
             <span class="truncate">Add to Cart</span>
           </button>
 
-          <!-- Buy Now Button (Fits 100% Inside Card -> Direct WhatsApp) -->
           <button onclick="HappyToysApp.buyNowDirectWhatsApp('${p.id}', event)" 
                   class="w-full min-w-0 h-[28px] sm:h-9 px-1 sm:px-2.5 rounded-full bg-[#0066FF] hover:bg-blue-700 text-white font-extrabold text-[8.8px] sm:text-xs tracking-tight active:scale-95 transition flex items-center justify-center gap-1 overflow-hidden">
             <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" viewBox="0 0 24 24" fill="none">
