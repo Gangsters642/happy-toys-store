@@ -35,26 +35,25 @@ const HappyToysApp = (() => {
       state.products = seed.products || [];
     }
 
-    // Load Video from Advanced Storage
+    // Load Uploaded Video into the new VIP UI Block
     const splashMedia = await HTS_DB.get('splashMedia');
     if (splashMedia) {
         const isVideo = splashMedia.startsWith("data:video");
         const videoEl = document.getElementById("splashVideoPlayer");
         const imgEl = document.getElementById("splashImgPlayer");
-        const overlay = document.getElementById("videoOverlay");
-        const gradient = document.getElementById("splashGradient");
+        const placeholder = document.getElementById("splashMediaPlaceholder");
+
+        if (placeholder) placeholder.classList.add("hidden"); // Hide default placeholder
 
         if (isVideo && videoEl) {
             videoEl.src = splashMedia;
             videoEl.classList.remove("hidden");
-            videoEl.play().catch(e => console.log("Autoplay issue:", e));
+            // Video attributes already set in HTML, just attempt play
+            videoEl.play().catch(e => console.log("Autoplay issue (requires user interaction):", e));
         } else if (imgEl) {
             imgEl.src = splashMedia;
             imgEl.classList.remove("hidden");
         }
-        
-        if (overlay) overlay.classList.remove("hidden");
-        if (gradient) gradient.classList.add("hidden");
     }
 
     bindEvents();
@@ -82,10 +81,9 @@ const HappyToysApp = (() => {
     const video = document.getElementById("splashVideoPlayer");
     const mainContent = document.getElementById("mainStoreContent");
     
-    if(video) video.pause();
+    if(video) video.pause(); // stop video to save battery
     
     if(splash) {
-      splash.style.transform = 'scale(1.2)';
       splash.style.opacity = '0';
       setTimeout(() => {
         splash.classList.add("hidden");
@@ -93,7 +91,7 @@ const HappyToysApp = (() => {
         mainContent.classList.remove("opacity-0", "h-0", "overflow-hidden");
         mainContent.classList.add("store-reveal");
         fireConfetti();
-      }, 800);
+      }, 700);
     }
   }
 
@@ -104,24 +102,13 @@ const HappyToysApp = (() => {
     document.getElementById("openCategoryDrawerBtn")?.addEventListener("click", openDrawer);
     document.getElementById("closeCategoryDrawerBtn")?.addEventListener("click", closeDrawer);
     document.getElementById("categoryDrawerBackdrop")?.addEventListener("click", closeDrawer);
-
-    const dSearch = document.getElementById("desktopSearchInput");
-    const mSearch = document.getElementById("mobileSearchInput");
-    const onSearch = (e) => {
-      state.searchQuery = e.target.value.trim().toLowerCase();
-      if (dSearch) dSearch.value = e.target.value;
-      if (mSearch) mSearch.value = e.target.value;
-      renderProducts();
-    };
-    dSearch?.addEventListener("input", onSearch);
-    mSearch?.addEventListener("input", onSearch);
   }
 
   function renderCategories() {
     const horiz = document.getElementById("horizontalCategoryBar");
     if (horiz) {
       horiz.innerHTML = state.categories.map((cat) => {
-        const active = state.activeCategory === cat.slug ? "bg-blue-600 text-white border-blue-600 shadow-sm" : "bg-white text-slate-700 hover:bg-slate-100 border-slate-200";
+        const active = state.activeCategory === cat.slug ? "bg-blue-600 text-white border-blue-600 shadow-sm" : "bg-white text-slate-700 border-slate-200";
         return `<button onclick="HappyToysApp.selectCategory('${cat.slug}')" class="whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold border transition flex items-center gap-1.5 ${active}"><span>${cat.icon}</span><span>${cat.name}</span></button>`;
       }).join("");
     }
@@ -135,8 +122,6 @@ const HappyToysApp = (() => {
 
   function resetFilters() {
     state.activeCategory = "all"; state.searchQuery = "";
-    document.getElementById("desktopSearchInput").value = "";
-    document.getElementById("mobileSearchInput").value = "";
     renderCategories(); renderProducts();
   }
 
@@ -145,52 +130,32 @@ const HappyToysApp = (() => {
     if (p && window.HappyToysModal) window.HappyToysModal.open(p, state.products);
   }
 
-  function loadSamples() {
-    localStorage.removeItem("hts_custom_products");
-    location.reload();
-  }
-
   function renderProducts() {
     const grid = document.getElementById("productGrid");
-    const emptyState = document.getElementById("emptyCatalogState");
     const activeCatObj = state.categories.find(c => c.slug === state.activeCategory);
     document.getElementById("activeCategoryHeading").textContent = activeCatObj ? activeCatObj.name : "All Toys";
 
     let filtered = state.products.filter((p) => {
       if (!p.isPublished) return false;
       if (state.activeCategory !== "all" && p.category !== state.activeCategory) return false;
-      if (state.searchQuery && !`${p.name} ${p.sku}`.toLowerCase().includes(state.searchQuery)) return false;
       return true;
     });
 
-    if (filtered.length === 0) {
-      grid.innerHTML = "";
-      emptyState.classList.remove("hidden");
-      return;
-    }
-    emptyState.classList.add("hidden");
-
     grid.innerHTML = filtered.map((p) => `
-      <article class="toy-card bg-white rounded-3xl border border-slate-200/60 overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300">
-        <div>
-          <div class="relative overflow-hidden bg-slate-50 aspect-square p-2">
-            <img src="${p.mainImage}" alt="${p.name}" class="toy-card-img w-full h-full object-cover rounded-2xl" />
-          </div>
-          <div class="px-5 pt-4 pb-2">
-            <h3 class="font-extrabold text-slate-900 text-lg leading-tight mb-1 line-clamp-2">${p.name}</h3>
-            <p class="text-[11px] font-bold text-slate-400 mb-2">SKU: ${p.sku}</p>
-          </div>
+      <article class="toy-card bg-white rounded-3xl border border-slate-200/60 overflow-hidden flex flex-col shadow-sm hover:shadow-lg transition">
+        <div class="relative aspect-square p-2 bg-slate-50">
+          <img src="${p.mainImage}" alt="${p.name}" class="w-full h-full object-cover rounded-2xl" />
         </div>
-        <div class="px-5 pb-5 bg-white">
-          <div class="flex items-end gap-2 mb-4"><span class="text-2xl font-black text-blue-600">${formatPkr(p.pricePkr)}</span></div>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-extrabold text-xs transition-all">Details</button>
-            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs transition-all shadow-md">Buy Now</button>
+        <div class="px-4 pt-3 pb-4 bg-white flex-1 flex flex-col">
+          <h3 class="font-extrabold text-slate-900 text-sm leading-tight mb-2 line-clamp-2">${p.name}</h3>
+          <div class="mt-auto">
+            <span class="text-xl font-black text-blue-600 block mb-3">${formatPkr(p.pricePkr)}</span>
+            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-md">Buy Now</button>
           </div>
         </div>
       </article>`).join("");
   }
 
-  return { init, selectCategory, resetFilters, openProductModal, loadSamples, enterStore };
+  return { init, selectCategory, resetFilters, openProductModal, enterStore };
 })();
 document.addEventListener("DOMContentLoaded", HappyToysApp.init);
