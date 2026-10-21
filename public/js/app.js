@@ -9,15 +9,12 @@ const HappyToysApp = (() => {
     const unmuteBtn = document.getElementById("unmuteNoticeBtn");
     if (!videoEl) return;
 
-    // 1. Force unmute and 100% volume
     videoEl.muted = false;
     videoEl.volume = 1.0;
 
     const playPromise = videoEl.play();
     if (playPromise !== undefined) {
       playPromise.catch(() => {
-        // Browser blocked unmuted autoplay -> start playing muted so video doesn't freeze,
-        // and unmute on the very first touch/click anywhere on the screen!
         videoEl.muted = true;
         videoEl.play().catch(() => {});
         if (unmuteBtn) unmuteBtn.classList.remove("hidden");
@@ -45,7 +42,6 @@ const HappyToysApp = (() => {
         if (entry.isIntersecting) {
           entry.target.classList.add("is-visible");
         } else {
-          // Re-animate smoothly when scrolling back up/down
           entry.target.classList.remove("is-visible");
         }
       });
@@ -53,7 +49,6 @@ const HappyToysApp = (() => {
 
     const cards = document.querySelectorAll(".toy-card-reveal");
     cards.forEach((card, index) => {
-      // Stagger delay so cards pop in one after another nicely
       card.style.transitionDelay = `${(index % 4) * 90}ms`;
       scrollObserver.observe(card);
     });
@@ -77,6 +72,9 @@ const HappyToysApp = (() => {
     renderCategories();
     renderProducts();
 
+    // Check if URL has direct product share parameter (e.g. #product=prod-123)
+    checkForDirectProductLink();
+
     try {
       const storeRes = await fetch("/api/store");
       if (storeRes.ok) {
@@ -85,10 +83,22 @@ const HappyToysApp = (() => {
           state.products = liveData.products;
           localStorage.setItem("hts_custom_products", JSON.stringify(liveData.products));
           renderProducts();
+          checkForDirectProductLink();
         }
       }
     } catch (err) {
       console.log("Background sync:", err);
+    }
+  }
+
+  function checkForDirectProductLink() {
+    const hash = window.location.hash;
+    if (hash && hash.includes("#product=")) {
+      const prodId = hash.replace("#product=", "");
+      const p = state.products.find(x => x.id === prodId);
+      if (p && window.HappyToysModal) {
+        window.HappyToysModal.open(p, state.products);
+      }
     }
   }
 
@@ -168,6 +178,18 @@ const HappyToysApp = (() => {
     if (p && window.HappyToysModal) window.HappyToysModal.open(p, state.products);
   }
 
+  function buyNowDirectWhatsApp(id, event) {
+    if (event) event.stopPropagation();
+    const p = state.products.find(x => x.id === id);
+    if (!p) return;
+
+    const whatsappNumber = "923707116317";
+    const productLink = window.location.origin + "/#product=" + p.id;
+    const message = `Hello Happy Toys Store! I want to order this product:\n\n* Name: ${p.name}\n* Price: ${formatPkr(p.pricePkr)}\n* Product Link: ${productLink}\n\nPlease confirm my order!`;
+    
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
+  }
+
   function renderProducts() {
     const grid = document.getElementById("productGrid");
     const activeCatObj = state.categories.find(c => c.slug === state.activeCategory);
@@ -198,7 +220,9 @@ const HappyToysApp = (() => {
           <h3 class="font-black text-slate-900 text-sm leading-snug mb-2 line-clamp-2 cursor-pointer hover:text-amber-600 transition" onclick="HappyToysApp.openProductModal('${p.id}')">${p.name}</h3>
           <div>
             <span class="text-xl font-black text-blue-600 block mb-3">${formatPkr(p.pricePkr)}</span>
-            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="w-full py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs shadow-md active:scale-95 transition-all">Buy Now 🛒</button>
+            <button onclick="HappyToysApp.buyNowDirectWhatsApp('${p.id}', event)" class="w-full py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
+              <span>💬 Buy on WhatsApp</span>
+            </button>
           </div>
         </div>
       </article>`;
@@ -207,6 +231,6 @@ const HappyToysApp = (() => {
     initScrollAnimations();
   }
 
-  return { init, selectCategory, resetFilters, openProductModal, enterStore };
+  return { init, selectCategory, resetFilters, openProductModal, buyNowDirectWhatsApp, enterStore };
 })();
 document.addEventListener("DOMContentLoaded", HappyToysApp.init);
