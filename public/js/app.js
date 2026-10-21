@@ -1,28 +1,5 @@
-const HTS_DB = (() => {
-  const dbName = "HappyToysDB";
-  const storeName = "mediaStore";
-  const initDB = () => new Promise((resolve, reject) => {
-    const req = indexedDB.open(dbName, 1);
-    req.onupgradeneeded = (e) => e.target.result.createObjectStore(storeName);
-    req.onsuccess = (e) => resolve(e.target.result);
-    req.onerror = (e) => reject(e.target.error);
-  });
-  return {
-    get: async (key) => {
-      const db = await initDB();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, "readonly");
-        const req = tx.objectStore(storeName).get(key);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(tx.error);
-      });
-    }
-  };
-})();
-
 const HappyToysApp = (() => {
   let state = { categories: [], products: [], activeCategory: "all", searchQuery: "" };
-  let appSettings = JSON.parse(localStorage.getItem("hts_settings") || "{}");
 
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
 
@@ -30,39 +7,29 @@ const HappyToysApp = (() => {
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
     state.categories = seed.categories || [];
     
-    // Load products from Local Storage (Admin Panel uploads) OR fallback to seed data
-    const savedProducts = localStorage.getItem("hts_custom_products");
-    if (savedProducts) {
-      try { state.products = JSON.parse(savedProducts); } catch (e) { state.products = seed.products || []; }
-    } else {
-      state.products = seed.products || [];
-    }
-
-    // Load Splash Video from IndexedDB (Admin Panel upload)
-    const splashMedia = await HTS_DB.get('splashMedia');
-    const mediaSource = splashMedia || appSettings.introGifUrl;
-    
-    const videoEl = document.getElementById("splashVideoPlayer");
-    const imgEl = document.getElementById("splashImgPlayer");
-    const placeholder = document.getElementById("splashMediaPlaceholder");
-
-    if (mediaSource) {
-        if (placeholder) placeholder.classList.add("hidden");
-        const isVideo = mediaSource.startsWith("data:video") || mediaSource.endsWith(".mp4") || mediaSource.includes("video");
-
-        if (isVideo && videoEl) {
-            videoEl.src = mediaSource;
-            videoEl.classList.remove("hidden");
-            videoEl.play().catch(e => console.log("Autoplay prevented:", e));
-        } else if (imgEl) {
-            imgEl.src = mediaSource;
-            imgEl.classList.remove("hidden");
+    // FETCH LIVE DATA FROM CLOUDFLARE DATABASE
+    try {
+        const res = await fetch('/api/store');
+        if(res.ok) {
+            const liveData = await res.json();
+            // If live data has products, use them, otherwise use seed demo products
+            state.products = (liveData.products && liveData.products.length > 0) ? liveData.products : (seed.products || []);
+            
+            // Set Splash Video globally!
+            if (liveData.introGifUrl) {
+                const videoEl = document.getElementById("splashVideoPlayer");
+                const placeholder = document.getElementById("splashMediaPlaceholder");
+                if (placeholder) placeholder.classList.add("hidden");
+                if (videoEl) {
+                    videoEl.src = liveData.introGifUrl;
+                    videoEl.classList.remove("hidden");
+                    videoEl.play().catch(e => console.log("Autoplay:", e));
+                }
+            }
         }
-    } else {
-        if (placeholder) {
-            placeholder.classList.remove("hidden");
-            placeholder.innerHTML = `<span class="text-xs font-bold text-slate-400">Welcome to Happy Toys!</span>`;
-        }
+    } catch (e) {
+        console.error("Failed to load live data, showing demo store.");
+        state.products = seed.products || [];
     }
 
     bindEvents();
@@ -130,11 +97,6 @@ const HappyToysApp = (() => {
     renderProducts();
   }
 
-  function resetFilters() {
-    state.activeCategory = "all"; state.searchQuery = "";
-    renderCategories(); renderProducts();
-  }
-
   function openProductModal(id) {
     const p = state.products.find(x => x.id === id);
     if (p && window.HappyToysModal) window.HappyToysModal.open(p, state.products);
@@ -173,6 +135,6 @@ const HappyToysApp = (() => {
       </article>`).join("");
   }
 
-  return { init, selectCategory, resetFilters, openProductModal, enterStore };
+  return { init, selectCategory, openProductModal, enterStore };
 })();
 document.addEventListener("DOMContentLoaded", HappyToysApp.init);
