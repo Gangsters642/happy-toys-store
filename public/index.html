@@ -20,9 +20,7 @@
       0%, 100% { transform: translateY(0px) scale(1); }
       50% { transform: translateY(-6px) scale(1.02); }
     }
-    .animate-float-text {
-      animation: float-text 2.5s ease-in-out infinite;
-    }
+    .animate-float-text { animation: float-text 2.5s ease-in-out infinite; }
 
     .btn-vip-gradient {
       background: linear-gradient(135deg, #ff7e5f, #feb47b, #ffcc00);
@@ -36,18 +34,15 @@
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-    .btn-vip-gradient:hover {
-      transform: scale(1.04);
-      box-shadow: 0 15px 30px rgba(255, 204, 0, 0.6);
-    }
+    .btn-vip-gradient:hover { transform: scale(1.04); box-shadow: 0 15px 30px rgba(255, 204, 0, 0.6); }
   </style>
 </head>
-<body class="min-h-screen flex flex-col splash-active bg-slate-900">
+<body class="min-h-screen flex flex-col splash-active bg-slate-50">
 
   <!-- VIP SPLASH MODAL WINDOW -->
-  <div id="vipSplashScreen" class="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 p-4 sm:p-6 transition-all duration-700 overflow-y-auto">
+  <div id="vipSplashScreen" class="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-sky-100 via-amber-50 to-pink-100 p-4 sm:p-6 transition-all duration-700 overflow-y-auto">
     
-    <div class="w-full max-w-md bg-white rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.5)] border-4 border-amber-300 overflow-hidden relative flex flex-col my-auto p-5 sm:p-6">
+    <div class="w-full max-w-md bg-white rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.15)] border-4 border-amber-300 overflow-hidden relative flex flex-col my-auto p-5 sm:p-6">
       
       <!-- Close Button -->
       <button onclick="HappyToysApp.enterStore()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 z-50 p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition">
@@ -55,7 +50,7 @@
       </button>
 
       <!-- VIDEO SECTION -->
-      <div class="w-full aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-md relative flex items-center justify-center border-2 border-slate-100 mb-5">
+      <div class="w-full aspect-video bg-slate-100 rounded-2xl overflow-hidden shadow-sm relative flex items-center justify-center border-2 border-slate-100 mb-5">
         <div id="splashMediaPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
           <span class="text-xs font-bold">Loading Video...</span>
         </div>
@@ -63,7 +58,7 @@
         <img id="splashImgPlayer" class="w-full h-full object-cover hidden z-10" alt="Splash Image" />
       </div>
 
-      <!-- STORE NAME WITH BOUNCING ANIMATION -->
+      <!-- STORE NAME -->
       <div class="text-center flex flex-col items-center">
         <h1 class="toy-title-font text-2xl sm:text-3xl text-amber-500 tracking-wide uppercase mb-1 animate-float-text drop-shadow-sm">
           HAPPY TOYS STORE
@@ -80,15 +75,15 @@
 
         <!-- Key Features Cards -->
         <div class="grid grid-cols-3 gap-2 w-full mb-5">
-          <div class="bg-sky-50/80 border border-sky-100 rounded-2xl p-2.5 flex flex-col items-center shadow-sm">
+          <div class="bg-sky-50 border border-sky-100 rounded-2xl p-2.5 flex flex-col items-center shadow-xs">
             <span class="text-lg mb-1">🛡️</span>
             <span class="text-[9px] font-extrabold text-sky-800 uppercase tracking-tighter">PREMIUM QUALITY</span>
           </div>
-          <div class="bg-amber-50/80 border border-amber-100 rounded-2xl p-2.5 flex flex-col items-center shadow-sm">
+          <div class="bg-amber-50 border border-amber-100 rounded-2xl p-2.5 flex flex-col items-center shadow-xs">
             <span class="text-lg mb-1">🚀</span>
             <span class="text-[9px] font-extrabold text-amber-800 uppercase tracking-tighter">FAST DELIVERY</span>
           </div>
-          <div class="bg-pink-50/80 border border-pink-100 rounded-2xl p-2.5 flex flex-col items-center shadow-sm">
+          <div class="bg-pink-50 border border-pink-100 rounded-2xl p-2.5 flex flex-col items-center shadow-xs">
             <span class="text-lg mb-1">😊</span>
             <span class="text-[9px] font-extrabold text-pink-800 uppercase tracking-tighter">HAPPY KIDS</span>
           </div>
@@ -103,8 +98,8 @@
     </div>
   </div>
 
-  <!-- MAIN STORE CONTENT -->
-  <div id="mainStoreContent" class="flex flex-col flex-1 opacity-0 h-0 overflow-hidden">
+  <!-- MAIN STORE CONTENT (BRIGHT & CLEAN WHITE THEME) -->
+  <div id="mainStoreContent" class="flex flex-col flex-1 opacity-0 h-0 overflow-hidden bg-slate-50">
     <div class="rainbow-bar"></div>
     <div class="bg-slate-900 text-white text-xs sm:text-sm py-2 px-4 text-center font-medium">
       🎉 Welcome to Happy Toys Store! Fast Delivery Across Pakistan
@@ -113,7 +108,7 @@
     <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <button id="openCategoryDrawerBtn" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h10"/></svg></button>
+          <button id="openCategoryDrawerBtn" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h10"/></svg></button>
           <a href="#" onclick="HappyToysApp.resetFilters(); return false;" class="flex items-center gap-2">
             <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-red-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-sm">🧸</div>
             <div>
@@ -150,6 +145,7 @@
 
       <section class="max-w-7xl mx-auto px-4 py-8">
         <h2 id="activeCategoryHeading" class="toy-title-font text-2xl text-slate-800 mb-6">All Toys</h2>
+        <!-- PRODUCT GRID (2 Columns on mobile, 3-4 on desktop) -->
         <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
       </section>
     </main>
@@ -160,33 +156,17 @@
   <script src="js/cart-whatsapp.js"></script>
   <script src="js/app.js"></script>
   <script>
-    // Continuous Bottom Fireworks / Confetti Fountain
+    // Continuous Bottom Fireworks / Confetti Fountain on Splash
     window.addEventListener('DOMContentLoaded', () => {
        if(typeof confetti === 'function') {
-           // Initial Burst
            confetti({ particleCount: 120, spread: 100, origin: { y: 0.8 } });
-
-           // Continuous Fireworks fountains shooting from bottom corners
            var duration = 15 * 1000;
            var animationEnd = Date.now() + duration;
            var interval = setInterval(function() {
              var timeLeft = animationEnd - Date.now();
              if (timeLeft <= 0) return clearInterval(interval);
-             
-             // Left bottom fountain
-             confetti({
-               particleCount: 8,
-               angle: 60,
-               spread: 55,
-               origin: { x: 0, y: 1 }
-             });
-             // Right bottom fountain
-             confetti({
-               particleCount: 8,
-               angle: 120,
-               spread: 55,
-               origin: { x: 1, y: 1 }
-             });
+             confetti({ particleCount: 8, angle: 60, spread: 55, origin: { x: 0, y: 1 } });
+             confetti({ particleCount: 8, angle: 120, spread: 55, origin: { x: 1, y: 1 } });
            }, 300);
        }
     });

@@ -37,7 +37,6 @@ const HappyToysApp = (() => {
       state.products = seed.products || [];
     }
 
-    // Load Splash Video from DB or Settings URL
     const splashMedia = await HTS_DB.get('splashMedia');
     const mediaSource = splashMedia || appSettings.introGifUrl;
     
@@ -137,7 +136,7 @@ const HappyToysApp = (() => {
   function renderProducts() {
     const grid = document.getElementById("productGrid");
     const activeCatObj = state.categories.find(c => c.slug === state.activeCategory);
-    document.getElementById("activeCategoryHeadingtextContent") = activeCatObj ? activeCatObj.name : "All Toys";
+    document.getElementById("activeCategoryHeading").textContent = activeCatObj ? activeCatObj.name : "All Toys";
 
     let filtered = state.products.filter((p) => {
       if (!p.isPublished) return false;
@@ -145,13 +144,18 @@ const HappyToysApp = (() => {
       return true;
     });
 
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 font-semibold">No toys found in this category. Add toys via Admin panel!</div>`;
+      return;
+    }
+
     grid.innerHTML = filtered.map((p) => `
       <article class="toy-card bg-white rounded-3xl border-2 border-slate-100 overflow-hidden flex flex-col shadow-sm hover:shadow-xl transition-all duration-300">
-        <div class="relative aspect-square p-3 bg-amber-50/40">
+        <div class="relative aspect-square p-3 bg-amber-50/40 cursor-pointer" onclick="HappyToysApp.openProductModal('${p.id}')">
           <img src="${p.mainImage}" alt="${p.name}" class="w-full h-full object-cover rounded-2xl" />
         </div>
         <div class="px-4 pt-3 pb-4 bg-white flex-1 flex flex-col justify-between">
-          <h3 class="font-black text-slate-900 text-sm leading-snug mb-2 line-clamp-2">${p.name}</h3>
+          <h3 class="font-black text-slate-900 text-sm leading-snug mb-2 line-clamp-2 cursor-pointer" onclick="HappyToysApp.openProductModal('${p.id}')">${p.name}</h3>
           <div>
             <span class="text-xl font-black text-blue-600 block mb-3">${formatPkr(p.pricePkr)}</span>
             <button onclick="HappyToysApp.openProductModal('${p.id}')" class="w-full py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-md transition">Buy Now</button>
