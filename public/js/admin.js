@@ -20,12 +20,23 @@ const HappyToysAdmin = (() => {
       populateCategoryDropdown();
       loadAdminData();
       if(appSettings.introGifUrl) {
-        document.getElementById("adminIntroGifUrl").value = appSettings.introGifUrl;
+         showSplashPreview(appSettings.introGifUrl);
       }
     } else {
       document.getElementById("adminLoginModal").classList.remove("hidden");
     }
     bindEvents();
+  }
+
+  function showSplashPreview(dataUrl) {
+     const preview = document.getElementById("splashPreview");
+     preview.classList.remove("hidden");
+     if(dataUrl.startsWith("data:video")) {
+         preview.innerHTML = `<video src="${dataUrl}" autoplay loop muted playsinline class="w-full h-48 object-cover"></video>`;
+     } else {
+         preview.innerHTML = `<img src="${dataUrl}" class="w-full h-48 object-cover" />`;
+     }
+     document.getElementById("adminIntroGifUrl").value = dataUrl;
   }
 
   function populateCategoryDropdown() {
@@ -38,10 +49,14 @@ const HappyToysAdmin = (() => {
   }
 
   function saveSettings() {
-    const url = document.getElementById("adminIntroGifUrl").value.trim();
+    const url = document.getElementById("adminIntroGifUrl").value;
+    if(!url) {
+        alert("Please select a video or GIF first.");
+        return;
+    }
     appSettings.introGifUrl = url;
     localStorage.setItem("hts_settings", JSON.stringify(appSettings));
-    alert("VIP Splash Screen Video updated successfully!");
+    alert("VIP Splash Screen Media saved successfully! It will now play on the store.");
   }
 
   function bindEvents() {
@@ -83,6 +98,17 @@ const HappyToysAdmin = (() => {
     document.getElementById("openAddProductModalBtn").addEventListener("click", () => openModal());
     document.getElementById("closeProductModalBtn").addEventListener("click", closeModal);
     document.getElementById("cancelProductModalBtn").addEventListener("click", closeModal);
+
+    // Read Splash Media File locally
+    document.getElementById("splashMediaUpload").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        showSplashPreview(evt.target.result);
+      };
+      reader.readAsDataURL(file);
+    });
 
     document.getElementById("imageUploadInput").addEventListener("change", (e) => {
       const file = e.target.files[0];

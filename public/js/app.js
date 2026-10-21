@@ -21,28 +21,36 @@ const HappyToysApp = (() => {
       state.products = seed.products || [];
     }
 
-    // Now uses an IMG tag (for GIF or static image) which is NEVER blocked by browsers
-    const visualPlayer = document.getElementById("splashVideoPlayer");
+    const splashContainer = document.getElementById("vipSplashScreen");
     const overlay = document.getElementById("videoOverlay");
     const gradient = document.getElementById("splashGradient");
     
-    if (appSettings.introGifUrl && visualPlayer) {
-        visualPlayer.src = appSettings.introGifUrl;
+    if (appSettings.introGifUrl && splashContainer) {
+        const isVideo = appSettings.introGifUrl.startsWith("data:video");
         
-        visualPlayer.onload = () => {
-            visualPlayer.classList.remove("hidden");
-            visualPlayer.classList.remove("opacity-0");
-            visualPlayer.classList.add("opacity-100");
-            if(overlay) {
-                overlay.classList.remove("hidden");
-                overlay.style.backgroundColor = "rgba(15, 23, 42, 0.4)"; // Much lighter overlay 
-            }
-            if(gradient) gradient.classList.add("hidden");
-        };
+        let mediaEl;
+        if(isVideo) {
+             mediaEl = document.createElement("video");
+             mediaEl.autoplay = true;
+             mediaEl.loop = true;
+             mediaEl.muted = true;
+             mediaEl.setAttribute("playsinline", "playsinline");
+        } else {
+             mediaEl = document.createElement("img");
+        }
         
-        visualPlayer.onerror = () => {
-            console.error("Failed to load GIF/Image.");
-        };
+        mediaEl.src = appSettings.introGifUrl;
+        mediaEl.className = "absolute inset-0 w-full h-full object-cover z-0";
+        mediaEl.id = "activeSplashMedia";
+        
+        // Insert right after gradient
+        gradient.parentNode.insertBefore(mediaEl, overlay);
+        
+        if(overlay) {
+            overlay.classList.remove("hidden");
+            overlay.style.backgroundColor = "rgba(15, 23, 42, 0.4)";
+        }
+        if(gradient) gradient.classList.add("hidden");
     }
 
     bindEvents();
@@ -54,10 +62,7 @@ const HappyToysApp = (() => {
       var duration = 3 * 1000;
       var animationEnd = Date.now() + duration;
       var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 150 };
-
-      function randomInRange(min, max) {
-        return Math.random() * (max - min) + min;
-      }
+      function randomInRange(min, max) { return Math.random() * (max - min) + min; }
 
       var interval = setInterval(function() {
         var timeLeft = animationEnd - Date.now();
@@ -73,6 +78,9 @@ const HappyToysApp = (() => {
   function enterStore() {
     const splash = document.getElementById("vipSplashScreen");
     const mainContent = document.getElementById("mainStoreContent");
+    const activeMedia = document.getElementById("activeSplashMedia");
+    
+    if(activeMedia && activeMedia.tagName === "VIDEO") activeMedia.pause();
     
     if(splash) {
       splash.style.transform = 'scale(1.2)';
