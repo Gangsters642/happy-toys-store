@@ -1,121 +1,11 @@
 const HappyToysApp = (() => {
-  let state = {
-    categories: [],
-    products: [],
-    activeCategory: "all",
-    searchQuery: "",
-    favorites: []
-  };
-  let isStoreEntered = false;
-  let videoWatchdog = null;
+  let state = { categories: [], products: [], activeCategory: "all", searchQuery: "" };
+  let scrollObserver = null;
 
-  function formatPkr(amount) {
-    return "PKR " + Number(amount || 0).toLocaleString("en-PK");
-  }
+  function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
 
-  function upgradeSplashScreenUI() {
-    const splash = document.getElementById("vipSplashScreen");
-    if (!splash) return;
-
-    const existingVideo = document.getElementById("splashVideoPlayer");
-    const videoSrc =
-      existingVideo?.querySelector("source")?.getAttribute("src") ||
-      existingVideo?.getAttribute("src") ||
-      "/videos/splash.mp4";
-
-    const existingTeddyImg = splash.querySelector("img");
-    const teddyImgSrc = existingTeddyImg ? existingTeddyImg.getAttribute("src") : "";
-
-    splash.innerHTML = `
-      <div class="splash-card-3d relative select-none">
-        
-        <!-- Decorative 3D Confetti Dots -->
-        <div class="pointer-events-none absolute inset-0 overflow-hidden z-0 opacity-80">
-          <span class="absolute top-[42%] left-[5%] w-2.5 h-2.5 rounded-sm bg-sky-400 rotate-12"></span>
-          <span class="absolute top-[46%] right-[6%] w-3 h-2 rounded-sm bg-blue-500 -rotate-12"></span>
-          <span class="absolute top-[55%] left-[8%] w-2.5 h-2 rounded-full bg-amber-400"></span>
-          <span class="absolute top-[52%] right-[12%] w-2.5 h-2.5 rounded-sm bg-purple-400 rotate-45"></span>
-          <span class="absolute top-[61%] left-[18%] w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span class="absolute top-[60%] right-[18%] w-2.5 h-2 rounded-sm bg-rose-400 -rotate-12"></span>
-          <span class="absolute bottom-[14%] left-[4%] w-2.5 h-2 rounded-sm bg-purple-500 rotate-12"></span>
-          <span class="absolute bottom-[15%] right-[4%] w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-        </div>
-
-        <!-- 1. Top Full-Width Video Frame (GPU Accelerated & Continuous Play) -->
-        <div class="hts-video-frame-3d z-10">
-          <video id="splashVideoPlayer" 
-                 src="${videoSrc}" 
-                 playsinline 
-                 webkit-playsinline 
-                 autoplay 
-                 muted 
-                 loop 
-                 preload="auto" 
-                 class="w-full h-full object-cover"
-                 style="transform: translate3d(0,0,0); backface-visibility: hidden; will-change: transform;">
-            <source src="${videoSrc}" type="video/mp4" />
-          </video>
-
-          <button id="unmuteNoticeBtn" type="button" class="absolute bottom-3 left-3 z-20 bg-black/75 text-white text-[11px] font-bold px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-1.5 shadow-md active:scale-95 transition">
-            <span>🔊</span> <span>Tap for Sound</span>
-          </button>
-
-          <button type="button" onclick="HappyToysApp.enterStore()" aria-label="Close Intro" class="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-slate-100/90 hover:bg-white text-slate-600 flex items-center justify-center shadow-md font-bold text-base active:scale-90 transition">
-            ✕
-          </button>
-        </div>
-
-        <!-- 2. Store Heading -->
-        <div class="z-10 text-center px-2 mt-1">
-          <h1 class="hts-title-3d uppercase">HAPPY TOYS STORE</h1>
-          <p class="text-slate-500 font-bold text-xs sm:text-sm mt-1 flex items-center justify-center gap-1.5">
-            <span>✨</span>
-            <span>Best Toys for Every Smile</span>
-            <span>✨</span>
-          </p>
-        </div>
-
-        <!-- 3. Teddy Avatar -->
-        <div class="z-10 my-1">
-          <div class="hts-teddy-badge-3d overflow-hidden">
-            ${
-              teddyImgSrc
-                ? `<img src="${teddyImgSrc}" alt="Happy Toys" class="w-14 h-14 object-contain drop-shadow" />`
-                : `<span class="text-5xl leading-none select-none drop-shadow">🧸</span>`
-            }
-          </div>
-        </div>
-
-        <!-- 4. Feature Cards -->
-        <div class="z-10 grid grid-cols-3 gap-2.5 w-full my-1">
-          <div class="hts-feature-card-3d bg-[#EFF6FF] border border-sky-100">
-            <span class="text-2xl leading-none">🛡️</span>
-            <span class="text-[10px] sm:text-[11px] font-black text-[#0369A1] tracking-tight text-center leading-tight uppercase">PREMIUM QUALITY</span>
-          </div>
-
-          <div class="hts-feature-card-3d bg-[#FEFCE8] border border-amber-100">
-            <span class="text-2xl leading-none">🚀</span>
-            <span class="text-[10px] sm:text-[11px] font-black text-[#B45309] tracking-tight text-center leading-tight uppercase">FAST DELIVERY</span>
-          </div>
-
-          <div class="hts-feature-card-3d bg-[#FDF2F8] border border-pink-100">
-            <span class="text-2xl leading-none">😊</span>
-            <span class="text-[10px] sm:text-[11px] font-black text-[#BE185D] tracking-tight text-center leading-tight uppercase">HAPPY KIDS</span>
-          </div>
-        </div>
-
-        <!-- 5. Instant Enter Store Button -->
-        <div class="z-10 w-full pt-1">
-          <button type="button" onclick="HappyToysApp.enterStore()" class="hts-enter-btn-3d">
-            <span>Enter Store</span>
-            <svg class="w-5 h-5 stroke-current" fill="none" stroke-width="2.6" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
-          </button>
-        </div>
-
-      </div>
-    `;
+  function getProductById(id) {
+    return state.products.find(x => x.id === id) || null;
   }
 
   function setupVideoWithSound() {
@@ -123,118 +13,53 @@ const HappyToysApp = (() => {
     const unmuteBtn = document.getElementById("unmuteNoticeBtn");
     if (!videoEl) return;
 
-    // 1. Force strict mobile-compatible muted playback first
-    videoEl.muted = true;
-    videoEl.defaultMuted = true;
-    videoEl.playsInline = true;
-    videoEl.setAttribute("playsinline", "");
-    videoEl.setAttribute("webkit-playsinline", "");
+    videoEl.muted = false;
+    videoEl.volume = 1.0;
 
-    const safePlay = () => {
-      if (isStoreEntered) return;
-      const playPromise = videoEl.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          // If browser blocks unmuted playback, fallback to muted so video NEVER pauses
-          videoEl.muted = true;
+    const playPromise = videoEl.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        videoEl.muted = true;
+        videoEl.play().catch(() => {});
+        if (unmuteBtn) unmuteBtn.classList.remove("hidden");
+
+        const enableAudio = () => {
+          videoEl.muted = false;
+          videoEl.volume = 1.0;
           videoEl.play().catch(() => {});
-        });
-      }
-    };
+          if (unmuteBtn) unmuteBtn.classList.add("hidden");
+          document.removeEventListener("click", enableAudio);
+          document.removeEventListener("touchstart", enableAudio);
+        };
 
-    safePlay();
-
-    // 2. Auto-Resume Watchdog: If layout shift or browser pauses video, resume immediately
-    videoEl.addEventListener("pause", () => {
-      if (!isStoreEntered && !videoEl.ended) {
-        safePlay();
-      }
-    });
-
-    videoEl.addEventListener("stalled", safePlay);
-    videoEl.addEventListener("waiting", safePlay);
-
-    if (videoWatchdog) clearInterval(videoWatchdog);
-    videoWatchdog = setInterval(() => {
-      if (isStoreEntered) {
-        clearInterval(videoWatchdog);
-        return;
-      }
-      if (videoEl.paused && !videoEl.ended) {
-        safePlay();
-      }
-    }, 350);
-
-    // 3. Unmute ONLY on explicit button click (prevents touchstart freeze bug)
-    if (unmuteBtn) {
-      unmuteBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        videoEl.muted = false;
-        videoEl.volume = 1.0;
-        const p = videoEl.play();
-        if (p !== undefined) {
-          p.then(() => {
-            unmuteBtn.classList.add("hidden");
-          }).catch(() => {
-            videoEl.muted = true;
-            videoEl.play().catch(() => {});
-          });
-        } else {
-          unmuteBtn.classList.add("hidden");
-        }
+        document.addEventListener("click", enableAudio, { once: true });
+        document.addEventListener("touchstart", enableAudio, { once: true });
       });
     }
   }
 
-  // Trigger one-by-one 3D card animation right when store becomes visible
-  function trigger3DProductReveal() {
-    const cards = document.querySelectorAll("#productGrid .toy-card-3d");
+  function initScrollAnimations() {
+    if (scrollObserver) scrollObserver.disconnect();
+
+    scrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+        } else {
+          entry.target.classList.remove("is-visible");
+        }
+      });
+    }, { threshold: 0.12 });
+
+    const cards = document.querySelectorAll(".toy-card-reveal");
     cards.forEach((card, index) => {
-      card.classList.remove("animate-3d-in");
-      card.style.animationDelay = "0s";
-      // Force browser reflow so animation triggers freshly every time
-      void card.offsetWidth;
-      card.style.animationDelay = `${(index * 0.11).toFixed(2)}s`;
-      card.classList.add("animate-3d-in");
+      card.style.transitionDelay = `${(index % 4) * 90}ms`;
+      scrollObserver.observe(card);
     });
   }
 
-  function loadFavorites() {
-    try {
-      const saved = JSON.parse(localStorage.getItem("hts_favorites") || "[]");
-      state.favorites = Array.isArray(saved) ? saved : [];
-    } catch (e) {
-      state.favorites = [];
-    }
-  }
-
-  function toggleFavorite(productId, event, fromModal = false) {
-    if (event) event.stopPropagation();
-    const idx = state.favorites.indexOf(productId);
-    if (idx > -1) {
-      state.favorites.splice(idx, 1);
-    } else {
-      state.favorites.push(productId);
-    }
-    localStorage.setItem("hts_favorites", JSON.stringify(state.favorites));
-    renderProducts(false);
-
-    if (fromModal) {
-      const modalBtn = document.getElementById(`modalFavBtn-${productId}`);
-      if (modalBtn) {
-        const svg = modalBtn.querySelector("svg");
-        if (svg) {
-          svg.setAttribute("fill", state.favorites.includes(productId) ? "currentColor" : "none");
-        }
-      }
-    }
-  }
-
   async function init() {
-    upgradeSplashScreenUI();
     setupVideoWithSound();
-    loadFavorites();
 
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
     state.categories = seed.categories || [];
@@ -249,7 +74,7 @@ const HappyToysApp = (() => {
 
     bindEvents();
     renderCategories();
-    renderProducts(false);
+    renderProducts();
     checkForDirectProductLink();
 
     try {
@@ -257,12 +82,9 @@ const HappyToysApp = (() => {
       if (storeRes.ok) {
         const liveData = await storeRes.json();
         if (liveData.products && liveData.products.length > 0) {
-          const changed = JSON.stringify(liveData.products) !== JSON.stringify(state.products);
           state.products = liveData.products;
           localStorage.setItem("hts_custom_products", JSON.stringify(liveData.products));
-          if (changed) {
-            renderProducts(isStoreEntered);
-          }
+          renderProducts();
           checkForDirectProductLink();
         }
       }
@@ -274,35 +96,29 @@ const HappyToysApp = (() => {
   function checkForDirectProductLink() {
     const hash = window.location.hash;
     if (hash && hash.includes("#product=")) {
-      const prodId = hash.replace("#product=", "");
-      const p = state.products.find(x => x.id === prodId);
+      const prodId = hash.replace("#product=", "").trim();
+      const p = getProductById(prodId);
       if (p && window.HappyToysModal) {
-        window.HappyToysModal.open(p, state.products);
+        // Skip splash screen automatically if customer opened a direct product link!
+        const splash = document.getElementById("vipSplashScreen");
+        const mainContent = document.getElementById("mainStoreContent");
+        if (splash && !splash.classList.contains("hidden")) {
+          splash.classList.add("hidden");
+          document.body.classList.remove("splash-active");
+          mainContent?.classList.remove("opacity-0", "h-0", "overflow-hidden");
+        }
+        window.HappyToysModal.open(p);
       }
     }
   }
 
   function fireEnterStoreConfetti() {
-    try {
-      if (typeof confetti === "function") {
-        confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, zIndex: 99999 });
-        setTimeout(() => {
-          confetti({ particleCount: 90, angle: 60, spread: 70, origin: { x: 0, y: 0.7 }, zIndex: 99999 });
-          confetti({ particleCount: 90, angle: 120, spread: 70, origin: { x: 1, y: 0.7 }, zIndex: 99999 });
-        }, 220);
-      }
-    } catch (e) {}
+    if (typeof confetti === "function") {
+      confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 }, zIndex: 200 });
+    }
   }
 
   function enterStore() {
-    if (isStoreEntered) return;
-    isStoreEntered = true;
-
-    if (videoWatchdog) {
-      clearInterval(videoWatchdog);
-      videoWatchdog = null;
-    }
-
     const splash = document.getElementById("vipSplashScreen");
     const video = document.getElementById("splashVideoPlayer");
     const mainContent = document.getElementById("mainStoreContent");
@@ -313,25 +129,15 @@ const HappyToysApp = (() => {
     }
 
     if (splash) {
-      splash.style.transition = "opacity 0.25s ease, transform 0.25s ease";
       splash.style.opacity = "0";
-      splash.style.transform = "scale(1.02)";
       setTimeout(() => {
         splash.classList.add("hidden");
-        splash.style.setProperty("display", "none", "important");
         document.body.classList.remove("splash-active");
-
-        if (mainContent) {
-          mainContent.classList.remove("opacity-0", "h-0", "overflow-hidden");
-          mainContent.classList.add("store-reveal");
-        }
-
-        // Trigger the 3D one-by-one product animation NOW when user enters store!
-        trigger3DProductReveal();
+        mainContent.classList.remove("opacity-0", "h-0", "overflow-hidden");
+        mainContent.classList.add("store-reveal");
         fireEnterStoreConfetti();
-      }, 220);
-    } else {
-      trigger3DProductReveal();
+        initScrollAnimations();
+      }, 700);
     }
   }
 
@@ -342,6 +148,7 @@ const HappyToysApp = (() => {
     document.getElementById("openCategoryDrawerBtn")?.addEventListener("click", openDrawer);
     document.getElementById("closeCategoryDrawerBtn")?.addEventListener("click", closeDrawer);
     document.getElementById("categoryDrawerBackdrop")?.addEventListener("click", closeDrawer);
+    window.addEventListener("hashchange", checkForDirectProductLink);
   }
 
   function renderCategories() {
@@ -350,18 +157,14 @@ const HappyToysApp = (() => {
 
     if (horiz) {
       horiz.innerHTML = state.categories.map((cat) => {
-        const active = state.activeCategory === cat.slug
-          ? "bg-amber-500 text-white border-amber-500 shadow-md"
-          : "bg-white text-slate-700 hover:bg-amber-50 border-slate-200";
-        return `<button onclick="HappyToysApp.selectCategory('${cat.slug}')" class="whitespace-nowrap px-4 py-2 rounded-full text-xs font-extrabold border transition-all flex items-center gap-2 ${active}"><span>${cat.icon}</span><span>${cat.name}</span></button>`;
+        const active = state.activeCategory === cat.slug ? "bg-amber-500 text-white border-amber-600 shadow-md scale-105" : "bg-white text-slate-700 hover:bg-amber-50 border-slate-200";
+        return `<button onclick="HappyToysApp.selectCategory('${cat.slug}')" class="whitespace-nowrap px-4 py-2.5 rounded-2xl text-xs font-black border-2 transition-all flex items-center gap-2 ${active}"><span>${cat.icon}</span><span>${cat.name}</span></button>`;
       }).join("");
     }
 
     if (drawer) {
       drawer.innerHTML = state.categories.map((cat, index) => {
-        const active = state.activeCategory === cat.slug
-          ? "bg-amber-100 text-amber-800 font-black border-l-4 border-amber-500"
-          : "text-slate-700 hover:bg-slate-100 font-bold";
+        const active = state.activeCategory === cat.slug ? "bg-amber-100 text-amber-800 font-black border-l-4 border-amber-500" : "text-slate-700 hover:bg-slate-100 font-bold";
         const delay = (index * 0.04).toFixed(2);
         return `<button onclick="HappyToysApp.selectCategory('${cat.slug}')" style="animation-delay: ${delay}s;" class="drawer-category-item w-full text-left px-4 py-3 rounded-xl text-sm flex items-center justify-between transition ${active}"><span class="flex items-center gap-3"><span>${cat.icon}</span><span>${cat.name}</span></span><span class="text-xs text-amber-500 font-extrabold">→</span></button>`;
       }).join("");
@@ -372,7 +175,7 @@ const HappyToysApp = (() => {
     state.activeCategory = slug;
     document.getElementById("categoryDrawerContainer")?.classList.add("hidden");
     renderCategories();
-    renderProducts(true);
+    renderProducts();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -380,45 +183,20 @@ const HappyToysApp = (() => {
     state.activeCategory = "all";
     state.searchQuery = "";
     renderCategories();
-    renderProducts(true);
+    renderProducts();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function openProductModal(id) {
-    const p = state.products.find(x => x.id === id);
-    if (p && window.HappyToysModal) window.HappyToysModal.open(p, state.products);
-  }
-
-  function buyNowDirectWhatsApp(id, event) {
+  function openProductModal(id, event) {
     if (event) event.stopPropagation();
-    const p = state.products.find(x => x.id === id);
-    if (!p) return;
-
-    const whatsappNumber = "923707116317";
-    const productLink = window.location.origin + "/#product=" + p.id;
-    const message = `Hello Happy Toys Store! I want to order this product:\n\n* Name: ${p.name}\n* Price: ${formatPkr(p.pricePkr)}\n* Product Link: ${productLink}\n\nPlease confirm my order!`;
-
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, "_blank");
-  }
-
-  function getCategoryDisplay(catSlug) {
-    const found = state.categories.find(c => c.slug === catSlug);
-    if (found && found.slug !== "all") {
-      return { icon: found.icon || "🧸", label: found.name };
+    const p = getProductById(id);
+    if (p && window.HappyToysModal) {
+      window.HappyToysModal.open(p);
     }
-    if (!catSlug || catSlug === "all") return { icon: "🧸", label: "For kids" };
-    const lower = String(catSlug).toLowerCase();
-    if (lower.includes("edu") || lower.includes("learn")) return { icon: "🧠", label: "Educational Toys" };
-    if (lower.includes("book") || lower.includes("board")) return { icon: "📖", label: "Educational Toys" };
-    return { icon: "🧸", label: catSlug.replace(/-/g, " ") };
   }
 
-  function renderProducts(animate3D = true) {
+  function renderProducts() {
     const grid = document.getElementById("productGrid");
-    if (!grid) return;
-
-    grid.className = "hts-3d-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 -mx-2 sm:mx-0";
-
     const activeCatObj = state.categories.find(c => c.slug === state.activeCategory);
     if (document.getElementById("activeCategoryHeading")) {
       document.getElementById("activeCategoryHeading").textContent = activeCatObj ? activeCatObj.name : "All Toys";
@@ -435,124 +213,51 @@ const HappyToysApp = (() => {
       return;
     }
 
-    const badges = [
-      { icon: "🔥", text: "Hot Deal" },
-      { icon: "✨", text: "Bestseller" },
-      { icon: "★", text: "New Arrival" },
-      { icon: "🔥", text: "Trending" }
-    ];
-    const sampleRatings = [
-      { score: "4.8", count: 120 },
-      { score: "4.7", count: 98 },
-      { score: "4.6", count: 75 },
-      { score: "4.5", count: 62 }
-    ];
+    const badges = ["🔥 Hot Deal", "✨ Bestseller", "⭐ New Arrival", "🚀 Trending"];
 
     grid.innerHTML = filtered.map((p, idx) => {
-      const badge = badges[idx % badges.length];
-      const reviewInfo = sampleRatings[idx % sampleRatings.length];
-      const catInfo = getCategoryDisplay(p.category);
-      const isFavorited = state.favorites.includes(p.id);
-      const immediateClass = (!animate3D && isStoreEntered) ? "toy-card-visible" : "toy-card-3d";
+      const waveClass = idx % 2 === 0 ? "wave-even" : "wave-odd";
+      const badgeText = badges[idx % badges.length];
+      const hasSizes = p.hasVariants && p.variants && p.variants.length > 0;
 
       return `
-      <article class="${immediateClass} w-full overflow-hidden bg-white rounded-[1.35rem] p-2 sm:p-3 border border-slate-100 shadow-[0_6px_20px_-4px_rgba(15,23,42,0.1)] flex flex-col justify-between">
-        
-        <div class="w-full">
-          <div class="relative aspect-[1.04/1] w-full rounded-2xl overflow-hidden bg-slate-50 cursor-pointer group" onclick="HappyToysApp.openProductModal('${p.id}')">
-            <img src="${p.mainImage}" alt="${p.name}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-            
-            <span class="absolute top-2 left-2 bg-[#FACC15] text-slate-900 text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1 leading-tight">
-              <span>${badge.icon}</span>
-              <span>${badge.text}</span>
-            </span>
-
-            <button onclick="HappyToysApp.toggleFavorite('${p.id}', event)" 
-                    aria-label="Favorite"
-                    class="absolute top-2 right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/95 hover:bg-white flex items-center justify-center shadow-md active:scale-90 transition">
-              <svg class="w-4 h-4 text-rose-500 fill-current" viewBox="0 0 24 24">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-              </svg>
-            </button>
-
-            <div class="absolute bottom-0 inset-x-0 h-1 flex">
-              <span class="flex-1 bg-rose-500"></span>
-              <span class="flex-1 bg-amber-400"></span>
-              <span class="flex-1 bg-emerald-400"></span>
-              <span class="flex-1 bg-sky-500"></span>
-              <span class="flex-1 bg-purple-500"></span>
+      <article onclick="HappyToysApp.openProductModal('${p.id}', event)" class="toy-card toy-card-reveal ${waveClass} bg-white rounded-3xl border-2 border-slate-100 overflow-hidden flex flex-col shadow-md transition-all duration-300 cursor-pointer">
+        <div class="relative aspect-square p-3 bg-gradient-to-br from-amber-50/60 via-white to-sky-50/40 overflow-hidden group">
+          <img src="${p.mainImage}" alt="${p.name}" class="w-full h-full object-cover rounded-2xl transition-transform duration-500 group-hover:scale-105" />
+          <span class="absolute top-3 left-3 bg-amber-400 text-slate-900 text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm">${badgeText}</span>
+          ${hasSizes ? `<span class="absolute bottom-3 left-3 bg-blue-600/95 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full shadow-sm">📏 Sizes Available</span>` : ""}
+          <button onclick="event.stopPropagation(); this.classList.toggle('scale-125');" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-rose-500 flex items-center justify-center shadow-md transition active:scale-90">❤️</button>
+        </div>
+        <div class="px-4 pt-3 pb-4 bg-white flex-1 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-1.5 mb-1 text-[11px] text-slate-500 font-bold">
+              <span>🧸</span> <span class="capitalize truncate">${p.category || 'Toys'}</span>
+              <span class="text-amber-500 ml-auto shrink-0">⭐ 4.8 <span class="text-slate-400 font-normal">(120)</span></span>
             </div>
+            <h3 class="font-black text-slate-900 text-sm leading-snug mb-2 line-clamp-2 hover:text-amber-600 transition">${p.name}</h3>
           </div>
-
-          <div class="pt-2.5 px-0.5">
-            <h3 class="font-extrabold text-[#0F172A] text-[13.5px] sm:text-base leading-tight line-clamp-1 cursor-pointer hover:text-blue-600 transition" onclick="HappyToysApp.openProductModal('${p.id}')">
-              ${p.name}
-            </h3>
-
-            <div class="flex items-center gap-1.5 mt-1 text-[11px] sm:text-xs text-[#475569] font-semibold">
-              <span class="text-xs sm:text-sm leading-none shrink-0">${catInfo.icon}</span>
-              <span class="capitalize truncate">${catInfo.label}</span>
+          <div>
+            <div class="flex items-baseline gap-1 mb-3">
+              ${hasSizes ? `<span class="text-[10px] font-bold text-slate-400">From</span>` : ""}
+              <span class="text-xl font-black text-blue-600">${formatPkr(p.pricePkr)}</span>
             </div>
-
-            <div class="flex items-center gap-1 mt-1 text-[11px] sm:text-xs">
-              <svg class="w-3.5 h-3.5 text-amber-400 fill-current shrink-0" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-              </svg>
-              <span class="font-extrabold text-slate-800">${p.rating || reviewInfo.score}</span>
-              <span class="text-[#64748B] font-medium truncate">(${p.reviewsCount || reviewInfo.count} reviews)</span>
-            </div>
-
-            <div class="mt-1.5 mb-2">
-              <span class="text-[16px] sm:text-xl font-black text-[#0066FF] tracking-tight block leading-none">
-                ${formatPkr(p.pricePkr)}
-              </span>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="event.stopPropagation(); HappyToysCart.addToCart('${p.id}');" class="py-2.5 px-1 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-900 font-black text-[11px] shadow-sm active:scale-95 transition flex items-center justify-center gap-1">
+                <span>🛒 Add to Cart</span>
+              </button>
+              <button onclick="HappyToysApp.openProductModal('${p.id}', event)" class="py-2.5 px-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-[11px] shadow-sm active:scale-95 transition flex items-center justify-center gap-1">
+                <span>🛍️ Buy Now</span>
+              </button>
             </div>
           </div>
         </div>
-
-        <div class="grid grid-cols-[28px_1.18fr_1fr] sm:grid-cols-[36px_1.15fr_1fr] items-center gap-1 sm:gap-1.5 w-full pt-0.5">
-          <button onclick="HappyToysApp.toggleFavorite('${p.id}', event)" 
-                  aria-label="Save Favorite"
-                  class="w-[28px] h-[28px] sm:w-9 sm:h-9 rounded-lg sm:rounded-xl border border-slate-200 bg-white hover:bg-rose-50 flex items-center justify-center shrink-0 active:scale-90 transition">
-            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500 transition-transform" fill="${isFavorited ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-            </svg>
-          </button>
-
-          <button onclick="event.stopPropagation(); HappyToysCart.addToCart('${p.id}');" 
-                  class="w-full min-w-0 h-[28px] sm:h-9 px-1 sm:px-2.5 rounded-full bg-[#F59E0B] hover:bg-amber-600 text-white font-extrabold text-[8.8px] sm:text-xs tracking-tight active:scale-95 transition flex items-center justify-center gap-1 overflow-hidden">
-            <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-current shrink-0" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-            </svg>
-            <span class="truncate">Add to Cart</span>
-          </button>
-
-          <button onclick="HappyToysApp.buyNowDirectWhatsApp('${p.id}', event)" 
-                  class="w-full min-w-0 h-[28px] sm:h-9 px-1 sm:px-2.5 rounded-full bg-[#0066FF] hover:bg-blue-700 text-white font-extrabold text-[8.8px] sm:text-xs tracking-tight active:scale-95 transition flex items-center justify-center gap-1 overflow-hidden">
-            <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" viewBox="0 0 24 24" fill="none">
-              <path d="M9 6V5a3 3 0 016 0v1" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M5.6 6h12.8c.95 0 1.74.74 1.8 1.69l.65 11A2 2 0 0118.86 21H5.14a2 2 0 01-1.99-2.31l.65-11C3.86 6.74 4.65 6 5.6 6zm6.4 8.2l-2.3-2.5h4.6L12 14.2z" fill="white"/>
-            </svg>
-            <span class="truncate">Buy Now</span>
-          </button>
-        </div>
-
       </article>`;
     }).join("");
 
-    if (animate3D && isStoreEntered) {
-      trigger3DProductReveal();
-    }
+    initScrollAnimations();
   }
 
-  return {
-    init,
-    selectCategory,
-    resetFilters,
-    openProductModal,
-    buyNowDirectWhatsApp,
-    toggleFavorite,
-    enterStore
-  };
+  return { init, selectCategory, resetFilters, openProductModal, getProductById, enterStore };
 })();
+window.HappyToysApp = HappyToysApp;
 document.addEventListener("DOMContentLoaded", HappyToysApp.init);

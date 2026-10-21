@@ -1,136 +1,216 @@
 const HappyToysModal = (() => {
   let currentProduct = null;
-  let allProducts = [];
+  let selectedSize = "Standard";
+  let selectedUnitPrice = 0;
+  let selectedQty = 1;
+  const WHATSAPP_NUMBER = "923707116317";
 
   function formatPkr(amount) {
     return "PKR " + Number(amount || 0).toLocaleString("en-PK");
   }
 
-  function isFav(id) {
-    try {
-      const favs = JSON.parse(localStorage.getItem("hts_favorites") || "[]");
-      return favs.includes(id);
-    } catch (e) {
-      return false;
+  function getAvailableVariants(product) {
+    if (product.hasVariants && Array.isArray(product.variants) && product.variants.length > 0) {
+      return product.variants;
     }
+    // Also provide Small, Medium, Big if user didn't configure custom variants yet?
+    // Wait: user said "अगर वेरिएंट वाला हो तो वो ऑप्शन हो... साइज सेलेक्ट करने का ऑप्शन भी हो"
+    return [];
   }
 
-  function open(product, productList) {
+  function open(product) {
+    if (!product) return;
     currentProduct = product;
-    allProducts = productList || [];
+    selectedQty = 1;
 
-    let modal = document.getElementById("customProductDetailModal");
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.id = "customProductDetailModal";
-      modal.className = "fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto";
-      document.body.appendChild(modal);
+    const variants = getAvailableVariants(product);
+    if (variants.length > 0) {
+      selectedSize = variants[0].size;
+      selectedUnitPrice = Number(variants[0].pricePkr);
+    } else {
+      selectedSize = "Standard";
+      selectedUnitPrice = Number(product.pricePkr);
     }
 
-    const whatsappNumber = "923707116317";
-    const favActive = isFav(product.id);
-    const catName = product.categoryName || product.category || "For kids";
-    const rating = product.rating || "4.8";
-    const reviews = product.reviewsCount || "120";
+    // Update browser hash so link refers directly to this product
+    if (window.location.hash !== `#product=${product.id}`) {
+      history.replaceState(null, "", `#product=${product.id}`);
+    }
 
-    const waMessage = `Hello Happy Toys Store! I want to order this product:\n\n* Name: ${product.name}\n* Price: ${formatPkr(product.pricePkr)}\n* Product Link: ${window.location.origin}/#product=${product.id}\n\nPlease confirm my order!`;
+    let pageModal = document.getElementById("separateProductDetailPage");
+    if (!pageModal) {
+      pageModal = document.createElement("div");
+      pageModal.id = "separateProductDetailPage";
+      pageModal.className = "fixed inset-0 z-[140] bg-slate-50 overflow-y-auto flex flex-col";
+      document.body.appendChild(pageModal);
+    }
 
-    modal.innerHTML = `
-      <div class="bg-white rounded-[2rem] max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 relative flex flex-col my-auto max-h-[92vh] animate-scale-in p-3.5 sm:p-5">
+    document.body.style.overflow = "hidden";
+    renderDetailPage();
+    pageModal.classList.remove("hidden");
+    pageModal.scrollTop = 0;
+  }
+
+  function selectVariantSize(sizeName, pricePkr) {
+    selectedSize = sizeName;
+    selectedUnitPrice = Number(pricePkr);
+    renderDetailPage();
+  }
+
+  function updateQuantity(delta) {
+    selectedQty = Math.max(1, selectedQty + delta);
+    renderDetailPage();
+  }
+
+  function orderNowOnWhatsApp() {
+    if (!currentProduct) return;
+    const totalPrice = selectedUnitPrice * selectedQty;
+    const productUrl = `${window.location.origin}/#product=${currentProduct.id}`;
+
+    const msg =
+      `Hello *Happy Toys Store*! 🧸\n` +
+      `I want to buy this toy:\n\n` +
+      `*🧸 Toy Name:* ${currentProduct.name}\n` +
+      `*📏 Selected Size:* ${selectedSize}\n` +
+      `*🔢 Quantity:* ${selectedQty}\n` +
+      `*💰 Total Price:* ${formatPkr(totalPrice)}\n` +
+      `*📝 Details:* ${currentProduct.shortDescription || "Premium Kids Toy"}\n\n` +
+      `*🔗 Product Link:* ${productUrl}\n\n` +
+      `Please confirm my order!`;
+
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
+  }
+
+  function addCurrentToCart() {
+    if (!currentProduct || !window.HappyToysCart) return;
+    window.HappyToysCart.addToCart(currentProduct.id, selectedSize, selectedUnitPrice, selectedQty);
+  }
+
+  function renderDetailPage() {
+    const pageModal = document.getElementById("separateProductDetailPage");
+    if (!pageModal || !currentProduct) return;
+
+    const variants = getAvailableVariants(currentProduct);
+    const totalPrice = selectedUnitPrice * selectedQty;
+
+    const sizeSelectorHtml = variants.length > 0 ? `
+      <div class="bg-amber-50/70 p-4 rounded-3xl border-2 border-amber-200 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-black text-slate-800 uppercase tracking-wider">📏 Select Toy Size:</span>
+          <span class="text-xs font-black text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">Selected: ${selectedSize}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2.5">
+          ${variants.map(v => {
+            const isSelected = v.size === selectedSize;
+            const activeCls = isSelected
+              ? "bg-blue-600 text-white border-blue-600 shadow-lg scale-[1.03]"
+              : "bg-white text-slate-800 border-slate-200 hover:border-amber-400";
+            return `
+              <button type="button" onclick="HappyToysModal.selectVariantSize('${v.size}',${v.pricePkr})"
+                class="py-3 px-2 rounded-2xl border-2 font-black text-center transition-all flex flex-col items-center justify-center ${activeCls}">
+                <span class="text-xs sm:text-sm">${v.size}</span>
+                <span class="text-[11px] ${isSelected ? 'text-amber-300' : 'text-blue-600'} font-extrabold mt-0.5">${formatPkr(v.pricePkr)}</span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    ` : "";
+
+    pageModal.innerHTML = `
+      <!-- Top Dedicated Product Page Header -->
+      <div class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 px-4 h-16 flex items-center justify-between shadow-xs">
+        <button onclick="HappyToysModal.close()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs sm:text-sm flex items-center gap-1.5 transition">
+          <span>←</span> <span>Back to Store</span>
+        </button>
+        <span class="toy-title-font text-base text-amber-500 truncate max-w-[160px] sm:max-w-xs">${currentProduct.name}</span>
+        <button onclick="HappyToysModal.close(); HappyToysCart.openDrawer();" class="px-3 py-2 rounded-xl bg-blue-600 text-white font-black text-xs shadow-sm">
+          🛒 Cart
+        </button>
+      </div>
+
+      <!-- Main Separate Product Body -->
+      <div class="max-w-4xl mx-auto w-full p-4 sm:p-6 pb-32 grid md:grid-cols-2 gap-6 items-start">
         
-        <!-- Product Image Box -->
-        <div class="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-slate-50">
-          <img src="${product.mainImage}" alt="${product.name}" class="w-full h-full object-cover" />
-          
-          <!-- Top-Left Yellow Badge -->
-          <span class="absolute top-3 left-3 bg-[#FACC15] text-slate-900 text-xs font-extrabold px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
-            <span>🔥</span> <span>Hot Deal</span>
-          </span>
-
-          <!-- Close Button -->
-          <button onclick="HappyToysModal.close()" class="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/95 hover:bg-white text-slate-700 flex items-center justify-center shadow-md font-bold transition">
-            ✕
-          </button>
-
-          <!-- Rainbow Bottom Strip -->
-          <div class="absolute bottom-0 inset-x-0 h-1.5 flex">
-            <span class="flex-1 bg-rose-500"></span>
-            <span class="flex-1 bg-amber-400"></span>
-            <span class="flex-1 bg-emerald-400"></span>
-            <span class="flex-1 bg-sky-500"></span>
-            <span class="flex-1 bg-purple-500"></span>
-          </div>
+        <!-- Big Product Image Card -->
+        <div class="bg-white rounded-[2.2rem] p-4 sm:p-6 border-2 border-amber-200 shadow-md relative">
+          <span class="absolute top-6 left-6 bg-amber-400 text-slate-900 text-xs font-black px-3 py-1 rounded-full shadow-sm">🔥 Premium Toy</span>
+          <img src="${currentProduct.mainImage}" alt="${currentProduct.name}" class="w-full aspect-square object-cover rounded-2xl" />
         </div>
 
-        <!-- Product Details Content -->
-        <div class="pt-3.5 pb-2 flex-1 overflow-y-auto space-y-2.5">
-          <h2 class="text-lg sm:text-xl font-extrabold text-[#0F172A] leading-snug">${product.name}</h2>
-
-          <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-            <span class="text-sm">🧸</span>
-            <span class="capitalize">${catName}</span>
+        <!-- Product Complete Information -->
+        <div class="bg-white rounded-[2.2rem] p-5 sm:p-6 border-2 border-slate-100 shadow-md space-y-5">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-black text-xs capitalize">🧸 ${currentProduct.category || "Kids Toy"}</span>
+              <span class="text-xs font-black text-amber-500">⭐ 4.9 (120+ Happy Kids)</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">${currentProduct.name}</h1>
+            <span class="text-xs text-slate-400 font-bold block mt-1">SKU: ${currentProduct.sku || "HTS-VIP"}</span>
           </div>
 
-          <div class="flex items-center gap-1.5 text-xs">
-            <svg class="w-4 h-4 text-amber-400 fill-current shrink-0" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-            </svg>
-            <span class="font-extrabold text-slate-800">${rating}</span>
-            <span class="text-slate-400 font-medium">(${reviews} reviews)</span>
-            <span class="ml-auto text-[11px] font-bold ${product.stockQty > 0 ? 'text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full' : 'text-rose-500'}">
-              ${product.stockQty > 0 ? '✓ In Stock' : 'Out of Stock'}
-            </span>
+          <!-- Dynamic Live Price Box -->
+          <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-sky-50 p-4 rounded-2xl border border-blue-100 flex items-center justify-between">
+            <div>
+              <span class="text-[11px] font-black text-slate-500 uppercase block">Selected Price (${selectedSize})</span>
+              <span class="text-3xl font-black text-blue-600">${formatPkr(totalPrice)}</span>
+            </div>
+            <div class="text-right">
+              <span class="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-black text-xs">
+                ✓ In Stock (${currentProduct.stockQty || 10})
+              </span>
+            </div>
           </div>
 
-          <div class="pt-0.5">
-            <span class="text-2xl font-black text-[#0066FF] tracking-tight">${formatPkr(product.pricePkr)}</span>
+          <!-- Size Variants Selector (Small / Medium / Big) -->
+          ${sizeSelectorHtml}
+
+          <!-- Quantity Selector -->
+          <div class="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+            <span class="text-xs font-black text-slate-700 uppercase">🔢 Select Quantity:</span>
+            <div class="flex items-center gap-3">
+              <button type="button" onclick="HappyToysModal.updateQuantity(-1)" class="w-9 h-9 rounded-xl bg-white border border-slate-300 font-black text-lg shadow-xs active:scale-90">-</button>
+              <span class="text-base font-black text-slate-900 min-w-[24px] text-center">${selectedQty}</span>
+              <button type="button" onclick="HappyToysModal.updateQuantity(1)" class="w-9 h-9 rounded-xl bg-amber-400 text-slate-900 font-black text-lg shadow-xs active:scale-90">+</button>
+            </div>
           </div>
 
-          <div class="pt-1">
-            <p class="text-slate-600 text-xs sm:text-sm leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
-              ${product.shortDescription || 'Premium quality toy designed to bring endless smiles and interactive learning for kids!'}
-            </p>
+          <!-- Full Product Description -->
+          <div class="space-y-2">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider">📝 Product Description & Details</h3>
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-slate-700 text-sm leading-relaxed whitespace-pre-line font-semibold">
+              ${currentProduct.shortDescription || "Best quality interactive toy for kids! Safe materials, bright colors, and durable build."}
+            </div>
           </div>
         </div>
+      </div>
 
-        <!-- Footer Action Buttons -->
-        <div class="pt-3 border-t border-slate-100 grid grid-cols-[44px_1.15fr_1fr] items-center gap-2">
-          <button onclick="HappyToysApp.toggleFavorite('${product.id}', event, true)" 
-                  id="modalFavBtn-${product.id}"
-                  class="w-11 h-11 rounded-2xl border border-slate-200 bg-white hover:bg-rose-50 flex items-center justify-center shrink-0 shadow-sm active:scale-90 transition">
-            <svg class="w-5 h-5 text-rose-500 transition-transform" fill="${favActive ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-            </svg>
+      <!-- Sticky Animated Bottom Action Bar -->
+      <div class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t-2 border-amber-200 p-3 sm:p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
+        <div class="max-w-4xl mx-auto flex items-center gap-3">
+          <button type="button" onclick="HappyToysModal.addCurrentToCart()"
+            class="py-3.5 px-5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-slate-900 font-black text-xs sm:text-sm shadow-md active:scale-95 transition flex items-center justify-center gap-2 shrink-0">
+            <span>🛒 Add to Cart</span>
           </button>
 
-          <button onclick="HappyToysCart.addToCart('${product.id}'); HappyToysModal.close();" 
-                  class="w-full h-11 rounded-full bg-[#F59E0B] hover:bg-amber-600 text-white font-extrabold text-xs sm:text-sm shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition">
-            <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-            </svg>
-            <span>Add to Cart</span>
+          <button type="button" onclick="HappyToysModal.orderNowOnWhatsApp()"
+            class="btn-vip-gradient flex-1 py-4 px-5 rounded-2xl text-white font-black text-sm sm:text-base shadow-xl flex items-center justify-center gap-2 animate-bounce cursor-pointer">
+            <span>💬 Buy Now on WhatsApp (${formatPkr(totalPrice)})</span>
           </button>
-
-          <a href="https://wa.me/${whatsappNumber}?text=${encodeURIComponent(waMessage)}" 
-             target="_blank" 
-             class="w-full h-11 rounded-full bg-[#0066FF] hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition">
-            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none">
-              <path d="M9 6V5a3 3 0 016 0v1" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M5.6 6h12.8c.95 0 1.74.74 1.8 1.69l.65 11A2 2 0 0118.86 21H5.14a2 2 0 01-1.99-2.31l.65-11C3.86 6.74 4.65 6 5.6 6zm6.4 8.2l-2.3-2.5h4.6L12 14.2z" fill="white"/>
-            </svg>
-            <span>Buy Now</span>
-          </a>
         </div>
-
       </div>
     `;
-    modal.classList.remove("hidden");
   }
 
   function close() {
-    const modal = document.getElementById("customProductDetailModal");
-    if (modal) modal.classList.add("hidden");
+    const pageModal = document.getElementById("separateProductDetailPage");
+    if (pageModal) pageModal.classList.add("hidden");
+    document.body.style.overflow = "";
+    if (window.location.hash.includes("#product=")) {
+      history.replaceState(null, "", window.location.pathname);
+    }
   }
 
-  return { open, close };
+  return { open, close, selectVariantSize, updateQuantity, orderNowOnWhatsApp, addCurrentToCart };
 })();
+window.HappyToysModal = HappyToysModal;
