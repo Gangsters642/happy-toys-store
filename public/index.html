@@ -51,9 +51,10 @@
   <!-- VIP SPLASH SCREEN -->
   <div id="vipSplashScreen" class="fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-1000 bg-white">
     <div id="splashGradient" class="absolute inset-0 opacity-100"></div>
+    <video id="splashVideoPlayer" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover z-0 hidden"></video>
+    <img id="splashImgPlayer" class="absolute inset-0 w-full h-full object-cover z-0 hidden" />
     
     <!-- Changed from Video to Image (GIF Support) for guaranteed mobile auto-play -->
-    <img id="splashVideoPlayer" src="" alt="Splash Background" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000 hidden pointer-events-none" />
     
     <div id="videoOverlay" class="absolute inset-0 bg-slate-900/40 hidden"></div>
     

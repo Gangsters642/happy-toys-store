@@ -1,7 +1,38 @@
+const HTS_DB = (() => {
+  const dbName = "HappyToysDB";
+  const storeName = "mediaStore";
+  const initDB = () => new Promise((resolve, reject) => {
+    const req = indexedDB.open(dbName, 1);
+    req.onupgradeneeded = (e) => e.target.result.createObjectStore(storeName);
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+  return {
+    set: async (key, val) => {
+      const db = await initDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, "readwrite");
+        tx.objectStore(storeName).put(val, key);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+    },
+    get: async (key) => {
+      const db = await initDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, "readonly");
+        const req = tx.objectStore(storeName).get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(tx.error);
+      });
+    }
+  };
+})();
+
 const HappyToysAdmin = (() => {
   let token = localStorage.getItem("hts_admin_token") || "";
   let products = [];
-  let appSettings = JSON.parse(localStorage.getItem("hts_settings") || "{}");
+  let tempMediaUrl = null;
 
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
   
@@ -21,9 +52,11 @@ const HappyToysAdmin = (() => {
       document.getElementById("adminLoginModal").classList.add("hidden");
       populateCategoryDropdown();
       loadAdminData();
-      // Load saved splash media if exists
-      if(appSettings.introGifUrl) {
-         showSplashPreview(appSettings.introGifUrl);
+      
+      // Load saved video from Advanced Storage
+      const savedMedia = await HTS_DB.get('splashMedia');
+      if (savedMedia) {
+         showSplashPreview(savedMedia);
       }
     } else {
       document.getElementById("adminLoginModal").classList.remove("hidden");
@@ -34,9 +67,11 @@ const HappyToysAdmin = (() => {
   function showSplashPreview(dataUrl) {
      const preview = document.getElementById("splashPreview");
      preview.classList.remove("hidden");
-     // We only handle images/GIFs now to avoid storage limits
-     preview.innerHTML = `<img src="${dataUrl}" class="w-full h-48 object-cover rounded-xl" />`;
-     document.getElementById("adminIntroGifUrl").value = dataUrl;
+     if (dataUrl.startsWith("data:video")) {
+         preview.innerHTML = `<video src="${dataUrl}" autoplay loop muted playsinline class="w-full h-48 object-cover rounded-xl"></video>`;
+     } else {
+         preview.innerHTML = `<img src="${dataUrl}" class="w-full h-48 object-cover rounded-xl" />`;
+     }
   }
 
   function populateCategoryDropdown() {
@@ -48,21 +83,19 @@ const HappyToysAdmin = (() => {
       .join("");
   }
 
-  // --- FIXED SAVE SETTINGS FUNCTION ---
-  function saveSettings() {
-    const url = document.getElementById("adminIntroGifUrl").value;
-    if(!url) {
-        alert("Please select a valid image or GIF first.");
+  async function saveSettings() {
+    if(!tempMediaUrl) {
+        alert("Please Select a Video or Image first.");
         return;
     }
-    
+    document.getElementById("saveMediaBtn").textContent = "Saving Video... Please Wait";
     try {
-        appSettings.introGifUrl = url;
-        localStorage.setItem("hts_settings", JSON.stringify(appSettings));
-        alert("✅ VIP Splash Screen Media saved successfully! It is now live on your store.");
+        await HTS_DB.set('splashMedia', tempMediaUrl);
+        alert("✅ VIP Splash Video Saved Perfectly! It will now play on your Storefront.");
     } catch (e) {
-        alert("Error saving: File might be too large! Please choose a smaller image or GIF (under 2MB).");
+        alert("Error: Video is too large. Please select a smaller video.");
     }
+    document.getElementById("saveMediaBtn").textContent = "Save Splash Media";
   }
 
   function bindEvents() {
@@ -105,22 +138,16 @@ const HappyToysAdmin = (() => {
     document.getElementById("openAddProductModalBtn").addEventListener("click", () => openModal());
     document.getElementById("closeProductModalBtn").addEventListener("click", closeModal);
     document.getElementById("cancelProductModalBtn").addEventListener("click", closeModal);
+    document.getElementById("saveMediaBtn").addEventListener("click", saveSettings);
 
-    // Read Splash Media File locally (Compressing large files to avoid quota error)
+    // Advanced Media Reader for Large Videos
     document.getElementById("splashMediaUpload").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      
-      // Check file size (max ~3MB for localStorage safety)
-      if (file.size > 3 * 1024 * 1024) {
-          alert("File is too large! Please select an image or GIF under 3MB.");
-          e.target.value = ''; // clear input
-          return;
-      }
-
       const reader = new FileReader();
       reader.onload = function(evt) {
-        showSplashPreview(evt.target.result);
+        tempMediaUrl = evt.target.result;
+        showSplashPreview(tempMediaUrl);
       };
       reader.readAsDataURL(file);
     });
@@ -128,12 +155,6 @@ const HappyToysAdmin = (() => {
     document.getElementById("imageUploadInput").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      
-      if (file.size > 2 * 1024 * 1024) {
-          alert("Image is too large! Please select a smaller photo (under 2MB).");
-          return;
-      }
-
       const reader = new FileReader();
       reader.onload = function(evt) {
         document.getElementById("prodMainImage").value = evt.target.result;
@@ -146,8 +167,7 @@ const HappyToysAdmin = (() => {
       e.preventDefault();
       const id = document.getElementById("editProductId").value || `prod-${Date.now()}`;
       const newProduct = {
-        id,
-        name: document.getElementById("prodName").value,
+        id, name: document.getElementById("prodName").value,
         sku: document.getElementById("prodSku").value,
         category: document.getElementById("prodCategory").value,
         stockQty: Number(document.getElementById("prodStock").value),
@@ -156,19 +176,13 @@ const HappyToysAdmin = (() => {
         mainImage: document.getElementById("prodMainImage").value || "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=600",
         isPublished: true
       };
-
       let currentList = getStoredProducts();
       const idx = currentList.findIndex(p => p.id === id);
       if (idx >= 0) currentList[idx] = newProduct; else currentList.unshift(newProduct);
-      
-      try {
-        saveStoredProducts(currentList);
-        closeModal();
-        renderTable();
-        alert("Toy saved successfully! Now visible on website.");
-      } catch (err) {
-        alert("Storage is full! Delete some older products or use smaller images.");
-      }
+      saveStoredProducts(currentList);
+      closeModal();
+      renderTable();
+      alert("Toy saved successfully!");
     });
   }
 
@@ -186,7 +200,7 @@ const HappyToysAdmin = (() => {
         <td class="py-3 px-4"><div class="flex items-center gap-3"><img src="${p.mainImage}" class="w-10 h-10 rounded-xl object-cover border"/><span class="font-bold text-slate-900">${p.name}</span></div></td>
         <td class="py-3 px-4"><span class="font-mono text-xs text-blue-600 block">${p.sku}</span><span class="text-xs text-slate-500 capitalize">${p.category}</span></td>
         <td class="py-3 px-4 font-bold text-slate-800">${formatPkr(p.pricePkr)}</td>
-        <td class="py-3 px-4 font-semibold ${p.stockQty > 0 ? "textemerald-600" : "text-red-500"}">${p.stockQty} in stock</td>
+        <td class="py-3 px-4 font-semibold ${p.stockQty > 0 ? "text-emerald-600" : "text-red-500"}">${p.stockQty} in stock</td>
         <td class="py-3 px-4 text-right space-x-2">
           <button onclick="HappyToysAdmin.editProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs">Edit</button>
           <button onclick="HappyToysAdmin.deleteProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs">Delete</button>
@@ -220,10 +234,10 @@ const HappyToysAdmin = (() => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(products, null, 2));
     const dl = document.createElement("a");
     dl.setAttribute("href", dataStr);
-    dl.setAttribute("download", "happy-toys-backup-" + new Date().toISOString().slice(0,10) + ".json");
+    dl.setAttribute("download", "happy-toys-backup.json");
     document.body.appendChild(dl); dl.click(); dl.remove();
   }
 
-  return { init, deleteProduct, editProduct, exportBackup, saveSettings };
+  return { init, deleteProduct, editProduct, exportBackup };
 })();
 document.addEventListener("DOMContentLoaded", HappyToysAdmin.init);

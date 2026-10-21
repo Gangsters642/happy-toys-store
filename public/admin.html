@@ -45,14 +45,14 @@
     <!-- VIP Splash Media Upload -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8">
       <h3 class="text-lg font-bold text-slate-900 mb-1">🎬 VIP Splash Screen Media</h3>
-      <p class="text-xs text-slate-500 mb-4">Upload a beautiful Image or animated GIF from your gallery. It will autoplay perfectly!</p>
+      <p class="text-xs text-slate-500 mb-4">Upload a short Video (MP4) or Image from your gallery. It will autoplay perfectly!</p>
       <div class="flex flex-col sm:flex-row items-end gap-4">
         <div class="flex-1 w-full">
            <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">Select Video or GIF</label>
            <input id="splashMediaUpload" type="file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer border border-slate-200 rounded-xl" />
            <input id="adminIntroGifUrl" type="hidden" />
         </div>
-        <button onclick="HappyToysAdmin.saveSettings()" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow transition whitespace-nowrap">Save Splash Media</button>
+        <button id="saveMediaBtn" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow transition whitespace-nowrap">Save Splash Media</button>
       </div>
       <div id="splashPreview" class="mt-4 hidden w-full max-w-sm rounded-xl overflow-hidden border-4 border-slate-100"></div>
     </div>
