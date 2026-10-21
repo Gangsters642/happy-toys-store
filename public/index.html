@@ -7,125 +7,115 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     body.splash-active { overflow: hidden; }
     
-    @keyframes modal-enter {
-      0% { opacity: 0; transform: scale(0.95) translateY(20px); }
-      100% { opacity: 1; transform: scale(1) translateY(0); }
+    .toy-title-font {
+      font-family: 'Fredoka One', cursive, sans-serif;
+      text-shadow: 3px 3px 0px #ff6b6b, 6px 6px 0px #4ecdc4, 9px 9px 0px #ffe66d;
     }
-    .animate-modal { animation: modal-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    
-    .btn-glow-yellow {
-      background: linear-gradient(90deg, #ffc107, #ff9800);
-      box-shadow: 0 0 20px rgba(255, 152, 0, 0.5);
+
+    @keyframes bounce-slow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .animate-bounce-slow { animation: bounce-slow 3s ease-in-out infinite; }
+
+    @keyframes pulse-glow {
+      0% { box-shadow: 0 0 15px rgba(255, 107, 107, 0.4); transform: scale(1); }
+      50% { box-shadow: 0 0 30px rgba(255, 107, 107, 0.8); transform: scale(1.03); }
+      100% { box-shadow: 0 0 15px rgba(255, 107, 107, 0.4); transform: scale(1); }
+    }
+    .btn-toy-rainbow {
+      background: linear-gradient(135deg, #ff6b6b, #ffbe0b, #3a86ff);
+      background-size: 200% 200%;
+      animation: rainbow-bg 5s ease infinite;
+      box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
       transition: all 0.3s ease;
     }
-    .btn-glow-yellow:hover {
-      box-shadow: 0 0 30px rgba(255, 152, 0, 0.8);
-      transform: scale(1.05);
-    }
-    
-    .toy-font { font-family: 'Nunito', sans-serif; }
-
-    @keyframes gradient-shift {
+    @keyframes rainbow-bg {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-    .bg-magical {
-      background: linear-gradient(-45deg, #0f172a, #1e40af, #4c1d95, #020617);
-      background-size: 300% 300%;
-      animation: gradient-shift 12s ease infinite;
+    .btn-toy-rainbow:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(58, 134, 255, 0.6); }
+
+    /* Colorful animated background */
+    @keyframes float-shape {
+      0% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-15px) rotate(5deg); }
+      100% { transform: translateY(0px) rotate(0deg); }
     }
-    
-    @keyframes float {
-      0% { transform: translateY(0px) scale(1); opacity: 0.3; }
-      50% { transform: translateY(-20px) scale(1.1); opacity: 0.6; }
-      100% { transform: translateY(0px) scale(1); opacity: 0.3; }
-    }
-    .orb-1 { position: absolute; top: 10%; left: 15%; width: 250px; height: 250px; background: #3b82f6; filter: blur(80px); animation: float 6s ease-in-out infinite; border-radius: 50%; pointer-events: none; }
-    .orb-2 { position: absolute; bottom: 15%; right: 10%; width: 300px; height: 300px; background: #a855f7; filter: blur(90px); animation: float 8s ease-in-out infinite 1s; border-radius: 50%; pointer-events: none; }
-    .orb-3 { position: absolute; top: 40%; right: 40%; width: 150px; height: 150px; background: #facc15; filter: blur(60px); animation: float 7s ease-in-out infinite 2s; border-radius: 50%; pointer-events: none; }
+    .floating-shape-1 { animation: float-shape 6s ease-in-out infinite; }
+    .floating-shape-2 { animation: float-shape 8s ease-in-out infinite 1s; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col splash-active bg-slate-50">
+<body class="min-h-screen flex flex-col splash-active bg-slate-100">
 
-  <!-- VIP POPUP MODAL -->
-  <!-- p-0 on mobile removes outer edges, sm:p-8 keeps desktop looking like a card -->
-  <div id="vipSplashScreen" class="fixed inset-0 z-[100] flex items-center justify-center bg-magical p-0 sm:p-8 transition-all duration-700 overflow-hidden">
+  <!-- BRIGHT, COLORFUL, TOY-STORE SPLASH MODAL -->
+  <div id="vipSplashScreen" class="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-sky-100 via-amber-50 to-pink-100 p-3 sm:p-6 transition-all duration-700 overflow-y-auto">
     
-    <div class="orb-1 z-0"></div>
-    <div class="orb-2 z-0"></div>
-    <div class="orb-3 z-0"></div>
+    <!-- Floating background decorative elements -->
+    <div class="absolute top-6 left-10 text-4xl floating-shape-1 opacity-70 pointer-events-none">🎈</div>
+    <div class="absolute bottom-10 right-10 text-4xl floating-shape-2 opacity-70 pointer-events-none">🧸</div>
+    <div class="absolute top-1/3 right-12 text-3xl floating-shape-1 opacity-65 pointer-events-none">⭐</div>
 
-    <!-- Modal Container: Full width/height on mobile, rounded card on desktop -->
-    <div id="splashModalBox" class="w-full h-full sm:h-auto sm:max-w-5xl bg-[#0a1128]/95 backdrop-blur-xl rounded-none sm:rounded-[2.5rem] flex flex-col md:flex-row overflow-hidden relative shadow-none sm:shadow-[0_30px_60px_rgba(0,0,0,0.7)] border-0 sm:border border-slate-700/60 animate-modal z-10">
+    <!-- Main White Clean Container -->
+    <div class="w-full max-w-xl bg-white rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] border-4 border-amber-200 overflow-hidden relative flex flex-col my-auto">
       
-      <button onclick="HappyToysApp.enterStore()" class="absolute top-3 right-3 sm:top-5 sm:right-5 text-slate-400 hover:text-white z-50 p-2.5 bg-black/30 hover:bg-black/60 rounded-full transition duration-300">
-        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+      <!-- Close Button -->
+      <button onclick="HappyToysApp.enterStore()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 z-50 p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
 
-      <!-- VIDEO AREA -->
-      <!-- Made slightly taller on mobile if needed, perfectly 16:9 on desktop -->
-      <div class="w-full h-[35vh] sm:h-auto md:w-[55%] relative aspect-video bg-black flex items-center justify-center border-b md:border-b-0 md:border-r border-slate-800">
-        <div id="splashMediaPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-600">
-          <svg class="w-16 h-16 mb-2 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 13l-5-4v8l5-4zm5 0l-5-4v8l5-4z"/></svg>
-          <span class="text-sm font-semibold tracking-wider uppercase">Video Area</span>
+      <!-- TOP SECTION: STANDALONE VIDEO/MEDIA CONTAINER -->
+      <div class="p-4 sm:p-6 pb-2">
+        <div class="w-full aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-inner relative flex items-center justify-center border-2 border-slate-200">
+          <div id="splashMediaPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
+            <span class="text-xs font-bold">Loading Toy Video...</span>
+          </div>
+          <video id="splashVideoPlayer" class="w-full h-full object-cover hidden z-10" controls autoplay loop muted playsinline></video>
+          <img id="splashImgPlayer" class="w-full h-full object-cover hidden z-10" alt="Splash Image" />
         </div>
-        <video id="splashVideoPlayer" class="w-full h-full object-cover hidden z-10" controls autoplay loop muted playsinline></video>
-        <img id="splashImgPlayer" class="w-full h-full object-cover hidden z-10" alt="Splash Image" />
       </div>
 
-      <!-- RIGHT SIDE: STORE DETAILS -->
-      <!-- Flex-1 ensures it pushes to fill the rest of the mobile screen perfectly -->
-      <div class="w-full flex-1 md:w-[45%] p-6 sm:p-10 flex flex-col items-center justify-center text-center relative overflow-hidden bg-gradient-to-b from-[#0a1128] to-[#050b18]">
+      <!-- BOTTOM SECTION: STORE DETAILS & COLORFUL FONTS -->
+      <div class="px-6 pb-6 pt-2 text-center flex flex-col items-center">
         
-        <div class="absolute top-6 left-8 text-yellow-400 text-2xl opacity-80 rotate-12">⭐</div>
-        <div class="absolute bottom-16 right-6 text-yellow-400 text-lg opacity-60">✨</div>
-        <div class="absolute top-12 right-12 text-2xl opacity-70 -rotate-12">🚀</div>
+        <!-- Colorful 3D Style Heading -->
+        <h1 class="toy-title-font text-3xl sm:text-4xl text-amber-500 tracking-wide uppercase mb-2 animate-bounce-slow pt-2">
+          Happy Toys Store
+        </h1>
+        <p class="text-slate-600 text-sm font-bold tracking-wide mb-5">
+          ✨ Best Toys for Every Smile ✨
+        </p>
 
-        <div class="flex flex-col items-center mb-4 sm:mb-6 z-10 mt-2">
-          <div class="w-16 h-16 sm:w-24 sm:h-24 rounded-full border-4 border-yellow-400 bg-gradient-to-br from-slate-800 to-slate-900 shadow-2xl flex items-center justify-center text-3xl sm:text-5xl mb-3 relative">
-            🧸
-            <div class="absolute -bottom-2 -right-2 text-xl drop-shadow-md">✨</div>
-          </div>
-          <h1 class="toy-font text-3xl sm:text-4xl font-black text-white tracking-tight leading-none mb-1 drop-shadow-lg">
-            Happy Toys
-          </h1>
-          <h2 class="toy-font text-xl sm:text-3xl font-black text-yellow-400 tracking-wide drop-shadow-lg">
-            Toy Store
-          </h2>
-          <p class="text-slate-300 text-xs sm:text-base font-semibold mt-2 sm:mt-3 tracking-wide">
-            Best Toys for Every Smile ✨
-          </p>
+        <!-- Animated Teddy Bear Badge in Circle -->
+        <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-200 to-yellow-100 border-4 border-amber-400 shadow-md flex items-center justify-center text-4xl mb-6 animate-bounce-slow relative">
+          🧸
+          <span class="absolute -top-1 -right-1 text-sm">✨</span>
         </div>
 
-        <div class="flex justify-center gap-4 sm:gap-8 w-full mb-6 sm:mb-8 border-t border-b border-slate-700/60 py-4 sm:py-5 z-10">
-          <div class="flex flex-col items-center gap-1.5 sm:gap-2 w-16">
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-slate-500 flex items-center justify-center text-slate-200 bg-slate-800/80 shadow-inner">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-            </div>
-            <span class="text-[9px] sm:text-[10px] text-slate-300 font-bold uppercase leading-tight">Premium<br>Quality</span>
+        <!-- Key Features Cards (Colorful Icons) -->
+        <div class="grid grid-cols-3 gap-3 w-full mb-6">
+          <div class="bg-sky-50 border border-sky-200 rounded-2xl p-3 flex flex-col items-center">
+            <span class="text-xl mb-1">🛡️</span>
+            <span class="text-[10px] font-extrabold text-sky-800 uppercase">Premium Quality</span>
           </div>
-          <div class="flex flex-col items-center gap-1.5 sm:gap-2 w-16">
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-slate-500 flex items-center justify-center text-slate-200 bg-slate-800/80 shadow-inner">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-            </div>
-            <span class="text-[9px] sm:text-[10px] text-slate-300 font-bold uppercase leading-tight">Fast<br>Delivery</span>
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex flex-col items-center">
+            <span class="text-xl mb-1">🚀</span>
+            <span class="text-[10px] font-extrabold text-amber-800 uppercase">Fast Delivery</span>
           </div>
-          <div class="flex flex-col items-center gap-1.5 sm:gap-2 w-16">
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-slate-500 flex items-center justify-center text-slate-200 bg-slate-800/80 shadow-inner">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-            <span class="text-[9px] sm:text-[10px] text-slate-300 font-bold uppercase leading-tight">Happy<br>Kids</span>
+          <div class="bg-pink-50 border border-pink-200 rounded-2xl p-3 flex flex-col items-center">
+            <span class="text-xl mb-1">😊</span>
+            <span class="text-[10px] font-extrabold text-pink-800 uppercase">Happy Kids</span>
           </div>
         </div>
 
-        <button onclick="HappyToysApp.enterStore()" class="btn-glow-yellow w-[90%] sm:w-[85%] px-6 py-3.5 sm:py-4 rounded-full text-slate-900 font-black text-lg sm:text-xl flex items-center justify-center gap-2 sm:gap-3 z-10">
-          <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-          Enter Store ➔
+        <!-- Colorful Enter Store Button -->
+        <button onclick="HappyToysApp.enterStore()" class="btn-toy-rainbow w-full py-4 rounded-2xl text-white font-black text-lg sm:text-xl flex items-center justify-center gap-3 shadow-lg">
+          <span>Enter Store ➔</span>
         </button>
 
       </div>
@@ -133,7 +123,6 @@
   </div>
 
   <!-- MAIN STORE CONTENT -->
-  <!-- (Existing content remains below popup) -->
   <div id="mainStoreContent" class="flex flex-col flex-1 opacity-0 h-0 overflow-hidden">
     <div class="rainbow-bar"></div>
     <div class="bg-slate-900 text-white text-xs sm:text-sm py-2 px-4 text-center font-medium">
@@ -147,7 +136,7 @@
           <a href="#" onclick="HappyToysApp.resetFilters(); return false;" class="flex items-center gap-2">
             <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-red-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-sm">🧸</div>
             <div>
-              <span class="toy-font text-xl sm:text-2xl font-black text-slate-800 tracking-tight leading-none block">Happy Toys</span>
+              <span class="toy-title-font text-lg text-amber-500 tracking-tight leading-none block">Happy Toys</span>
             </div>
           </a>
         </div>
@@ -162,7 +151,7 @@
       <div id="categoryDrawerBackdrop" class="drawer-backdrop fixed inset-0"></div>
       <aside class="drawer-panel relative z-10 w-80 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col">
         <div class="p-4 border-b border-slate-200 flex justify-between bg-slate-50">
-          <span class="toy-font text-lg font-bold">🧸 Categories</span>
+          <span class="font-bold">🧸 Categories</span>
           <button id="closeCategoryDrawerBtn" class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-200">✕</button>
         </div>
         <div id="drawerCategoryList" class="p-3 overflow-y-auto space-y-1"></div>
