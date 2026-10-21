@@ -4,17 +4,16 @@ const HappyToysApp = (() => {
 
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
 
+  function getFallbackImageDataUri(title, bgColor = "#e0f2fe") {
+    const safeTitle = (title || "Happy Toys Store").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600"><rect width="100%" height="100%" fill="${bgColor}"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="24" fill="#0f172a">${safeTitle}</text></svg>`;
+    return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+  }
+
   function init() {
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
     state.categories = seed.categories || [];
     
-    // Setup Splash Screen Video
-    const videoPlayer = document.getElementById("splashVideoPlayer");
-    if(appSettings.introVideoUrl && videoPlayer) {
-      videoPlayer.src = appSettings.introVideoUrl;
-      videoPlayer.classList.remove("hidden");
-    }
-
     const saved = localStorage.getItem("hts_custom_products");
     if (saved) {
       try { state.products = JSON.parse(saved); } catch (e) { state.products = seed.products || []; }
@@ -22,21 +21,81 @@ const HappyToysApp = (() => {
       state.products = seed.products || [];
     }
 
+    // Attempt to load video if URL is present in settings
+    const videoPlayer = document.getElementById("splashVideoPlayer");
+    const overlay = document.getElementById("videoOverlay");
+    if(appSettings.introVideoUrl && videoPlayer) {
+        videoPlayer.classList.remove("hidden");
+        // Ensure properties for mobile autoplay
+        videoPlayer.muted = true;
+        videoPlayer.setAttribute("playsinline", "");
+        
+        videoPlayer.src = appSettings.introVideoUrl;
+        
+        videoPlayer.oncanplay = () => {
+            videoPlayer.classList.remove("opacity-0");
+            videoPlayer.classList.add("opacity-100");
+            if(overlay) overlay.classList.remove("hidden");
+        };
+        
+        videoPlayer.onerror = () => {
+            console.error("Video failed to load.");
+            videoPlayer.classList.add("hidden");
+            if(overlay) overlay.classList.add("hidden");
+        };
+    }
+
     bindEvents();
     renderCategories();
     renderProducts();
   }
 
+  function fireConfetti() {
+      var duration = 3 * 1000;
+      var animationEnd = Date.now() + duration;
+      var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 150 };
+
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      var interval = setInterval(function() {
+        var timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        var particleCount = 50 * (timeLeft / duration);
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+      }, 250);
+  }
+
   function enterStore() {
     const splash = document.getElementById("vipSplashScreen");
     const video = document.getElementById("splashVideoPlayer");
-    if(video) video.pause(); // save resources
+    const mainContent = document.getElementById("mainStoreContent");
+    
+    if(video) video.pause();
+    
     if(splash) {
+      splash.style.transform = 'scale(1.2)';
       splash.style.opacity = '0';
+      
       setTimeout(() => {
         splash.classList.add("hidden");
         document.body.classList.remove("splash-active");
-      }, 700);
+        
+        // Show main content with animation
+        mainContent.classList.remove("opacity-0", "h-0", "overflow-hidden");
+        mainContent.classList.add("store-reveal");
+        
+        // Fire confetti!
+        if(typeof confetti === 'function') {
+            fireConfetti();
+        }
+      }, 800);
     }
   }
 
@@ -125,7 +184,7 @@ const HappyToysApp = (() => {
       <article class="toy-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md transition">
         <div>
           <div class="relative overflow-hidden bg-slate-100 aspect-square">
-            <img src="${p.mainImage}" alt="${p.name}" class="toy-card-img w-full h-full object-cover" />
+            <img src="${p.mainImage}" alt="${p.name}" class="toy-card-img w-full h-full object-cover" onerror="this.onerror=null; this.src='${getFallbackImageDataUri(p.name, "#e2e8f0")}';" />
           </div>
           <div class="p-4">
             <h3 class="font-bold text-slate-900 text-base leading-snug mb-1.5 line-clamp-2">${p.name}</h3>
@@ -135,8 +194,8 @@ const HappyToysApp = (() => {
         <div class="px-4 pb-4 pt-2 border-t border-slate-100 bg-white">
           <div class="flex items-baseline gap-2 mb-3"><span class="text-lg font-extrabold text-blue-700">${formatPkr(p.pricePkr)}</span></div>
           <div class="grid grid-cols-2 gap-2">
-            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs">View Details</button>
-            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs">Buy Now</button>
+            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs transition">View Details</button>
+            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition">Buy Now</button>
           </div>
         </div>
         <div class="rainbow-bar"></div>

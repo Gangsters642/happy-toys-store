@@ -6,109 +6,155 @@
   <title>Happy Toys Store | Premium Kids Toys & Educational Games</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/styles.css" />
+  <!-- Confetti JS for the Store Opening Animation -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
-    /* Prevent scrolling while VIP Splash Screen is open */
     body.splash-active { overflow: hidden; }
     
-    /* Splash Screen VIP Button Glow */
-    .vip-glow-btn {
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
-      transition: all 0.3s ease;
+    /* Splash Screen VIP Button Glow & Pulse Animation */
+    @keyframes pulse-glow {
+      0% { box-shadow: 0 0 15px rgba(251, 191, 36, 0.4), inset 0 0 10px rgba(255,255,255,0.2); transform: scale(1); }
+      50% { box-shadow: 0 0 35px rgba(251, 191, 36, 0.8), inset 0 0 15px rgba(255,255,255,0.4); transform: scale(1.05); }
+      100% { box-shadow: 0 0 15px rgba(251, 191, 36, 0.4), inset 0 0 10px rgba(255,255,255,0.2); transform: scale(1); }
     }
+
+    .vip-glow-btn {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: 2px solid #fbbf24;
+      animation: pulse-glow 2s infinite ease-in-out;
+      transition: all 0.3s ease;
+      color: white;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
     .vip-glow-btn:hover {
-      box-shadow: 0 0 40px rgba(255, 255, 255, 0.7);
-      transform: scale(1.05);
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      transform: scale(1.1) !important;
+      box-shadow: 0 0 50px rgba(251, 191, 36, 1);
+    }
+
+    /* Open, Light Background for the Splash to remove "Tunnel" feel */
+    #splashGradient {
+      background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 60%, #e2e8f0 100%);
+    }
+
+    /* Store Opening Animation */
+    .store-reveal {
+      animation: reveal-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes reveal-up {
+      0% { opacity: 0; transform: translateY(40px) scale(0.98); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
   </style>
 </head>
 <body class="min-h-screen flex flex-col splash-active">
 
   <!-- VIP SPLASH SCREEN -->
-  <div id="vipSplashScreen" class="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-700">
-    <!-- Auto-playing background video (Set via Admin) -->
-    <video id="splashVideoPlayer" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-50 hidden"></video>
-    <!-- Fallback gradient if no video is set -->
-    <div id="splashGradient" class="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 opacity-80"></div>
+  <div id="vipSplashScreen" class="fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-1000 bg-white">
+    <!-- The gradient is now light and airy -->
+    <div id="splashGradient" class="absolute inset-0 opacity-100"></div>
     
-    <div class="relative z-10 text-center px-4 flex flex-col items-center">
-      <div class="w-24 h-24 rounded-[2rem] bg-gradient-to-tr from-red-500 via-amber-400 to-blue-600 flex items-center justify-center text-white font-bold text-5xl shadow-2xl mb-6 shadow-amber-500/30">🧸</div>
-      <h1 class="brand-font text-5xl sm:text-6xl font-bold text-white mb-4 drop-shadow-lg tracking-tight">Happy Toys Store</h1>
-      <p class="text-blue-100 text-sm sm:text-lg font-medium mb-10 max-w-md drop-shadow px-4">Experience premium quality educational toys, outdoor fun, and gifts for your kids.</p>
+    <!-- Auto-playing background video (Set via Admin) -->
+    <video id="splashVideoPlayer" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000 hidden pointer-events-none"></video>
+    
+    <!-- A slight dark overlay if video is playing so text is readable, hidden by default -->
+    <div id="videoOverlay" class="absolute inset-0 bg-slate-900/40 hidden"></div>
+    
+    <div class="relative z-10 text-center px-4 flex flex-col items-center w-full max-w-lg">
+      <div class="w-32 h-32 rounded-full bg-white shadow-2xl flex items-center justify-center text-6xl mb-8 border-4 border-amber-400 relative overflow-hidden">
+        <span class="absolute inset-0 bg-gradient-to-tr from-amber-100 to-transparent opacity-50"></span>
+        🧸
+      </div>
       
-      <button onclick="HappyToysApp.enterStore()" class="vip-glow-btn relative px-10 py-4 rounded-2xl bg-white text-slate-900 font-extrabold text-xl overflow-hidden group">
-        <span class="relative z-10 flex items-center gap-3">Visit Store <span class="text-2xl">✨</span></span>
-        <div class="absolute inset-0 bg-gradient-to-r from-amber-100 to-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <h1 class="brand-font text-5xl sm:text-6xl font-black text-slate-900 mb-4 drop-shadow-md tracking-tight">
+        <span class="text-blue-600">Happy</span> Toys
+      </h1>
+      <p class="text-slate-600 text-sm sm:text-lg font-medium mb-12 max-w-md drop-shadow-sm px-4">
+        Discover premium quality educational toys, fun games, and magical gifts for your kids.
+      </p>
+      
+      <button onclick="HappyToysApp.enterStore()" class="vip-glow-btn px-10 py-4 rounded-full font-extrabold text-2xl flex items-center gap-3 cursor-pointer z-20">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
+        </svg>
+        Enter Store ✨
       </button>
     </div>
-    <div class="absolute bottom-0 left-0 w-full rainbow-bar h-2"></div>
+    
+    <div class="absolute bottom-0 left-0 w-full rainbow-bar h-3 z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.1)]"></div>
   </div>
 
-  <div class="rainbow-bar"></div>
-  <div class="bg-slate-900 text-white text-xs sm:text-sm py-2 px-4 text-center font-medium">
-    🎉 Welcome to Happy Toys Store! Fast Delivery Across Pakistan | Order Directly on WhatsApp
-  </div>
-
-  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <button id="openCategoryDrawerBtn" class="p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10" /></svg></button>
-        <a href="#" onclick="HappyToysApp.resetFilters(); return false;" class="flex items-center gap-2">
-          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-red-500 via-amber-400 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-sm">🧸</div>
-          <div>
-            <span class="brand-font text-xl sm:text-2xl font-bold tracking-tight block leading-none"><span class="text-red-500">H</span><span class="text-amber-500">A</span><span class="text-blue-600">P</span><span class="text-green-600">P</span><span class="text-purple-600">Y</span><span class="text-slate-800"> TOYS</span></span>
-            <span class="text-[10px] sm:text-xs font-bold tracking-widest text-blue-700 uppercase block">STORE</span>
-          </div>
-        </a>
-      </div>
-      <div class="hidden md:flex flex-1 max-w-md mx-4">
-        <input id="desktopSearchInput" type="search" placeholder="Search toys..." class="w-full px-4 py-2.5 rounded-full bg-slate-100 focus:border-blue-500 focus:bg-white focus:outline-none text-sm" />
-      </div>
-      <div class="flex items-center gap-2 sm:gap-3">
-        <a href="admin.html" class="text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700">Admin</a>
-        <button onclick="HappyToysCart.openDrawer()" class="relative flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 text-white font-semibold text-xs sm:text-sm shadow-sm">
-          🛒 Cart <span id="cartCountBadge" class="px-1.5 py-0.5 text-[11px] rounded-full bg-amber-400 text-slate-900 font-bold">0</span>
-        </button>
-      </div>
+  <!-- STORE CONTENT (Hidden initially, revealed with animation) -->
+  <div id="mainStoreContent" class="flex flex-col flex-1 opacity-0 h-0 overflow-hidden">
+    <div class="rainbow-bar"></div>
+    <div class="bg-slate-900 text-white text-xs sm:text-sm py-2 px-4 text-center font-medium">
+      🎉 Welcome to Happy Toys Store! Fast Delivery Across Pakistan | Order Directly on WhatsApp
     </div>
-    <div class="md:hidden px-4 pb-3">
-      <input id="mobileSearchInput" type="search" placeholder="Search toys..." class="w-full px-4 py-2 rounded-full bg-slate-100 focus:outline-none text-sm" />
-    </div>
-  </header>
 
-  <div id="categoryDrawerContainer" class="fixed inset-0 z-50 hidden">
-    <div id="categoryDrawerBackdrop" class="drawer-backdrop fixed inset-0"></div>
-    <aside class="drawer-panel relative z-10 w-80 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col">
-      <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-        <span class="brand-font text-lg font-bold text-slate-800">🧸 Toy Categories</span>
-        <button id="closeCategoryDrawerBtn" class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-200">✕</button>
-      </div>
-      <div id="drawerCategoryList" class="p-3 overflow-y-auto flex-1 space-y-1"></div>
-    </aside>
-  </div>
-
-  <main class="flex-1">
-    <section class="bg-white border-b border-slate-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div id="horizontalCategoryBar" class="flex items-center gap-2 overflow-x-auto no-scrollbar"></div>
-      </div>
-    </section>
-
-    <section id="catalogSection" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h2 id="activeCategoryHeading" class="text-xl sm:text-2xl font-bold text-slate-900">All Toys</h2>
-          <p id="productCountSubtext" class="text-xs sm:text-sm text-slate-500">Showing available toys</p>
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <button id="openCategoryDrawerBtn" class="p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10" /></svg></button>
+          <a href="#" onclick="HappyToysApp.resetFilters(); return false;" class="flex items-center gap-2">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-red-500 via-amber-400 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-sm">🧸</div>
+            <div>
+              <span class="brand-font text-xl sm:text-2xl font-bold tracking-tight block leading-none"><span class="text-red-500">H</span><span class="text-amber-500">A</span><span class="text-blue-600">P</span><span class="text-green-600">P</span><span class="text-purple-600">Y</span><span class="text-slate-800"> TOYS</span></span>
+              <span class="text-[10px] sm:text-xs font-bold tracking-widest text-blue-700 uppercase block">STORE</span>
+            </div>
+          </a>
+        </div>
+        <div class="hidden md:flex flex-1 max-w-md mx-4">
+          <input id="desktopSearchInput" type="search" placeholder="Search toys..." class="w-full px-4 py-2.5 rounded-full bg-slate-100 focus:border-blue-500 focus:bg-white focus:outline-none text-sm" />
+        </div>
+        <div class="flex items-center gap-2 sm:gap-3">
+          <a href="admin.html" class="text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700">Admin</a>
+          <button onclick="HappyToysCart.openDrawer()" class="relative flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 text-white font-semibold text-xs sm:text-sm shadow-sm">
+            🛒 Cart <span id="cartCountBadge" class="px-1.5 py-0.5 text-[11px] rounded-full bg-amber-400 text-slate-900 font-bold">0</span>
+          </button>
         </div>
       </div>
-      <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
-      <div id="emptyCatalogState" class="hidden bg-white rounded-2xl border border-slate-200 p-10 text-center max-w-lg mx-auto my-6 shadow-sm">
-        <div class="text-4xl mb-3">🧸</div>
-        <h3 class="text-xl font-bold text-slate-800 mb-2">No Toys Found</h3>
-        <p class="text-sm text-slate-500 mb-5">Click below to load sample products, or add them via Admin panel.</p>
-        <button onclick="HappyToysApp.loadSamples()" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold text-sm">Load Sample Toys</button>
+      <div class="md:hidden px-4 pb-3">
+        <input id="mobileSearchInput" type="search" placeholder="Search toys..." class="w-full px-4 py-2 rounded-full bg-slate-100 focus:outline-none text-sm" />
       </div>
-    </section>
-  </main>
+    </header>
+
+    <div id="categoryDrawerContainer" class="fixed inset-0 z-50 hidden">
+      <div id="categoryDrawerBackdrop" class="drawer-backdrop fixed inset-0"></div>
+      <aside class="drawer-panel relative z-10 w-80 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+          <span class="brand-font text-lg font-bold text-slate-800">🧸 Toy Categories</span>
+          <button id="closeCategoryDrawerBtn" class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-200">✕</button>
+        </div>
+        <div id="drawerCategoryList" class="p-3 overflow-y-auto flex-1 space-y-1"></div>
+      </aside>
+    </div>
+
+    <main class="flex-1">
+      <section class="bg-white border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div id="horizontalCategoryBar" class="flex items-center gap-2 overflow-x-auto no-scrollbar"></div>
+        </div>
+      </section>
+
+      <section id="catalogSection" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 id="activeCategoryHeading" class="text-xl sm:text-2xl font-bold text-slate-900">All Toys</h2>
+            <p id="productCountSubtext" class="text-xs sm:text-sm text-slate-500">Showing available toys</p>
+          </div>
+        </div>
+        <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+        <div id="emptyCatalogState" class="hidden bg-white rounded-2xl border border-slate-200 p-10 text-center max-w-lg mx-auto my-6 shadow-sm">
+          <div class="text-4xl mb-3">🧸</div>
+          <h3 class="text-xl font-bold text-slate-800 mb-2">No Toys Found</h3>
+          <p class="text-sm text-slate-500 mb-5">Click below to load sample products, or add them via Admin panel.</p>
+          <button onclick="HappyToysApp.loadSamples()" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold text-sm">Load Sample Toys</button>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <script src="js/data-seed.js"></script>
   <script src="js/product-modal.js"></script>
