@@ -24,20 +24,19 @@ const HappyToysApp = (() => {
     return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
   }
 
-  async function init() {
+  function init() {
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [], settings: {} };
     state.categories = seed.categories || [];
     
-    // Fetch live products from API with seed fallback
-    try {
-      const res = await fetch("/api/products");
-      const data = await res.json();
-      if (data.success && Array.isArray(data.products) && data.products.length > 0) {
-        state.products = data.products;
-      } else {
+    // Load products from localStorage or seed
+    const saved = localStorage.getItem("hts_custom_products");
+    if (saved) {
+      try {
+        state.products = JSON.parse(saved);
+      } catch (e) {
         state.products = seed.products || [];
       }
-    } catch (err) {
+    } else {
       state.products = seed.products || [];
     }
 
@@ -168,7 +167,7 @@ const HappyToysApp = (() => {
 
     if (filtered.length === 0) {
       if (grid) grid.innerHTML = "";
-      if (emptyState) emptyState.classList.add("hidden"); // simplified
+      if (emptyState) emptyState.classList.remove("hidden");
       return;
     }
     if (emptyState) emptyState.classList.add("hidden");
@@ -180,10 +179,10 @@ const HappyToysApp = (() => {
         const discPct = hasDisc ? Math.round(((p.pricePkr - p.salePricePkr) / p.pricePkr) * 100) : 0;
         const fallback = getFallbackImageDataUri(p.fallbackSvgTitle || p.name, p.fallbackColor);
         return `
-        <article class="toy-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col justify-between">
+        <article class="toy-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md transition">
           <div>
-            <div class="relative overflow-hidden bg-slate-100">
-              <img src="${p.mainImage}" alt="${p.name}" onerror="this.onerror=null; this.src='${fallback}';" class="toy-card-img w-full" />
+            <div class="relative overflow-hidden bg-slate-100 aspect-square">
+              <img src="${p.mainImage}" alt="${p.name}" onerror="this.onerror=null; this.src='${fallback}';" class="toy-card-img w-full h-full object-cover" />
               <div class="absolute top-3 left-3 flex flex-col gap-1.5">
                 ${hasDisc ? `<span class="px-2.5 py-1 rounded-full bg-red-500 text-white font-bold text-[11px] shadow">-${discPct}% OFF</span>` : ""}
                 ${p.isBestSeller ? `<span class="px-2.5 py-1 rounded-full bg-amber-400 text-slate-900 font-bold text-[11px] shadow">🔥 Best Seller</span>` : ""}
@@ -195,19 +194,19 @@ const HappyToysApp = (() => {
                 <span>SKU: ${p.sku}</span>
                 <span class="${p.stockQty > 0 ? "text-emerald-600 font-semibold" : "text-red-500 font-semibold"}">${p.stockQty > 0 ? `● In Stock (${p.stockQty})` : "● Out of Stock"}</span>
               </div>
-              <h3 class="font-bold text-slate-900 text-base leading-snug mb-1.5">${p.name}</h3>
-              <p class="text-xs text-slate-500 mb-3">${p.shortDescription || ""}</p>
+              <h3 class="font-bold text-slate-900 text-base leading-snug mb-1.5 line-clamp-2">${p.name}</h3>
+              <p class="text-xs text-slate-500 mb-3 line-clamp-2">${p.shortDescription || ""}</p>
               ${p.hasVariants ? `<div class="mb-2"><span class="inline-block text-[11px] font-semibold px-2.5 py-1 rounded-md bg-blue-50 text-blue-700">✨ Options Available</span></div>` : ""}
             </div>
           </div>
-          <div class="px-4 pb-4 pt-2 border-t border-slate-100">
+          <div class="px-4 pb-4 pt-2 border-t border-slate-100 bg-white">
             <div class="flex items-baseline gap-2 mb-3">
               <span class="text-lg font-extrabold text-blue-700">${formatPkr(price)}</span>
               ${hasDisc ? `<span class="text-xs text-slate-400 line-through">${formatPkr(p.pricePkr)}</span>` : ""}
             </div>
             <div class="grid grid-cols-2 gap-2">
-              <button onclick="HappyToysApp.openProductModal('${p.id}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs">View Details</button>
-              <button onclick="HappyToysApp.openProductModal('${p.id}')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs">Buy Now</button>
+              <button onclick="HappyToysApp.openProductModal('${p.id}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs transition">View Details</button>
+              <button onclick="HappyToysApp.openProductModal('${p.id}')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition">Buy Now</button>
             </div>
           </div>
           <div class="rainbow-bar"></div>
