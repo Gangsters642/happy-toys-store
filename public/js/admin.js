@@ -4,11 +4,13 @@ const HappyToysAdmin = (() => {
   let appSettings = JSON.parse(localStorage.getItem("hts_settings") || "{}");
 
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
+  
   function getStoredProducts() {
     const saved = localStorage.getItem("hts_custom_products");
     if (saved) { try { return JSON.parse(saved); } catch (e) { } }
     return window.HAPPY_TOYS_SEED ? window.HAPPY_TOYS_SEED.products : [];
   }
+  
   function saveStoredProducts(prods) {
     localStorage.setItem("hts_custom_products", JSON.stringify(prods));
     products = prods;
@@ -19,6 +21,7 @@ const HappyToysAdmin = (() => {
       document.getElementById("adminLoginModal").classList.add("hidden");
       populateCategoryDropdown();
       loadAdminData();
+      // Load saved splash media if exists
       if(appSettings.introGifUrl) {
          showSplashPreview(appSettings.introGifUrl);
       }
@@ -31,11 +34,8 @@ const HappyToysAdmin = (() => {
   function showSplashPreview(dataUrl) {
      const preview = document.getElementById("splashPreview");
      preview.classList.remove("hidden");
-     if(dataUrl.startsWith("data:video")) {
-         preview.innerHTML = `<video src="${dataUrl}" autoplay loop muted playsinline class="w-full h-48 object-cover"></video>`;
-     } else {
-         preview.innerHTML = `<img src="${dataUrl}" class="w-full h-48 object-cover" />`;
-     }
+     // We only handle images/GIFs now to avoid storage limits
+     preview.innerHTML = `<img src="${dataUrl}" class="w-full h-48 object-cover rounded-xl" />`;
      document.getElementById("adminIntroGifUrl").value = dataUrl;
   }
 
@@ -48,15 +48,21 @@ const HappyToysAdmin = (() => {
       .join("");
   }
 
+  // --- FIXED SAVE SETTINGS FUNCTION ---
   function saveSettings() {
     const url = document.getElementById("adminIntroGifUrl").value;
     if(!url) {
-        alert("Please select a video or GIF first.");
+        alert("Please select a valid image or GIF first.");
         return;
     }
-    appSettings.introGifUrl = url;
-    localStorage.setItem("hts_settings", JSON.stringify(appSettings));
-    alert("VIP Splash Screen Media saved successfully! It will now play on the store.");
+    
+    try {
+        appSettings.introGifUrl = url;
+        localStorage.setItem("hts_settings", JSON.stringify(appSettings));
+        alert("✅ VIP Splash Screen Media saved successfully! It is now live on your store.");
+    } catch (e) {
+        alert("Error saving: File might be too large! Please choose a smaller image or GIF (under 2MB).");
+    }
   }
 
   function bindEvents() {
@@ -70,6 +76,7 @@ const HappyToysAdmin = (() => {
         loadAdminData();
       } else { alert("Incorrect password"); }
     });
+    
     document.getElementById("adminLogoutBtn").addEventListener("click", () => {
       localStorage.removeItem("hts_admin_token"); location.reload();
     });
@@ -99,10 +106,18 @@ const HappyToysAdmin = (() => {
     document.getElementById("closeProductModalBtn").addEventListener("click", closeModal);
     document.getElementById("cancelProductModalBtn").addEventListener("click", closeModal);
 
-    // Read Splash Media File locally
+    // Read Splash Media File locally (Compressing large files to avoid quota error)
     document.getElementById("splashMediaUpload").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
+      
+      // Check file size (max ~3MB for localStorage safety)
+      if (file.size > 3 * 1024 * 1024) {
+          alert("File is too large! Please select an image or GIF under 3MB.");
+          e.target.value = ''; // clear input
+          return;
+      }
+
       const reader = new FileReader();
       reader.onload = function(evt) {
         showSplashPreview(evt.target.result);
@@ -113,6 +128,12 @@ const HappyToysAdmin = (() => {
     document.getElementById("imageUploadInput").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
+      
+      if (file.size > 2 * 1024 * 1024) {
+          alert("Image is too large! Please select a smaller photo (under 2MB).");
+          return;
+      }
+
       const reader = new FileReader();
       reader.onload = function(evt) {
         document.getElementById("prodMainImage").value = evt.target.result;
@@ -139,10 +160,15 @@ const HappyToysAdmin = (() => {
       let currentList = getStoredProducts();
       const idx = currentList.findIndex(p => p.id === id);
       if (idx >= 0) currentList[idx] = newProduct; else currentList.unshift(newProduct);
-      saveStoredProducts(currentList);
-      closeModal();
-      renderTable();
-      alert("Toy saved successfully! Now visible on website.");
+      
+      try {
+        saveStoredProducts(currentList);
+        closeModal();
+        renderTable();
+        alert("Toy saved successfully! Now visible on website.");
+      } catch (err) {
+        alert("Storage is full! Delete some older products or use smaller images.");
+      }
     });
   }
 
@@ -160,7 +186,7 @@ const HappyToysAdmin = (() => {
         <td class="py-3 px-4"><div class="flex items-center gap-3"><img src="${p.mainImage}" class="w-10 h-10 rounded-xl object-cover border"/><span class="font-bold text-slate-900">${p.name}</span></div></td>
         <td class="py-3 px-4"><span class="font-mono text-xs text-blue-600 block">${p.sku}</span><span class="text-xs text-slate-500 capitalize">${p.category}</span></td>
         <td class="py-3 px-4 font-bold text-slate-800">${formatPkr(p.pricePkr)}</td>
-        <td class="py-3 px-4 font-semibold ${p.stockQty > 0 ? "text-emerald-600" : "text-red-500"}">${p.stockQty} in stock</td>
+        <td class="py-3 px-4 font-semibold ${p.stockQty > 0 ? "textemerald-600" : "text-red-500"}">${p.stockQty} in stock</td>
         <td class="py-3 px-4 text-right space-x-2">
           <button onclick="HappyToysAdmin.editProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs">Edit</button>
           <button onclick="HappyToysAdmin.deleteProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs">Delete</button>
