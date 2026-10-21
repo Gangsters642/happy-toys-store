@@ -1,25 +1,3 @@
-const HTS_DB = (() => {
-  const dbName = "HappyToysDB";
-  const storeName = "mediaStore";
-  const initDB = () => new Promise((resolve, reject) => {
-    const req = indexedDB.open(dbName, 1);
-    req.onupgradeneeded = (e) => e.target.result.createObjectStore(storeName);
-    req.onsuccess = (e) => resolve(e.target.result);
-    req.onerror = (e) => reject(e.target.error);
-  });
-  return {
-    get: async (key) => {
-      const db = await initDB();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, "readonly");
-        const req = tx.objectStore(storeName).get(key);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(tx.error);
-      });
-    }
-  };
-})();
-
 const HappyToysApp = (() => {
   let state = { categories: [], products: [], activeCategory: "all", searchQuery: "" };
   let appSettings = JSON.parse(localStorage.getItem("hts_settings") || "{}");
@@ -27,34 +5,28 @@ const HappyToysApp = (() => {
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
 
   async function init() {
+    // 1. ALWAYS load data from data-seed.js FIRST (Global Data)
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
     state.categories = seed.categories || [];
-    
-    const saved = localStorage.getItem("hts_custom_products");
-    if (saved) {
-      try { state.products = JSON.parse(saved); } catch (e) { state.products = seed.products || []; }
-    } else {
-      state.products = seed.products || [];
-    }
+    state.products = seed.products || [];
 
-    const splashMedia = await HTS_DB.get('splashMedia');
-    const mediaSource = splashMedia || appSettings.introGifUrl;
-    
-    if (mediaSource) {
-        const isVideo = mediaSource.startsWith("data:video") || mediaSource.endsWith(".mp4") || mediaSource.includes("video");
-        const videoEl = document.getElementById("splashVideoPlayer");
-        const imgEl = document.getElementById("splashImgPlayer");
-        const placeholder = document.getElementById("splashMediaPlaceholder");
+    // NOTE: We are completely ignoring localStorage/IndexedDB for products and videos 
+    // for standard users. This ensures everyone sees the exact same store!
 
+    // If you want a specific video to play for EVERYONE, you MUST put its URL here
+    // Replace this link with your actual hosted video link.
+    const GLOBAL_VIDEO_URL = "https://www.w3schools.com/html/mov_bbb.mp4"; // Example Video
+
+    const videoEl = document.getElementById("splashVideoPlayer");
+    const imgEl = document.getElementById("splashImgPlayer");
+    const placeholder = document.getElementById("splashMediaPlaceholder");
+
+    if (GLOBAL_VIDEO_URL) {
         if (placeholder) placeholder.classList.add("hidden");
-
-        if (isVideo && videoEl) {
-            videoEl.src = mediaSource;
+        if (videoEl) {
+            videoEl.src = GLOBAL_VIDEO_URL;
             videoEl.classList.remove("hidden");
             videoEl.play().catch(e => console.log("Autoplay prevented:", e));
-        } else if (imgEl) {
-            imgEl.src = mediaSource;
-            imgEl.classList.remove("hidden");
         }
     }
 
@@ -136,7 +108,9 @@ const HappyToysApp = (() => {
   function renderProducts() {
     const grid = document.getElementById("productGrid");
     const activeCatObj = state.categories.find(c => c.slug === state.activeCategory);
-    document.getElementById("activeCategoryHeading").textContent = activeCatObj ? activeCatObj.name : "All Toys";
+    if (document.getElementById("activeCategoryHeading")) {
+        document.getElementById("activeCategoryHeading").textContent = activeCatObj ? activeCatObj.name : "All Toys";
+    }
 
     let filtered = state.products.filter((p) => {
       if (!p.isPublished) return false;
@@ -145,7 +119,7 @@ const HappyToysApp = (() => {
     });
 
     if (filtered.length === 0) {
-      grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 font-semibold">No toys found in this category. Add toys via Admin panel!</div>`;
+      grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 font-semibold">No toys found in this category.</div>`;
       return;
     }
 
