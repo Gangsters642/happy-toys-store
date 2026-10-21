@@ -6,12 +6,10 @@
   <title>Happy Toys Store | Premium Kids Toys & Educational Games</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/styles.css" />
-  <!-- Confetti JS for the Store Opening Animation -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     body.splash-active { overflow: hidden; }
     
-    /* Splash Screen VIP Button Glow & Pulse Animation */
     @keyframes pulse-glow {
       0% { box-shadow: 0 0 15px rgba(251, 191, 36, 0.4), inset 0 0 10px rgba(255,255,255,0.2); transform: scale(1); }
       50% { box-shadow: 0 0 35px rgba(251, 191, 36, 0.8), inset 0 0 15px rgba(255,255,255,0.4); transform: scale(1.05); }
@@ -33,12 +31,11 @@
       box-shadow: 0 0 50px rgba(251, 191, 36, 1);
     }
 
-    /* Open, Light Background for the Splash to remove "Tunnel" feel */
+    /* Very Bright, Cheerful Toy Store Gradient */
     #splashGradient {
-      background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 60%, #e2e8f0 100%);
+      background: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 50%, #fce7f3 100%);
     }
 
-    /* Store Opening Animation */
     .store-reveal {
       animation: reveal-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
@@ -53,13 +50,11 @@
 
   <!-- VIP SPLASH SCREEN -->
   <div id="vipSplashScreen" class="fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-1000 bg-white">
-    <!-- The gradient is now light and airy -->
     <div id="splashGradient" class="absolute inset-0 opacity-100"></div>
     
-    <!-- Auto-playing background video (Set via Admin) -->
-    <video id="splashVideoPlayer" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000 hidden pointer-events-none"></video>
+    <!-- Changed from Video to Image (GIF Support) for guaranteed mobile auto-play -->
+    <img id="splashVideoPlayer" src="" alt="Splash Background" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000 hidden pointer-events-none" />
     
-    <!-- A slight dark overlay if video is playing so text is readable, hidden by default -->
     <div id="videoOverlay" class="absolute inset-0 bg-slate-900/40 hidden"></div>
     
     <div class="relative z-10 text-center px-4 flex flex-col items-center w-full max-w-lg">
@@ -71,11 +66,11 @@
       <h1 class="brand-font text-5xl sm:text-6xl font-black text-slate-900 mb-4 drop-shadow-md tracking-tight">
         <span class="text-blue-600">Happy</span> Toys
       </h1>
-      <p class="text-slate-600 text-sm sm:text-lg font-medium mb-12 max-w-md drop-shadow-sm px-4">
+      <p class="text-slate-700 text-sm sm:text-lg font-bold mb-12 max-w-md drop-shadow-sm px-4">
         Discover premium quality educational toys, fun games, and magical gifts for your kids.
       </p>
       
-      <button onclick="HappyToysApp.enterStore()" class="vip-glow-btn px-10 py-4 rounded-full font-extrabold text-2xl flex items-center gap-3 cursor-pointer z-20">
+      <button onclick="HappyToysApp.enterStore()" class="vip-glow-btn px-10 py-4 rounded-full font-extrabold text-2xl flex items-center gap-3 cursor-pointer z-20 shadow-xl">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
         </svg>
@@ -86,8 +81,8 @@
     <div class="absolute bottom-0 left-0 w-full rainbow-bar h-3 z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.1)]"></div>
   </div>
 
-  <!-- STORE CONTENT (Hidden initially, revealed with animation) -->
-  <div id="mainStoreContent" class="flex flex-col flex-1 opacity-0 h-0 overflow-hidden">
+  <!-- MAIN STORE CONTENT -->
+  <div id="mainStoreContent" class="flex flex-col flex-1 opacity-0 h-0 overflow-hidden bg-slate-50">
     <div class="rainbow-bar"></div>
     <div class="bg-slate-900 text-white text-xs sm:text-sm py-2 px-4 text-center font-medium">
       🎉 Welcome to Happy Toys Store! Fast Delivery Across Pakistan | Order Directly on WhatsApp

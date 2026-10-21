@@ -21,49 +21,28 @@ const HappyToysApp = (() => {
       state.products = seed.products || [];
     }
 
-    // --- AGGRESSIVE VIDEO AUTOPLAY LOGIC ---
-    const videoPlayer = document.getElementById("splashVideoPlayer");
+    // Now uses an IMG tag (for GIF or static image) which is NEVER blocked by browsers
+    const visualPlayer = document.getElementById("splashVideoPlayer");
     const overlay = document.getElementById("videoOverlay");
     const gradient = document.getElementById("splashGradient");
     
-    if (appSettings.introVideoUrl && videoPlayer) {
-        // Ensure properties needed for mobile autoplay are strictly set
-        videoPlayer.muted = true;
-        videoPlayer.defaultMuted = true;
-        videoPlayer.setAttribute("playsinline", "playsinline");
-        videoPlayer.setAttribute("webkit-playsinline", "webkit-playsinline");
+    if (appSettings.introGifUrl && visualPlayer) {
+        visualPlayer.src = appSettings.introGifUrl;
         
-        videoPlayer.src = appSettings.introVideoUrl;
+        visualPlayer.onload = () => {
+            visualPlayer.classList.remove("hidden");
+            visualPlayer.classList.remove("opacity-0");
+            visualPlayer.classList.add("opacity-100");
+            if(overlay) {
+                overlay.classList.remove("hidden");
+                overlay.style.backgroundColor = "rgba(15, 23, 42, 0.4)"; // Much lighter overlay 
+            }
+            if(gradient) gradient.classList.add("hidden");
+        };
         
-        // Remove hidden class immediately so it occupies space
-        videoPlayer.classList.remove("hidden");
-        
-        // Attempt to play immediately
-        const playPromise = videoPlayer.play();
-        
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                // Video started playing successfully
-                console.log("Video autoplay started.");
-                videoPlayer.classList.remove("opacity-0");
-                videoPlayer.classList.add("opacity-100");
-                if(overlay) {
-                    overlay.classList.remove("hidden");
-                    // Ensure the overlay is dark enough to see white text, but transparent enough for video
-                    overlay.style.backgroundColor = "rgba(15, 23, 42, 0.6)"; 
-                }
-                if(gradient) gradient.classList.add("hidden"); // Remove solid background
-            }).catch(error => {
-                console.warn("Autoplay blocked, attempting fallback load event.", error);
-                // Fallback: If autoplay is blocked, wait for data to load and try again or show first frame
-                videoPlayer.addEventListener('loadeddata', () => {
-                   videoPlayer.classList.remove("opacity-0");
-                   videoPlayer.classList.add("opacity-100");
-                   if(overlay) overlay.classList.remove("hidden");
-                   if(gradient) gradient.classList.add("hidden");
-                });
-            });
-        }
+        visualPlayer.onerror = () => {
+            console.error("Failed to load GIF/Image.");
+        };
     }
 
     bindEvents();
@@ -82,11 +61,7 @@ const HappyToysApp = (() => {
 
       var interval = setInterval(function() {
         var timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-          return clearInterval(interval);
-        }
-
+        if (timeLeft <= 0) return clearInterval(interval);
         var particleCount = 50 * (timeLeft / duration);
         if(typeof confetti === 'function') {
             confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
@@ -97,10 +72,7 @@ const HappyToysApp = (() => {
 
   function enterStore() {
     const splash = document.getElementById("vipSplashScreen");
-    const video = document.getElementById("splashVideoPlayer");
     const mainContent = document.getElementById("mainStoreContent");
-    
-    if(video) video.pause();
     
     if(splash) {
       splash.style.transform = 'scale(1.2)';
@@ -143,8 +115,8 @@ const HappyToysApp = (() => {
     const drawer = document.getElementById("drawerCategoryList");
     if (horiz) {
       horiz.innerHTML = state.categories.map((cat) => {
-        const active = state.activeCategory === cat.slug ? "bg-blue-600 text-white border-blue-600" : "bg-slate-100 text-slate-700 hover:bg-slate-200 border-transparent";
-        return `<button onclick="HappyToysApp.selectCategory('${cat.slug}')" class="whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 ${active}"><span>${cat.icon}</span><span>${cat.name}</span></button>`;
+        const active = state.activeCategory === cat.slug ? "bg-blue-600 text-white border-blue-600 shadow-sm" : "bg-white text-slate-700 hover:bg-slate-100 border-slate-200";
+        return `<button onclick="HappyToysApp.selectCategory('${cat.slug}')" class="whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold border transition flex items-center gap-1.5 ${active}"><span>${cat.icon}</span><span>${cat.name}</span></button>`;
       }).join("");
     }
     if (drawer) {
@@ -200,24 +172,26 @@ const HappyToysApp = (() => {
     emptyState.classList.add("hidden");
 
     grid.innerHTML = filtered.map((p) => `
-      <article class="toy-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md transition">
+      <article class="toy-card bg-white rounded-3xl border border-slate-200/60 overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300">
         <div>
-          <div class="relative overflow-hidden bg-slate-100 aspect-square">
-            <img src="${p.mainImage}" alt="${p.name}" class="toy-card-img w-full h-full object-cover" onerror="this.onerror=null; this.src='${getFallbackImageDataUri(p.name, "#e2e8f0")}';" />
+          <div class="relative overflow-hidden bg-slate-50 aspect-square p-2">
+            <img src="${p.mainImage}" alt="${p.name}" class="toy-card-img w-full h-full object-cover rounded-2xl" onerror="this.onerror=null; this.src='${getFallbackImageDataUri(p.name, "#e2e8f0")}';" />
+            <div class="absolute top-4 left-4 flex flex-col gap-1.5">
+              ${p.salePricePkr && p.salePricePkr < p.pricePkr ? `<span class="px-3 py-1 rounded-full bg-red-500 text-white font-extrabold text-[10px] shadow-sm tracking-wider uppercase">Sale</span>` : ""}
+            </div>
           </div>
-          <div class="p-4">
-            <h3 class="font-bold text-slate-900 text-base leading-snug mb-1.5 line-clamp-2">${p.name}</h3>
-            <p class="text-[11px] text-slate-400 font-medium mb-2">SKU: ${p.sku} | ${p.stockQty > 0 ? `<span class="text-emerald-600">In Stock</span>` : `<span class="text-red-500">Out of Stock</span>`}</p>
-          </div>
-        </div>
-        <div class="px-4 pb-4 pt-2 border-t border-slate-100 bg-white">
-          <div class="flex items-baseline gap-2 mb-3"><span class="text-lg font-extrabold text-blue-700">${formatPkr(p.pricePkr)}</span></div>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs transition">View Details</button>
-            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition">Buy Now</button>
+          <div class="px-5 pt-4 pb-2">
+            <h3 class="font-extrabold text-slate-900 text-lg leading-tight mb-1 line-clamp-2">${p.name}</h3>
+            <p class="text-[11px] font-bold text-slate-400 mb-2">SKU: ${p.sku} &bull; ${p.stockQty > 0 ? `<span class="text-emerald-500">IN STOCK</span>` : `<span class="text-red-500">SOLD OUT</span>`}</p>
           </div>
         </div>
-        <div class="rainbow-bar"></div>
+        <div class="px-5 pb-5 bg-white">
+          <div class="flex items-end gap-2 mb-4">
+            <span class="text-2xl font-black text-blue-600">${formatPkr(p.salePricePkr || p.pricePkr)}</span>
+            ${p.salePricePkr && p.salePricePkr < p.pricePkr ? `<span class="text-sm font-bold text-slate-400 line-through pb-1">${formatPkr(p.pricePkr)}</span>` : ""}
+          </div>
+          <button onclick="HappyToysApp.openProductModal('${p.id}')" class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm transition-all shadow-md hover:shadow-lg">View Details</button>
+        </div>
       </article>`).join("");
   }
 

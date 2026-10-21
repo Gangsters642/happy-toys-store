@@ -19,8 +19,8 @@ const HappyToysAdmin = (() => {
       document.getElementById("adminLoginModal").classList.add("hidden");
       populateCategoryDropdown();
       loadAdminData();
-      if(appSettings.introVideoUrl) {
-        document.getElementById("adminIntroVideoUrl").value = appSettings.introVideoUrl;
+      if(appSettings.introGifUrl) {
+        document.getElementById("adminIntroGifUrl").value = appSettings.introGifUrl;
       }
     } else {
       document.getElementById("adminLoginModal").classList.remove("hidden");
@@ -38,8 +38,8 @@ const HappyToysAdmin = (() => {
   }
 
   function saveSettings() {
-    const url = document.getElementById("adminIntroVideoUrl").value.trim();
-    appSettings.introVideoUrl = url;
+    const url = document.getElementById("adminIntroGifUrl").value.trim();
+    appSettings.introGifUrl = url;
     localStorage.setItem("hts_settings", JSON.stringify(appSettings));
     alert("VIP Splash Screen Video updated successfully!");
   }
