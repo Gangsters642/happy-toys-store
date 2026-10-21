@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Happy Toys Store | Premium Kids Toys</title>
-  <!-- Preload video immediately before anything else -->
   <link rel="preload" href="/api/splash-media" as="video" type="video/mp4" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/styles.css" />
@@ -37,6 +36,41 @@
       100% { background-position: 0% 50%; }
     }
     .btn-vip-gradient:hover { transform: scale(1.04); box-shadow: 0 15px 30px rgba(255, 204, 0, 0.6); }
+
+    /* ========================================== */
+    /* NEW: PRODUCT SCROLL REVEAL & FLOATING UI   */
+    /* ========================================== */
+    .toy-card-reveal {
+      opacity: 0;
+      transform: translateY(45px) scale(0.92);
+      transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+
+    .toy-card-reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    @keyframes card-gentle-wave {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-7px); }
+    }
+
+    .toy-card-reveal.is-visible.wave-even {
+      animation: card-gentle-wave 3.8s ease-in-out infinite 0.7s;
+    }
+
+    .toy-card-reveal.is-visible.wave-odd {
+      animation: card-gentle-wave 4.2s ease-in-out infinite 1.4s;
+    }
+
+    .toy-card-reveal:hover, .toy-card-reveal:active {
+      animation-play-state: paused !important;
+      transform: translateY(-8px) scale(1.03) !important;
+      box-shadow: 0 20px 35px rgba(245, 158, 11, 0.22) !important;
+      border-color: #fbbf24 !important;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col splash-active bg-slate-50">
@@ -51,10 +85,15 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
 
-      <!-- INSTANT STREAMING VIDEO SECTION -->
+      <!-- INSTANT STREAMING VIDEO SECTION (UNMUTED BY DEFAULT) -->
       <div class="w-full aspect-video bg-amber-50/50 rounded-2xl overflow-hidden shadow-sm relative flex items-center justify-center border-2 border-amber-100 mb-5">
-        <video id="splashVideoPlayer" src="/api/splash-media" preload="auto" class="w-full h-full object-cover z-10" controls autoplay loop muted playsinline></video>
+        <video id="splashVideoPlayer" src="/api/splash-media" preload="auto" class="w-full h-full object-cover z-10" controls autoplay loop playsinline></video>
         <img id="splashImgPlayer" class="w-full h-full object-cover hidden z-10" alt="Splash Image" />
+        
+        <!-- Fallback Tap-to-Unmute Badge (Only shows if mobile browser blocks sound) -->
+        <button id="unmuteNoticeBtn" class="hidden absolute top-3 left-3 z-30 bg-amber-500/95 hover:bg-amber-600 text-white text-xs font-black px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 animate-bounce">
+          <span>🔊</span> <span>Tap for Sound</span>
+        </button>
       </div>
 
       <!-- STORE NAME -->
@@ -142,7 +181,7 @@
 
       <section class="max-w-7xl mx-auto px-4 py-8">
         <h2 id="activeCategoryHeading" class="toy-title-font text-2xl text-slate-800 mb-6">All Toys</h2>
-        <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+        <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5"></div>
       </section>
     </main>
   </div>
@@ -153,9 +192,6 @@
   <script src="js/app.js"></script>
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-       const vid = document.getElementById('splashVideoPlayer');
-       if (vid) vid.play().catch(() => {});
-
        if(typeof confetti === 'function') {
            confetti({ particleCount: 120, spread: 100, origin: { y: 0.8 } });
            var duration = 15 * 1000;

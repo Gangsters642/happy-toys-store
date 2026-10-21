@@ -1,19 +1,70 @@
 const HappyToysApp = (() => {
   let state = { categories: [], products: [], activeCategory: "all", searchQuery: "" };
+  let scrollObserver = null;
 
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
 
-  async function init() {
-    // Play video immediately without waiting for any API
+  function setupVideoWithSound() {
     const videoEl = document.getElementById("splashVideoPlayer");
-    if (videoEl) {
-      videoEl.play().catch(() => {});
+    const unmuteBtn = document.getElementById("unmuteNoticeBtn");
+    if (!videoEl) return;
+
+    // 1. Force unmute and 100% volume
+    videoEl.muted = false;
+    videoEl.volume = 1.0;
+
+    const playPromise = videoEl.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Browser blocked unmuted autoplay -> start playing muted so video doesn't freeze,
+        // and unmute on the very first touch/click anywhere on the screen!
+        videoEl.muted = true;
+        videoEl.play().catch(() => {});
+        if (unmuteBtn) unmuteBtn.classList.remove("hidden");
+
+        const enableAudio = () => {
+          videoEl.muted = false;
+          videoEl.volume = 1.0;
+          videoEl.play().catch(() => {});
+          if (unmuteBtn) unmuteBtn.classList.add("hidden");
+          document.removeEventListener("click", enableAudio);
+          document.removeEventListener("touchstart", enableAudio);
+        };
+
+        document.addEventListener("click", enableAudio, { once: true });
+        document.addEventListener("touchstart", enableAudio, { once: true });
+      });
     }
+  }
+
+  function initScrollAnimations() {
+    if (scrollObserver) scrollObserver.disconnect();
+
+    scrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+        } else {
+          // Re-animate smoothly when scrolling back up/down
+          entry.target.classList.remove("is-visible");
+        }
+      });
+    }, { threshold: 0.12 });
+
+    const cards = document.querySelectorAll(".toy-card-reveal");
+    cards.forEach((card, index) => {
+      // Stagger delay so cards pop in one after another nicely
+      card.style.transitionDelay = `${(index % 4) * 90}ms`;
+      scrollObserver.observe(card);
+    });
+  }
+
+  async function init() {
+    setupVideoWithSound();
 
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
     state.categories = seed.categories || [];
 
-    // Load cached products immediately for 0ms product render
     const savedLocal = localStorage.getItem("hts_custom_products");
     if (savedLocal) {
       try { state.products = JSON.parse(savedLocal); } catch (e) {}
@@ -26,7 +77,6 @@ const HappyToysApp = (() => {
     renderCategories();
     renderProducts();
 
-    // Sync latest products in background
     try {
       const storeRes = await fetch("/api/store");
       if (storeRes.ok) {
@@ -53,7 +103,10 @@ const HappyToysApp = (() => {
     const video = document.getElementById("splashVideoPlayer");
     const mainContent = document.getElementById("mainStoreContent");
 
-    if (video) video.pause();
+    if (video) {
+      video.pause();
+      video.muted = true;
+    }
 
     if (splash) {
       splash.style.opacity = "0";
@@ -63,6 +116,7 @@ const HappyToysApp = (() => {
         mainContent.classList.remove("opacity-0", "h-0", "overflow-hidden");
         mainContent.classList.add("store-reveal");
         fireEnterStoreConfetti();
+        initScrollAnimations();
       }, 700);
     }
   }
@@ -132,19 +186,25 @@ const HappyToysApp = (() => {
       return;
     }
 
-    grid.innerHTML = filtered.map((p) => `
-      <article class="toy-card bg-white rounded-3xl border-2 border-slate-100 overflow-hidden flex flex-col shadow-sm hover:shadow-xl transition-all duration-300">
-        <div class="relative aspect-square p-3 bg-amber-50/40 cursor-pointer" onclick="HappyToysApp.openProductModal('${p.id}')">
-          <img src="${p.mainImage}" alt="${p.name}" class="w-full h-full object-cover rounded-2xl" />
+    grid.innerHTML = filtered.map((p, idx) => {
+      const waveClass = idx % 2 === 0 ? "wave-even" : "wave-odd";
+      return `
+      <article class="toy-card toy-card-reveal ${waveClass} bg-white rounded-3xl border-2 border-slate-100 overflow-hidden flex flex-col shadow-md transition-all duration-300">
+        <div class="relative aspect-square p-3 bg-gradient-to-br from-amber-50/60 via-white to-sky-50/40 cursor-pointer overflow-hidden group" onclick="HappyToysApp.openProductModal('${p.id}')">
+          <img src="${p.mainImage}" alt="${p.name}" class="w-full h-full object-cover rounded-2xl transition-transform duration-500 group-hover:scale-105" />
+          <span class="absolute top-4 right-4 bg-amber-400 text-slate-900 text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm">✨ HOT</span>
         </div>
         <div class="px-4 pt-3 pb-4 bg-white flex-1 flex flex-col justify-between">
-          <h3 class="font-black text-slate-900 text-sm leading-snug mb-2 line-clamp-2 cursor-pointer" onclick="HappyToysApp.openProductModal('${p.id}')">${p.name}</h3>
+          <h3 class="font-black text-slate-900 text-sm leading-snug mb-2 line-clamp-2 cursor-pointer hover:text-amber-600 transition" onclick="HappyToysApp.openProductModal('${p.id}')">${p.name}</h3>
           <div>
             <span class="text-xl font-black text-blue-600 block mb-3">${formatPkr(p.pricePkr)}</span>
-            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="w-full py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-md transition">Buy Now</button>
+            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="w-full py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs shadow-md active:scale-95 transition-all">Buy Now 🛒</button>
           </div>
         </div>
-      </article>`).join("");
+      </article>`;
+    }).join("");
+
+    initScrollAnimations();
   }
 
   return { init, selectCategory, resetFilters, openProductModal, enterStore };
