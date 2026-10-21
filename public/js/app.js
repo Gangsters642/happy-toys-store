@@ -80,15 +80,13 @@ const HappyToysApp = (() => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add("is-visible");
-        } else {
-          entry.target.classList.remove("is-visible");
         }
       });
-    }, { threshold: 0.12 });
+    }, { threshold: 0.08 });
 
     const cards = document.querySelectorAll(".toy-card-reveal");
     cards.forEach((card, index) => {
-      card.style.transitionDelay = `${(index % 4) * 70}ms`;
+      card.style.transitionDelay = `${(index % 4) * 50}ms`;
       scrollObserver.observe(card);
     });
   }
@@ -251,8 +249,8 @@ const HappyToysApp = (() => {
     const grid = document.getElementById("productGrid");
     if (!grid) return;
 
-    // Force 2-column mobile grid just like the reference image
-    grid.className = "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4";
+    // Expand grid width on mobile (-mx-2) so cards are wider and aligned side-by-side
+    grid.className = "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 -mx-2 sm:mx-0";
 
     const activeCatObj = state.categories.find(c => c.slug === state.activeCategory);
     if (document.getElementById("activeCategoryHeading")) {
@@ -284,18 +282,18 @@ const HappyToysApp = (() => {
     ];
 
     grid.innerHTML = filtered.map((p, idx) => {
-      const waveClass = idx % 2 === 0 ? "wave-even" : "wave-odd";
       const badge = badges[idx % badges.length];
       const reviewInfo = sampleRatings[idx % sampleRatings.length];
       const catInfo = getCategoryDisplay(p.category);
       const isFavorited = state.favorites.includes(p.id);
 
       return `
-      <article class="toy-card toy-card-reveal ${waveClass} bg-white rounded-[1.4rem] p-2 sm:p-3 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.08)] flex flex-col justify-between transition-all duration-300">
+      <article class="toy-card-reveal w-full overflow-hidden bg-white rounded-[1.35rem] p-2 sm:p-3 border border-slate-100 shadow-[0_4px_18px_-4px_rgba(15,23,42,0.08)] flex flex-col justify-between transition-all duration-300">
         
-        <!-- Top Image Container -->
-        <div>
-          <div class="relative aspect-[1.05/1] w-full rounded-2xl overflow-hidden bg-slate-50 cursor-pointer group" onclick="HappyToysApp.openProductModal('${p.id}')">
+        <!-- Top Image & Details -->
+        <div class="w-full">
+          <!-- Square/4:3 Image Box -->
+          <div class="relative aspect-[1.04/1] w-full rounded-2xl overflow-hidden bg-slate-50 cursor-pointer group" onclick="HappyToysApp.openProductModal('${p.id}')">
             <img src="${p.mainImage}" alt="${p.name}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
             
             <!-- Top-Left Yellow Badge -->
@@ -304,7 +302,7 @@ const HappyToysApp = (() => {
               <span>${badge.text}</span>
             </span>
 
-            <!-- Top-Right Solid Red Heart Circle -->
+            <!-- Top-Right Red Heart Circle -->
             <button onclick="HappyToysApp.toggleFavorite('${p.id}', event)" 
                     aria-label="Favorite"
                     class="absolute top-2 right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/95 hover:bg-white flex items-center justify-center shadow-md active:scale-90 transition">
@@ -313,7 +311,7 @@ const HappyToysApp = (() => {
               </svg>
             </button>
 
-            <!-- Rainbow Bottom Strip inside Image -->
+            <!-- Rainbow Bottom Strip -->
             <div class="absolute bottom-0 inset-x-0 h-1 flex">
               <span class="flex-1 bg-rose-500"></span>
               <span class="flex-1 bg-amber-400"></span>
@@ -323,16 +321,16 @@ const HappyToysApp = (() => {
             </div>
           </div>
 
-          <!-- Product Info Section (Exact Order from Reference Image) -->
+          <!-- Product Text Details -->
           <div class="pt-2.5 px-0.5">
-            <!-- 1. Product Title -->
-            <h3 class="font-extrabold text-[#0F172A] text-[13px] sm:text-base leading-snug line-clamp-1 cursor-pointer hover:text-blue-600 transition" onclick="HappyToysApp.openProductModal('${p.id}')">
+            <!-- 1. Product Name -->
+            <h3 class="font-extrabold text-[#0F172A] text-[13.5px] sm:text-base leading-tight line-clamp-1 cursor-pointer hover:text-blue-600 transition" onclick="HappyToysApp.openProductModal('${p.id}')">
               ${p.name}
             </h3>
 
-            <!-- 2. Small Category Icon & Label -->
-            <div class="flex items-center gap-1.5 mt-1 text-[11px] sm:text-xs text-slate-500 font-medium">
-              <span class="text-xs sm:text-sm leading-none">${catInfo.icon}</span>
+            <!-- 2. Small Category Icon & Name -->
+            <div class="flex items-center gap-1.5 mt-1 text-[11px] sm:text-xs text-[#475569] font-semibold">
+              <span class="text-xs sm:text-sm leading-none shrink-0">${catInfo.icon}</span>
               <span class="capitalize truncate">${catInfo.label}</span>
             </div>
 
@@ -342,46 +340,46 @@ const HappyToysApp = (() => {
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
               </svg>
               <span class="font-extrabold text-slate-800">${p.rating || reviewInfo.score}</span>
-              <span class="text-slate-400 font-medium truncate">(${p.reviewsCount || reviewInfo.count} reviews)</span>
+              <span class="text-[#64748B] font-medium truncate">(${p.reviewsCount || reviewInfo.count} reviews)</span>
             </div>
 
-            <!-- 4. Price in Vibrant Blue -->
+            <!-- 4. Price in Blue -->
             <div class="mt-1.5 mb-2">
-              <span class="text-[15px] sm:text-xl font-black text-[#0066FF] tracking-tight block leading-none">
+              <span class="text-[16px] sm:text-xl font-black text-[#0066FF] tracking-tight block leading-none">
                 ${formatPkr(p.pricePkr)}
               </span>
             </div>
           </div>
         </div>
 
-        <!-- 5. Bottom Action Row: [ ♡ ] [ 🛒 Add to Cart ] [ 🛍️ Buy Now ] -->
-        <div class="flex items-center gap-1 sm:gap-1.5 pt-0.5">
-          <!-- Favorite Heart Toggle Button -->
+        <!-- 5. Locked Inside-Card Grid Row: [ ♡ ] [ 🛒 Add to Cart ] [ 🛍️ Buy Now ] -->
+        <div class="grid grid-cols-[28px_1.18fr_1fr] sm:grid-cols-[36px_1.15fr_1fr] items-center gap-1 sm:gap-1.5 w-full pt-0.5">
+          <!-- Favorite Outline Heart Button -->
           <button onclick="HappyToysApp.toggleFavorite('${p.id}', event)" 
                   aria-label="Save Favorite"
-                  class="w-7 h-7 sm:w-9 sm:h-9 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 flex items-center justify-center shrink-0 shadow-xs active:scale-90 transition">
+                  class="w-[28px] h-[28px] sm:w-9 sm:h-9 rounded-lg sm:rounded-xl border border-slate-200 bg-white hover:bg-rose-50 flex items-center justify-center shrink-0 active:scale-90 transition">
             <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500 transition-transform" fill="${isFavorited ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
             </svg>
           </button>
 
-          <!-- Add to Cart Button (Orange Pill + Cart Sticker) -->
+          <!-- Add to Cart Button (Fits 100% Inside Card) -->
           <button onclick="event.stopPropagation(); HappyToysCart.addToCart('${p.id}');" 
-                  class="flex-1 h-7 sm:h-9 px-1.5 sm:px-2.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-white font-extrabold text-[9.5px] sm:text-xs shadow-xs active:scale-95 transition flex items-center justify-center gap-1 whitespace-nowrap">
+                  class="w-full min-w-0 h-[28px] sm:h-9 px-1 sm:px-2.5 rounded-full bg-[#F59E0B] hover:bg-amber-600 text-white font-extrabold text-[8.8px] sm:text-xs tracking-tight active:scale-95 transition flex items-center justify-center gap-1 overflow-hidden">
             <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-current shrink-0" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
-            <span>Add to Cart</span>
+            <span class="truncate">Add to Cart</span>
           </button>
 
-          <!-- Buy Now Button (Blue Pill + Shopping Bag Sticker -> Direct WhatsApp) -->
+          <!-- Buy Now Button (Fits 100% Inside Card -> Direct WhatsApp) -->
           <button onclick="HappyToysApp.buyNowDirectWhatsApp('${p.id}', event)" 
-                  class="flex-1 h-7 sm:h-9 px-1.5 sm:px-2.5 rounded-full bg-[#0066FF] hover:bg-blue-700 text-white font-extrabold text-[9.5px] sm:text-xs shadow-xs active:scale-95 transition flex items-center justify-center gap-1 whitespace-nowrap">
+                  class="w-full min-w-0 h-[28px] sm:h-9 px-1 sm:px-2.5 rounded-full bg-[#0066FF] hover:bg-blue-700 text-white font-extrabold text-[8.8px] sm:text-xs tracking-tight active:scale-95 transition flex items-center justify-center gap-1 overflow-hidden">
             <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" viewBox="0 0 24 24" fill="none">
               <path d="M9 6V5a3 3 0 016 0v1" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
               <path fill-rule="evenodd" clip-rule="evenodd" d="M5.6 6h12.8c.95 0 1.74.74 1.8 1.69l.65 11A2 2 0 0118.86 21H5.14a2 2 0 01-1.99-2.31l.65-11C3.86 6.74 4.65 6 5.6 6zm6.4 8.2l-2.3-2.5h4.6L12 14.2z" fill="white"/>
             </svg>
-            <span>Buy Now</span>
+            <span class="truncate">Buy Now</span>
           </button>
         </div>
 
