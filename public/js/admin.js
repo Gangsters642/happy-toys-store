@@ -32,7 +32,7 @@ const HTS_DB = (() => {
 const HappyToysAdmin = (() => {
   let token = localStorage.getItem("hts_admin_token") || "";
   let products = [];
-  let tempMediaUrl = null;
+  let appSettings = JSON.parse(localStorage.getItem("hts_settings") || "{}");
 
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
   
@@ -53,10 +53,12 @@ const HappyToysAdmin = (() => {
       populateCategoryDropdown();
       loadAdminData();
       
-      // Load saved video from Advanced Storage
       const savedMedia = await HTS_DB.get('splashMedia');
       if (savedMedia) {
          showSplashPreview(savedMedia);
+      } else if (appSettings.introGifUrl) {
+         document.getElementById("adminIntroGifUrl").value = appSettings.introGifUrl;
+         showSplashPreview(appSettings.introGifUrl);
       }
     } else {
       document.getElementById("adminLoginModal").classList.remove("hidden");
@@ -67,10 +69,10 @@ const HappyToysAdmin = (() => {
   function showSplashPreview(dataUrl) {
      const preview = document.getElementById("splashPreview");
      preview.classList.remove("hidden");
-     if (dataUrl.startsWith("data:video")) {
-         preview.innerHTML = `<video src="${dataUrl}" autoplay loop muted playsinline class="w-full h-48 object-cover rounded-xl"></video>`;
+     if (dataUrl.startsWith("data:video") || dataUrl.endsWith(".mp4")) {
+         preview.innerHTML = `<video src="${dataUrl}" autoplay loop muted playsinline class="w-full h-48 object-cover"></video>`;
      } else {
-         preview.innerHTML = `<img src="${dataUrl}" class="w-full h-48 object-cover rounded-xl" />`;
+         preview.innerHTML = `<img src="${dataUrl}" class="w-full h-48 object-cover" />`;
      }
   }
 
@@ -84,18 +86,26 @@ const HappyToysAdmin = (() => {
   }
 
   async function saveSettings() {
-    if(!tempMediaUrl) {
-        alert("Please Select a Video or Image first.");
-        return;
-    }
-    document.getElementById("saveMediaBtn").textContent = "Saving Video... Please Wait";
+    const urlInput = document.getElementById("adminIntroGifUrl").value;
+    const btn = document.getElementById("saveMediaBtn");
+    btn.textContent = "Saving Video... Please Wait";
+    
     try {
-        await HTS_DB.set('splashMedia', tempMediaUrl);
-        alert("✅ VIP Splash Video Saved Perfectly! It will now play on your Storefront.");
+        if (window.tempMediaData) {
+            // Save local video to IndexedDB
+            await HTS_DB.set('splashMedia', window.tempMediaData);
+            appSettings.introGifUrl = ""; // Clear URL if local is used
+        } else if (urlInput) {
+            // Save URL to Settings
+            appSettings.introGifUrl = urlInput;
+            await HTS_DB.set('splashMedia', null); // Clear local if URL is used
+        }
+        localStorage.setItem("hts_settings", JSON.stringify(appSettings));
+        alert("✅ VIP Splash Video Saved Perfectly!");
     } catch (e) {
-        alert("Error: Video is too large. Please select a smaller video.");
+        alert("Error saving. Video might be too large.");
     }
-    document.getElementById("saveMediaBtn").textContent = "Save Splash Media";
+    btn.textContent = "Save Splash Video";
   }
 
   function bindEvents() {
@@ -107,47 +117,31 @@ const HappyToysAdmin = (() => {
         document.getElementById("adminLoginModal").classList.add("hidden");
         populateCategoryDropdown();
         loadAdminData();
-      } else { alert("Incorrect password"); }
+      }
     });
-    
+
     document.getElementById("adminLogoutBtn").addEventListener("click", () => {
       localStorage.removeItem("hts_admin_token"); location.reload();
     });
 
-    const modal = document.getElementById("productModal");
-    const openModal = (product = null) => {
-      document.getElementById("productForm").reset();
-      document.getElementById("imagePreviewContainer").innerHTML = "";
-      if (product) {
-        document.getElementById("productModalTitle").textContent = "Edit Toy: " + product.name;
-        document.getElementById("editProductId").value = product.id;
-        document.getElementById("prodName").value = product.name;
-        document.getElementById("prodSku").value = product.sku;
-        document.getElementById("prodCategory").value = product.category;
-        document.getElementById("prodStock").value = product.stockQty;
-        document.getElementById("prodPrice").value = product.pricePkr;
-        document.getElementById("prodMainImage").value = product.mainImage || "";
-      } else {
-        document.getElementById("productModalTitle").textContent = "Add New Toy Product";
-        document.getElementById("editProductId").value = "";
-      }
-      modal.classList.remove("hidden");
-    };
-    const closeModal = () => modal.classList.add("hidden");
-
-    document.getElementById("openAddProductModalBtn").addEventListener("click", () => openModal());
-    document.getElementById("closeProductModalBtn").addEventListener("click", closeModal);
-    document.getElementById("cancelProductModalBtn").addEventListener("click", closeModal);
     document.getElementById("saveMediaBtn").addEventListener("click", saveSettings);
 
-    // Advanced Media Reader for Large Videos
+    const modal = document.getElementById("productModal");
+    document.getElementById("openAddProductModalBtn").addEventListener("click", () => {
+      document.getElementById("productForm").reset();
+      document.getElementById("editProductId").value = "";
+      modal.classList.remove("hidden");
+    });
+    document.getElementById("closeProductModalBtn").addEventListener("click", () => modal.classList.add("hidden"));
+
     document.getElementById("splashMediaUpload").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
+      document.getElementById("adminIntroGifUrl").value = ""; // clear url
       const reader = new FileReader();
       reader.onload = function(evt) {
-        tempMediaUrl = evt.target.result;
-        showSplashPreview(tempMediaUrl);
+        window.tempMediaData = evt.target.result;
+        showSplashPreview(window.tempMediaData);
       };
       reader.readAsDataURL(file);
     });
@@ -180,9 +174,9 @@ const HappyToysAdmin = (() => {
       const idx = currentList.findIndex(p => p.id === id);
       if (idx >= 0) currentList[idx] = newProduct; else currentList.unshift(newProduct);
       saveStoredProducts(currentList);
-      closeModal();
+      modal.classList.add("hidden");
       renderTable();
-      alert("Toy saved successfully!");
+      alert("Toy saved!");
     });
   }
 
@@ -190,7 +184,6 @@ const HappyToysAdmin = (() => {
 
   function renderTable() {
     const tbody = document.getElementById("adminProductTableBody");
-    document.getElementById("adminProductCount").textContent = products.length + " items";
     if (products.length === 0) {
       tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400">No products found.</td></tr>`;
       return;
@@ -200,44 +193,19 @@ const HappyToysAdmin = (() => {
         <td class="py-3 px-4"><div class="flex items-center gap-3"><img src="${p.mainImage}" class="w-10 h-10 rounded-xl object-cover border"/><span class="font-bold text-slate-900">${p.name}</span></div></td>
         <td class="py-3 px-4"><span class="font-mono text-xs text-blue-600 block">${p.sku}</span><span class="text-xs text-slate-500 capitalize">${p.category}</span></td>
         <td class="py-3 px-4 font-bold text-slate-800">${formatPkr(p.pricePkr)}</td>
-        <td class="py-3 px-4 font-semibold ${p.stockQty > 0 ? "text-emerald-600" : "text-red-500"}">${p.stockQty} in stock</td>
+        <td class="py-3 px-4 font-semibold ${p.stockQty > 0 ? "text-emerald-600" : "text-red-500"}">${p.stockQty}</td>
         <td class="py-3 px-4 text-right space-x-2">
-          <button onclick="HappyToysAdmin.editProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs">Edit</button>
-          <button onclick="HappyToysAdmin.deleteProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs">Delete</button>
+          <button onclick="HappyToysAdmin.deleteProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs">Del</button>
         </td>
       </tr>`).join("");
   }
-
-  function editProduct(id) {
-    const p = products.find(item => item.id === id);
-    if (p) {
-      document.getElementById("openAddProductModalBtn").click();
-      setTimeout(() => {
-        document.getElementById("editProductId").value = p.id;
-        document.getElementById("prodName").value = p.name;
-        document.getElementById("prodSku").value = p.sku;
-        document.getElementById("prodCategory").value = p.category;
-        document.getElementById("prodStock").value = p.stockQty;
-        document.getElementById("prodPrice").value = p.pricePkr;
-        document.getElementById("prodMainImage").value = p.mainImage || "";
-      }, 50);
-    }
-  }
-
+  
   function deleteProduct(id) {
     if (!confirm("Are you sure?")) return;
     saveStoredProducts(products.filter(p => p.id !== id));
     renderTable();
   }
 
-  function exportBackup() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(products, null, 2));
-    const dl = document.createElement("a");
-    dl.setAttribute("href", dataStr);
-    dl.setAttribute("download", "happy-toys-backup.json");
-    document.body.appendChild(dl); dl.click(); dl.remove();
-  }
-
-  return { init, deleteProduct, editProduct, exportBackup };
+  return { init, deleteProduct, saveSettings };
 })();
 document.addEventListener("DOMContentLoaded", HappyToysAdmin.init);
