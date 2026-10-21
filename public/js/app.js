@@ -72,7 +72,6 @@ const HappyToysApp = (() => {
     renderCategories();
     renderProducts();
 
-    // Check if URL has direct product share parameter (e.g. #product=prod-123)
     checkForDirectProductLink();
 
     try {
@@ -152,9 +151,11 @@ const HappyToysApp = (() => {
     }
 
     if (drawer) {
-      drawer.innerHTML = state.categories.map((cat) => {
+      drawer.innerHTML = state.categories.map((cat, index) => {
         const active = state.activeCategory === cat.slug ? "bg-amber-100 text-amber-800 font-black border-l-4 border-amber-500" : "text-slate-700 hover:bg-slate-100 font-bold";
-        return `<button onclick="HappyToysApp.selectCategory('${cat.slug}')" class="w-full text-left px-4 py-3 rounded-xl text-sm flex items-center justify-between transition ${active}"><span class="flex items-center gap-3"><span>${cat.icon}</span><span>${cat.name}</span></span><span class="text-xs text-amber-500 font-extrabold">→</span></button>`;
+        // Staggered animation delay for each category item (e.g. 0.04s interval)
+        const delay = (index * 0.04).toFixed(2);
+        return `<button onclick="HappyToysApp.selectCategory('${cat.slug}')" style="animation-delay: ${delay}s;" class="drawer-category-item w-full text-left px-4 py-3 rounded-xl text-sm flex items-center justify-between transition ${active}"><span class="flex items-center gap-3"><span>${cat.icon}</span><span>${cat.name}</span></span><span class="text-xs text-amber-500 font-extrabold">→</span></button>`;
       }).join("");
     }
   }
@@ -164,6 +165,7 @@ const HappyToysApp = (() => {
     document.getElementById("categoryDrawerContainer")?.classList.add("hidden");
     renderCategories();
     renderProducts();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function resetFilters() {
@@ -171,6 +173,7 @@ const HappyToysApp = (() => {
     state.searchQuery = "";
     renderCategories();
     renderProducts();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function openProductModal(id) {
