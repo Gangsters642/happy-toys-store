@@ -1,5 +1,5 @@
 const HappyToysCart = (() => {
-  const KEY = "hts_cart_items_v5";
+  const KEY = "hts_cart_items_v6";
   const WA = "923707116317";
   let cart = [];
 
@@ -34,7 +34,7 @@ const HappyToysCart = (() => {
       t.className = "fixed bottom-6 left-1/2 -translate-x-1/2 z-[250] bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl font-black text-xs flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none";
       document.body.appendChild(t);
     }
-    t.innerHTML = `<span>🛒</span><span>${text}</span>`;
+    t.innerHTML = `🛒<span>${text}</span>`;
     t.classList.remove("opacity-0");
     clearTimeout(window._htsT);
     window._htsT = setTimeout(() => t.classList.add("opacity-0"), 2000);
