@@ -22,12 +22,14 @@ const HTS_DB = (() => {
 
 const HappyToysApp = (() => {
   let state = { categories: [], products: [], activeCategory: "all", searchQuery: "" };
+  let appSettings = JSON.parse(localStorage.getItem("hts_settings") || "{}");
 
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
 
   async function init() {
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
     state.categories = seed.categories || [];
+    
     const saved = localStorage.getItem("hts_custom_products");
     if (saved) {
       try { state.products = JSON.parse(saved); } catch (e) { state.products = seed.products || []; }
@@ -35,23 +37,24 @@ const HappyToysApp = (() => {
       state.products = seed.products || [];
     }
 
-    // Load Uploaded Video into the new VIP UI Block
+    // Load Splash Video from DB or Settings URL
     const splashMedia = await HTS_DB.get('splashMedia');
-    if (splashMedia) {
-        const isVideo = splashMedia.startsWith("data:video");
+    const mediaSource = splashMedia || appSettings.introGifUrl;
+    
+    if (mediaSource) {
+        const isVideo = mediaSource.startsWith("data:video") || mediaSource.endsWith(".mp4") || mediaSource.includes("video");
         const videoEl = document.getElementById("splashVideoPlayer");
         const imgEl = document.getElementById("splashImgPlayer");
         const placeholder = document.getElementById("splashMediaPlaceholder");
 
-        if (placeholder) placeholder.classList.add("hidden"); // Hide default placeholder
+        if (placeholder) placeholder.classList.add("hidden");
 
         if (isVideo && videoEl) {
-            videoEl.src = splashMedia;
+            videoEl.src = mediaSource;
             videoEl.classList.remove("hidden");
-            // Video attributes already set in HTML, just attempt play
-            videoEl.play().catch(e => console.log("Autoplay issue (requires user interaction):", e));
+            videoEl.play().catch(e => console.log("Autoplay prevented:", e));
         } else if (imgEl) {
-            imgEl.src = splashMedia;
+            imgEl.src = mediaSource;
             imgEl.classList.remove("hidden");
         }
     }
@@ -61,19 +64,10 @@ const HappyToysApp = (() => {
     renderProducts();
   }
 
-  function fireConfetti() {
-      if(typeof confetti !== 'function') return;
-      var duration = 3 * 1000;
-      var animationEnd = Date.now() + duration;
-      var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 150 };
-      function randomInRange(min, max) { return Math.random() * (max - min) + min; }
-      var interval = setInterval(function() {
-        var timeLeft = animationEnd - Date.now();
-        if (timeLeft <= 0) return clearInterval(interval);
-        var particleCount = 50 * (timeLeft / duration);
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-      }, 250);
+  function fireEnterStoreConfetti() {
+      if(typeof confetti === 'function') {
+          confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 }, zIndex: 200 });
+      }
   }
 
   function enterStore() {
@@ -81,7 +75,7 @@ const HappyToysApp = (() => {
     const video = document.getElementById("splashVideoPlayer");
     const mainContent = document.getElementById("mainStoreContent");
     
-    if(video) video.pause(); // stop video to save battery
+    if(video) video.pause();
     
     if(splash) {
       splash.style.opacity = '0';
@@ -90,7 +84,7 @@ const HappyToysApp = (() => {
         document.body.classList.remove("splash-active");
         mainContent.classList.remove("opacity-0", "h-0", "overflow-hidden");
         mainContent.classList.add("store-reveal");
-        fireConfetti();
+        fireEnterStoreConfetti();
       }, 700);
     }
   }
@@ -106,16 +100,26 @@ const HappyToysApp = (() => {
 
   function renderCategories() {
     const horiz = document.getElementById("horizontalCategoryBar");
+    const drawer = document.getElementById("drawerCategoryList");
+    
     if (horiz) {
       horiz.innerHTML = state.categories.map((cat) => {
-        const active = state.activeCategory === cat.slug ? "bg-blue-600 text-white border-blue-600 shadow-sm" : "bg-white text-slate-700 border-slate-200";
-        return `<button onclick="HappyToysApp.selectCategory('${cat.slug}')" class="whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold border transition flex items-center gap-1.5 ${active}"><span>${cat.icon}</span><span>${cat.name}</span></button>`;
+        const active = state.activeCategory === cat.slug ? "bg-amber-500 text-white border-amber-600 shadow-md scale-105" : "bg-white text-slate-700 hover:bg-amber-50 border-slate-200";
+        return `<button onclick="HappyToysApp.selectCategory('${cat.slug}')" class="whitespace-nowrap px-4 py-2.5 rounded-2xl text-xs font-black border-2 transition-all flex items-center gap-2 ${active}"><span>${cat.icon}</span><span>${cat.name}</span></button>`;
+      }).join("");
+    }
+    
+    if (drawer) {
+      drawer.innerHTML = state.categories.map((cat) => {
+        const active = state.activeCategory === cat.slug ? "bg-amber-100 text-amber-800 font-black border-l-4 border-amber-500" : "text-slate-700 hover:bg-slate-100 font-bold";
+        return `<button onclick="HappyToysApp.selectCategory('${cat.slug}')" class="w-full text-left px-4 py-3 rounded-xl text-sm flex items-center justify-between transition ${active}"><span class="flex items-center gap-3"><span>${cat.icon}</span><span>${cat.name}</span></span><span class="text-xs text-amber-500 font-extrabold">→</span></button>`;
       }).join("");
     }
   }
 
   function selectCategory(slug) {
     state.activeCategory = slug;
+    document.getElementById("categoryDrawerContainer")?.classList.add("hidden");
     renderCategories();
     renderProducts();
   }
@@ -133,7 +137,7 @@ const HappyToysApp = (() => {
   function renderProducts() {
     const grid = document.getElementById("productGrid");
     const activeCatObj = state.categories.find(c => c.slug === state.activeCategory);
-    document.getElementById("activeCategoryHeading").textContent = activeCatObj ? activeCatObj.name : "All Toys";
+    document.getElementById("activeCategoryHeadingtextContent") = activeCatObj ? activeCatObj.name : "All Toys";
 
     let filtered = state.products.filter((p) => {
       if (!p.isPublished) return false;
@@ -142,15 +146,15 @@ const HappyToysApp = (() => {
     });
 
     grid.innerHTML = filtered.map((p) => `
-      <article class="toy-card bg-white rounded-3xl border border-slate-200/60 overflow-hidden flex flex-col shadow-sm hover:shadow-lg transition">
-        <div class="relative aspect-square p-2 bg-slate-50">
+      <article class="toy-card bg-white rounded-3xl border-2 border-slate-100 overflow-hidden flex flex-col shadow-sm hover:shadow-xl transition-all duration-300">
+        <div class="relative aspect-square p-3 bg-amber-50/40">
           <img src="${p.mainImage}" alt="${p.name}" class="w-full h-full object-cover rounded-2xl" />
         </div>
-        <div class="px-4 pt-3 pb-4 bg-white flex-1 flex flex-col">
-          <h3 class="font-extrabold text-slate-900 text-sm leading-tight mb-2 line-clamp-2">${p.name}</h3>
-          <div class="mt-auto">
+        <div class="px-4 pt-3 pb-4 bg-white flex-1 flex flex-col justify-between">
+          <h3 class="font-black text-slate-900 text-sm leading-snug mb-2 line-clamp-2">${p.name}</h3>
+          <div>
             <span class="text-xl font-black text-blue-600 block mb-3">${formatPkr(p.pricePkr)}</span>
-            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-md">Buy Now</button>
+            <button onclick="HappyToysApp.openProductModal('${p.id}')" class="w-full py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-md transition">Buy Now</button>
           </div>
         </div>
       </article>`).join("");

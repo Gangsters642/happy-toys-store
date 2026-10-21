@@ -16,7 +16,6 @@
       letter-spacing: 1px;
     }
 
-    /* Smooth Floating / Bouncing Animation for Store Name */
     @keyframes float-text {
       0%, 100% { transform: translateY(0px) scale(1); }
       50% { transform: translateY(-6px) scale(1.02); }
@@ -25,7 +24,6 @@
       animation: float-text 2.5s ease-in-out infinite;
     }
 
-    /* Vibrant Gradient Button Glow */
     .btn-vip-gradient {
       background: linear-gradient(135deg, #ff7e5f, #feb47b, #ffcc00);
       background-size: 200% 200%;
@@ -49,7 +47,6 @@
   <!-- VIP SPLASH MODAL WINDOW -->
   <div id="vipSplashScreen" class="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 p-4 sm:p-6 transition-all duration-700 overflow-y-auto">
     
-    <!-- White Card Container (Identical for Mobile & Desktop) -->
     <div class="w-full max-w-md bg-white rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.5)] border-4 border-amber-300 overflow-hidden relative flex flex-col my-auto p-5 sm:p-6">
       
       <!-- Close Button -->
@@ -116,7 +113,7 @@
     <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <button id="openCategoryDrawerBtn" class="p-2 rounded-xl bg-slate-100 text-slate-700"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h10"/></svg></button>
+          <button id="openCategoryDrawerBtn" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h10"/></svg></button>
           <a href="#" onclick="HappyToysApp.resetFilters(); return false;" class="flex items-center gap-2">
             <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-red-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-sm">🧸</div>
             <div>
@@ -126,26 +123,33 @@
         </div>
         <div class="flex items-center gap-2 sm:gap-3">
           <a href="admin.html" class="text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl bg-slate-100 text-slate-700">Admin</a>
-          <button onclick="HappyToysCart.openDrawer()" class="px-3.5 py-2 rounded-xl bg-blue-600 text-white font-semibold text-xs sm:text-sm">🛒 Cart <span id="cartCountBadge" class="px-1.5 py-0.5 text-[11px] rounded-full bg-amber-400 text-slate-900 font-bold">0</span></button>
+          <button onclick="HappyToysCart.openDrawer()" class="px-3.5 py-2 rounded-xl bg-blue-600 text-white font-semibold text-xs sm:text-sm shadow-sm">🛒 Cart <span id="cartCountBadge" class="px-1.5 py-0.5 text-[11px] rounded-full bg-amber-400 text-slate-900 font-bold">0</span></button>
         </div>
       </div>
     </header>
 
+    <!-- CATEGORIES SIDEBAR DRAWER -->
     <div id="categoryDrawerContainer" class="fixed inset-0 z-50 hidden">
-      <div id="categoryDrawerBackdrop" class="drawer-backdrop fixed inset-0"></div>
+      <div id="categoryDrawerBackdrop" class="drawer-backdrop fixed inset-0 bg-black/50"></div>
       <aside class="drawer-panel relative z-10 w-80 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col">
-        <div class="p-4 border-b border-slate-200 flex justify-between bg-slate-50">
-          <span class="font-bold">🧸 Categories</span>
-          <button id="closeCategoryDrawerBtn" class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-200">✕</button>
+        <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+          <span class="toy-title-font text-lg text-amber-500">🧸 Toy Categories</span>
+          <button id="closeCategoryDrawerBtn" class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-200 font-bold">✕</button>
         </div>
-        <div id="drawerCategoryList" class="p-3 overflow-y-auto space-y-1"></div>
+        <div id="drawerCategoryList" class="p-3 overflow-y-auto space-y-1.5 flex-1"></div>
       </aside>
     </div>
 
     <main class="flex-1">
-      <section class="bg-white border-b border-slate-200"><div class="max-w-7xl mx-auto px-4 py-3"><div id="horizontalCategoryBar" class="flex items-center gap-2 overflow-x-auto no-scrollbar"></div></div></section>
+      <!-- HORIZONTAL COLORFUL CATEGORIES BAR -->
+      <section class="bg-white border-b border-slate-200 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+          <div id="horizontalCategoryBar" class="flex items-center gap-3 overflow-x-auto no-scrollbar py-1"></div>
+        </div>
+      </section>
+
       <section class="max-w-7xl mx-auto px-4 py-8">
-        <h2 id="activeCategoryHeading" class="text-2xl font-bold mb-6">All Toys</h2>
+        <h2 id="activeCategoryHeading" class="toy-title-font text-2xl text-slate-800 mb-6">All Toys</h2>
         <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
       </section>
     </main>
@@ -156,19 +160,34 @@
   <script src="js/cart-whatsapp.js"></script>
   <script src="js/app.js"></script>
   <script>
-    // Trigger continuous fireworks/confetti on load!
+    // Continuous Bottom Fireworks / Confetti Fountain
     window.addEventListener('DOMContentLoaded', () => {
        if(typeof confetti === 'function') {
-           var count = 200;
-           var defaults = { origin: { y: 0.7 } };
-           function fire(particleRatio, opts) {
-             confetti(Object.assign({}, defaults, opts, { particleCount: Math.floor(count * particleRatio) }));
-           }
-           fire(0.25, { spread: 26, startVelocity: 55 });
-           fire(0.2, { spread: 60 });
-           fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-           fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-           fire(0.1, { spread: 120, startVelocity: 45 });
+           // Initial Burst
+           confetti({ particleCount: 120, spread: 100, origin: { y: 0.8 } });
+
+           // Continuous Fireworks fountains shooting from bottom corners
+           var duration = 15 * 1000;
+           var animationEnd = Date.now() + duration;
+           var interval = setInterval(function() {
+             var timeLeft = animationEnd - Date.now();
+             if (timeLeft <= 0) return clearInterval(interval);
+             
+             // Left bottom fountain
+             confetti({
+               particleCount: 8,
+               angle: 60,
+               spread: 55,
+               origin: { x: 0, y: 1 }
+             });
+             // Right bottom fountain
+             confetti({
+               particleCount: 8,
+               angle: 120,
+               spread: 55,
+               origin: { x: 1, y: 1 }
+             });
+           }, 300);
        }
     });
   </script>
