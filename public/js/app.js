@@ -24,16 +24,19 @@ const HappyToysApp = (() => {
 
   function initScrollAnimations() {
     if (scrollObserver) scrollObserver.disconnect();
-    scrollObserver = new IntersectionObserver((entries) => {
+    
+    scrollObserver = new IntersectionObserver((entries, observer) => {
       entries.forEach((e) => {
         if (e.isIntersecting) {
           e.target.classList.add("is-visible");
+          observer.unobserve(e.target); // Stop observing once animated for better performance
         }
       });
-    }, { threshold: 0.08 });
+    }, { threshold: 0.08, rootMargin: "0px 0px -20px 0px" });
 
     document.querySelectorAll(".toy-card-reveal").forEach((c, i) => {
-      c.style.transitionDelay = `${(i % 4) * 75}ms`;
+      // Changed from transitionDelay to animationDelay to work with @keyframes
+      c.style.animationDelay = `${(i % 4) * 80}ms`;
       scrollObserver.observe(c);
     });
   }
