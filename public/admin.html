@@ -55,7 +55,7 @@
       <div class="flex items-center justify-between mb-6">
         <div>
           <h2 class="text-lg font-black text-slate-900">🧸 Store Products</h2>
-          <p class="text-xs text-slate-500">Add or edit toys and their size variant prices</p>
+          <p class="text-xs text-slate-500">Manage toys, sizes, languages, and bubble gun hole variants</p>
         </div>
         <button type="button" id="openAddProductModalBtn" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-md transition">+ Add New Toy</button>
       </div>
@@ -65,8 +65,8 @@
           <thead>
             <tr class="border-b border-slate-200 text-[11px] font-black text-slate-400 uppercase">
               <th class="py-3 px-4">Product</th>
-              <th class="py-3 px-4">Category / Variants</th>
-              <th class="py-3 px-4">Price</th>
+              <th class="py-3 px-4">Category & Special Options</th>
+              <th class="py-3 px-4">Base Price</th>
               <th class="py-3 px-4">Stock</th>
               <th class="py-3 px-4 text-right">Actions</th>
             </tr>
@@ -77,9 +77,10 @@
     </section>
   </main>
 
+  <!-- ADD / EDIT MODAL -->
   <div id="productModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between mb-5">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl my-auto max-h-[94vh] overflow-y-auto space-y-4">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
         <h3 id="productModalTitle" class="text-lg font-black text-slate-900">Add New Toy Product</h3>
         <button type="button" id="closeProductModalBtn" class="text-slate-400 hover:text-slate-700 text-xl font-bold">✕</button>
       </div>
@@ -93,51 +94,111 @@
           <input type="text" id="prodName" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold" />
         </div>
 
-        <div>
-          <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">UNIQUE SKU *</label>
-          <input type="text" id="prodSku" required placeholder="e.g. HTS-01" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm" />
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">EXACT CATEGORY *</label>
-          <select id="prodCategory" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold bg-white"></select>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">UNIQUE SKU *</label>
+            <input type="text" id="prodSku" required placeholder="e.g. HTS-01" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">EXACT CATEGORY *</label>
+            <select id="prodCategory" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold bg-white"></select>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">STOCK</label>
+            <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">STOCK QTY</label>
             <input type="number" id="prodStock" value="10" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold" />
           </div>
           <div>
-            <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">BASE PRICE (PKR) *</label>
+            <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">DEFAULT PRICE (PKR) *</label>
             <input type="number" id="prodPrice" required placeholder="e.g. 2000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold" />
           </div>
         </div>
 
-        <!-- SIZE VARIANTS TOGGLE & PRICING INPUTS -->
+        <!-- 1. SIZE VARIANTS (Small, Medium, Big) -->
         <div class="bg-amber-50/70 border-2 border-amber-200 rounded-2xl p-3.5 space-y-3">
           <label class="flex items-center justify-between cursor-pointer">
             <div>
-              <span class="text-xs font-black text-slate-900 block">📏 Enable Size Variants?</span>
-              <span class="text-[11px] text-slate-500 font-bold">Small, Medium, Big sizes</span>
+              <span class="text-xs font-black text-slate-900 block">📏 1. Size Variants (Small / Medium / Big)</span>
+              <span class="text-[11px] text-slate-500 font-bold">Set different prices for Small, Medium, and Big sizes</span>
             </div>
             <input type="checkbox" id="prodHasVariants" class="w-5 h-5 accent-amber-500 rounded cursor-pointer" />
           </label>
 
           <div id="variantPricesContainer" class="hidden pt-2 border-t border-amber-200 space-y-2">
-            <p class="text-[11px] font-extrabold text-amber-900">Enter price for each size:</p>
             <div class="grid grid-cols-3 gap-2">
               <div>
                 <label class="block text-[10px] font-black text-slate-700">Small (PKR)</label>
-                <input type="number" id="varPriceSmall" placeholder="1500" class="w-full p-2 rounded-xl border border-amber-300 text-xs font-bold bg-white" />
+                <input type="number" id="varPriceSmall" placeholder="e.g. 1500" class="w-full p-2 rounded-xl border border-amber-300 text-xs font-bold bg-white" />
               </div>
               <div>
                 <label class="block text-[10px] font-black text-slate-700">Medium (PKR)</label>
-                <input type="number" id="varPriceMedium" placeholder="2000" class="w-full p-2 rounded-xl border border-amber-300 text-xs font-bold bg-white" />
+                <input type="number" id="varPriceMedium" placeholder="e.g. 2000" class="w-full p-2 rounded-xl border border-amber-300 text-xs font-bold bg-white" />
               </div>
               <div>
                 <label class="block text-[10px] font-black text-slate-700">Big (PKR)</label>
-                <input type="number" id="varPriceBig" placeholder="2800" class="w-full p-2 rounded-xl border border-amber-300 text-xs font-bold bg-white" />
+                <input type="number" id="varPriceBig" placeholder="e.g. 2800" class="w-full p-2 rounded-xl border border-amber-300 text-xs font-bold bg-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. PRODUCT DIMENSIONS / INCHES -->
+        <div class="bg-sky-50/70 border-2 border-sky-200 rounded-2xl p-3.5 space-y-2">
+          <label class="block text-xs font-black text-sky-900">📐 2. Product Dimensions / Size in Inches (Optional)</label>
+          <span class="text-[11px] text-slate-500 font-bold block mb-1">Enter physical dimensions so customers know exact size</span>
+          <input type="text" id="prodDimensions" placeholder="e.g. 12 x 8 Inches (Medium) / 30cm" class="w-full px-3.5 py-2 rounded-xl border border-sky-300 text-xs font-bold bg-white" />
+        </div>
+
+        <!-- 3. BOOK LANGUAGE VARIANTS (English / Urdu) -->
+        <div class="bg-emerald-50/70 border-2 border-emerald-200 rounded-2xl p-3.5 space-y-3">
+          <label class="flex items-center justify-between cursor-pointer">
+            <div>
+              <span class="text-xs font-black text-slate-900 block">📚 3. Book Language Variants (English / Urdu)</span>
+              <span class="text-[11px] text-slate-500 font-bold">For learning books with English or Urdu edition pricing</span>
+            </div>
+            <input type="checkbox" id="prodHasLangVariants" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer" />
+          </label>
+
+          <div id="langVariantsContainer" class="hidden pt-2 border-t border-emerald-200 space-y-2">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-black text-slate-700">English Edition (PKR)</label>
+                <input type="number" id="langPriceEnglish" placeholder="e.g. 1800" class="w-full p-2 rounded-xl border border-emerald-300 text-xs font-bold bg-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black text-slate-700">Urdu Edition (PKR)</label>
+                <input type="number" id="langPriceUrdu" placeholder="e.g. 1600" class="w-full p-2 rounded-xl border border-emerald-300 text-xs font-bold bg-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. BUBBLE GUN HOLES VARIANTS -->
+        <div class="bg-purple-50/70 border-2 border-purple-200 rounded-2xl p-3.5 space-y-3">
+          <label class="flex items-center justify-between cursor-pointer">
+            <div>
+              <span class="text-xs font-black text-slate-900 block">🫧 4. Bubble Gun Holes Variants</span>
+              <span class="text-[11px] text-slate-500 font-bold">Configure hole counts (e.g. 12, 36, 40 Holes) and custom prices</span>
+            </div>
+            <input type="checkbox" id="prodHasHolesVariants" class="w-5 h-5 accent-purple-500 rounded cursor-pointer" />
+          </label>
+
+          <div id="holesVariantsContainer" class="hidden pt-2 border-t border-purple-200 space-y-2">
+            <p class="text-[11px] font-extrabold text-purple-900">Set Hole Counts and their Prices:</p>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <input type="text" id="holeCount1" placeholder="e.g. 12 Holes" value="12 Holes" class="w-full p-1.5 rounded-lg border text-[11px] font-black mb-1 text-center" />
+                <input type="number" id="holePrice1" placeholder="Price PKR" class="w-full p-2 rounded-xl border border-purple-300 text-xs font-bold bg-white" />
+              </div>
+              <div>
+                <input type="text" id="holeCount2" placeholder="e.g. 36 Holes" value="36 Holes" class="w-full p-1.5 rounded-lg border text-[11px] font-black mb-1 text-center" />
+                <input type="number" id="holePrice2" placeholder="Price PKR" class="w-full p-2 rounded-xl border border-purple-300 text-xs font-bold bg-white" />
+              </div>
+              <div>
+                <input type="text" id="holeCount3" placeholder="e.g. 40 Holes" value="40 Holes" class="w-full p-1.5 rounded-lg border text-[11px] font-black mb-1 text-center" />
+                <input type="number" id="holePrice3" placeholder="Price PKR" class="w-full p-2 rounded-xl border border-purple-300 text-xs font-bold bg-white" />
               </div>
             </div>
           </div>
@@ -145,7 +206,7 @@
 
         <div>
           <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">DESCRIPTION</label>
-          <textarea id="prodShortDesc" rows="3" placeholder="Enter toy details..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm"></textarea>
+          <textarea id="prodShortDesc" rows="3" placeholder="Enter toy details, age group, safety features..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold"></textarea>
         </div>
 
         <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 space-y-2">
@@ -155,14 +216,13 @@
         </div>
 
         <div class="flex justify-end pt-2">
-          <button type="submit" class="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm shadow-lg transition cursor-pointer">Save Toy</button>
+          <button type="submit" class="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm shadow-lg transition cursor-pointer">Save Toy Product</button>
         </div>
       </form>
     </div>
   </div>
 
-  <script src="js/data-seed.js?v=13"></script>
-  <script src="js/admin.js?v=13"></script>
-<script src="/js/security.js?v=6"></script>
+  <script src="js/data-seed.js?v=20"></script>
+  <script src="js/admin.js?v=20"></script>
 </body>
 </html>

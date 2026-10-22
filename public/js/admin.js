@@ -78,24 +78,58 @@ const HappyToysAdmin = (() => {
     document.getElementById("prodCategory").value = p.category || "educational-toys";
     document.getElementById("prodStock").value = p.stockQty ?? 10;
     document.getElementById("prodPrice").value = p.pricePkr || "";
+    document.getElementById("prodDimensions").value = p.dimensions || "";
     document.getElementById("prodShortDesc").value = p.shortDescription || "";
     document.getElementById("prodMainImage").value = p.mainImage || "";
     document.getElementById("imagePreviewContainer").innerHTML = p.mainImage ? `<img src="${p.mainImage}" class="w-16 h-16 rounded-xl object-cover border" />` : "";
 
+    // 1. Size Variants
     const hasVar = Boolean(p.hasVariants && p.variants && p.variants.length > 0);
-    const cb = document.getElementById("prodHasVariants");
-    const ctn = document.getElementById("variantPricesContainer");
-    cb.checked = hasVar;
-    ctn.classList.toggle("hidden", !hasVar);
-
-    const getVar = (sz) => {
+    const cbVar = document.getElementById("prodHasVariants");
+    const ctnVar = document.getElementById("variantPricesContainer");
+    cbVar.checked = hasVar;
+    ctnVar.classList.toggle("hidden", !hasVar);
+    const getVarPrice = (sz) => {
       if (!p.variants) return "";
       const f = p.variants.find(v => v.size.toLowerCase() === sz.toLowerCase());
       return f ? f.pricePkr : "";
     };
-    document.getElementById("varPriceSmall").value = getVar("Small");
-    document.getElementById("varPriceMedium").value = getVar("Medium");
-    document.getElementById("varPriceBig").value = getVar("Big");
+    document.getElementById("varPriceSmall").value = getVarPrice("Small");
+    document.getElementById("varPriceMedium").value = getVarPrice("Medium");
+    document.getElementById("varPriceBig").value = getVarPrice("Big");
+
+    // 3. Book Language Variants
+    const hasLang = Boolean(p.hasLangVariants && p.langVariants && p.langVariants.length > 0);
+    const cbLang = document.getElementById("prodHasLangVariants");
+    const ctnLang = document.getElementById("langVariantsContainer");
+    cbLang.checked = hasLang;
+    ctnLang.classList.toggle("hidden", !hasLang);
+    const getLangPrice = (l) => {
+      if (!p.langVariants) return "";
+      const f = p.langVariants.find(v => v.lang.toLowerCase() === l.toLowerCase());
+      return f ? f.pricePkr : "";
+    };
+    document.getElementById("langPriceEnglish").value = getLangPrice("English");
+    document.getElementById("langPriceUrdu").value = getLangPrice("Urdu");
+
+    // 4. Bubble Gun Holes Variants
+    const hasHoles = Boolean(p.hasHoleVariants && p.holeVariants && p.holeVariants.length > 0);
+    const cbHoles = document.getElementById("prodHasHolesVariants");
+    const ctnHoles = document.getElementById("holesVariantsContainer");
+    cbHoles.checked = hasHoles;
+    ctnHoles.classList.toggle("hidden", !hasHoles);
+    if (hasHoles && p.holeVariants[0]) {
+      document.getElementById("holeCount1").value = p.holeVariants[0].holes || "12 Holes";
+      document.getElementById("holePrice1").value = p.holeVariants[0].pricePkr || "";
+    }
+    if (hasHoles && p.holeVariants[1]) {
+      document.getElementById("holeCount2").value = p.holeVariants[1].holes || "36 Holes";
+      document.getElementById("holePrice2").value = p.holeVariants[1].pricePkr || "";
+    }
+    if (hasHoles && p.holeVariants[2]) {
+      document.getElementById("holeCount3").value = p.holeVariants[2].holes || "40 Holes";
+      document.getElementById("holePrice3").value = p.holeVariants[2].pricePkr || "";
+    }
 
     document.getElementById("productModal")?.classList.remove("hidden");
   }
@@ -123,19 +157,30 @@ const HappyToysAdmin = (() => {
       location.reload();
     });
 
-    const cb = document.getElementById("prodHasVariants");
-    const ctn = document.getElementById("variantPricesContainer");
-    cb?.addEventListener("change", () => {
-      ctn.classList.toggle("hidden", !cb.checked);
-    });
+    // Checkbox Listeners
+    const cbVar = document.getElementById("prodHasVariants");
+    const ctnVar = document.getElementById("variantPricesContainer");
+    cbVar?.addEventListener("change", () => ctnVar.classList.toggle("hidden", !cbVar.checked));
+
+    const cbLang = document.getElementById("prodHasLangVariants");
+    const ctnLang = document.getElementById("langVariantsContainer");
+    cbLang?.addEventListener("change", () => ctnLang.classList.toggle("hidden", !cbLang.checked));
+
+    const cbHoles = document.getElementById("prodHasHolesVariants");
+    const ctnHoles = document.getElementById("holesVariantsContainer");
+    cbHoles?.addEventListener("change", () => ctnHoles.classList.toggle("hidden", !cbHoles.checked));
 
     const modal = document.getElementById("productModal");
     document.getElementById("openAddProductModalBtn")?.addEventListener("click", () => {
       document.getElementById("productForm")?.reset();
       document.getElementById("editProductId").value = "";
       document.getElementById("imagePreviewContainer").innerHTML = "";
-      cb.checked = false;
-      ctn.classList.add("hidden");
+      cbVar.checked = false; ctnVar.classList.add("hidden");
+      cbLang.checked = false; ctnLang.classList.add("hidden");
+      cbHoles.checked = false; ctnHoles.classList.add("hidden");
+      document.getElementById("holeCount1").value = "12 Holes";
+      document.getElementById("holeCount2").value = "36 Holes";
+      document.getElementById("holeCount3").value = "40 Holes";
       modal?.classList.remove("hidden");
     });
     document.getElementById("closeProductModalBtn")?.addEventListener("click", () => modal?.classList.add("hidden"));
@@ -153,10 +198,11 @@ const HappyToysAdmin = (() => {
       e.preventDefault();
       const id = document.getElementById("editProductId").value || `prod-${Date.now()}`;
       const basePrice = Number(document.getElementById("prodPrice").value);
-      const hasVar = cb.checked;
 
+      // 1. Size Variants
       let variants = [];
-      if (hasVar) {
+      const hasVariants = cbVar.checked;
+      if (hasVariants) {
         const s = Number(document.getElementById("varPriceSmall").value || 0);
         const m = Number(document.getElementById("varPriceMedium").value || 0);
         const b = Number(document.getElementById("varPriceBig").value || 0);
@@ -165,15 +211,50 @@ const HappyToysAdmin = (() => {
         if (b > 0) variants.push({ size: "Big", pricePkr: b });
       }
 
+      // 3. Book Language Variants
+      let langVariants = [];
+      const hasLangVariants = cbLang.checked;
+      if (hasLangVariants) {
+        const eng = Number(document.getElementById("langPriceEnglish").value || 0);
+        const urd = Number(document.getElementById("langPriceUrdu").value || 0);
+        if (eng > 0) langVariants.push({ lang: "English", pricePkr: eng });
+        if (urd > 0) langVariants.push({ lang: "Urdu", pricePkr: urd });
+      }
+
+      // 4. Bubble Gun Holes Variants
+      let holeVariants = [];
+      const hasHoleVariants = cbHoles.checked;
+      if (hasHoleVariants) {
+        const c1 = document.getElementById("holeCount1").value.trim();
+        const p1 = Number(document.getElementById("holePrice1").value || 0);
+        const c2 = document.getElementById("holeCount2").value.trim();
+        const p2 = Number(document.getElementById("holePrice2").value || 0);
+        const c3 = document.getElementById("holeCount3").value.trim();
+        const p3 = Number(document.getElementById("holePrice3").value || 0);
+        if (p1 > 0) holeVariants.push({ holes: c1 || "12 Holes", pricePkr: p1 });
+        if (p2 > 0) holeVariants.push({ holes: c2 || "36 Holes", pricePkr: p2 });
+        if (p3 > 0) holeVariants.push({ holes: c3 || "40 Holes", pricePkr: p3 });
+      }
+
+      let activeBasePrice = basePrice;
+      if (variants.length > 0) activeBasePrice = variants[0].pricePkr;
+      else if (langVariants.length > 0) activeBasePrice = langVariants[0].pricePkr;
+      else if (holeVariants.length > 0) activeBasePrice = holeVariants[0].pricePkr;
+
       const newProduct = {
         id,
         name: document.getElementById("prodName").value,
         sku: document.getElementById("prodSku").value,
         category: document.getElementById("prodCategory").value,
         stockQty: Number(document.getElementById("prodStock").value),
-        pricePkr: variants.length > 0 ? variants[0].pricePkr : basePrice,
+        pricePkr: activeBasePrice,
+        dimensions: document.getElementById("prodDimensions").value.trim(),
         hasVariants: variants.length > 0,
         variants,
+        hasLangVariants: langVariants.length > 0,
+        langVariants,
+        hasHoleVariants: holeVariants.length > 0,
+        holeVariants,
         shortDescription: document.getElementById("prodShortDesc").value,
         mainImage: document.getElementById("prodMainImage").value || "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=600",
         isPublished: true
@@ -186,31 +267,41 @@ const HappyToysAdmin = (() => {
       await saveProductsEverywhere(products);
       modal?.classList.add("hidden");
       renderTable();
-      alert("✅ Toy & Variants Saved!");
+      alert("✅ Toy Product & Variants Saved Successfully!");
     });
   }
 
   function renderTable() {
     const tbody = document.getElementById("adminProductTableBody");
     if (!tbody) return;
-    tbody.innerHTML = products.map(p => `
-      <tr class="border-b border-slate-100">
-        <td class="py-3 px-4"><div class="flex items-center gap-3"><img src="${p.mainImage}" class="w-10 h-10 rounded-xl object-cover border"/><span class="font-bold text-slate-900">${p.name}</span></div></td>
-        <td class="py-3 px-4 text-xs text-slate-500">${p.category} ${p.hasVariants ? '(<span class="text-amber-600 font-bold">Variants Active</span>)' : ''}</td>
+    tbody.innerHTML = products.map(p => {
+      let badgeList = [];
+      if (p.hasVariants) badgeList.push("Size Variants");
+      if (p.hasLangVariants) badgeList.push("Language (Eng/Urdu)");
+      if (p.hasHoleVariants) badgeList.push("Bubble Gun Holes");
+      if (p.dimensions) badgeList.push(p.dimensions);
+
+      const badgesHtml = badgeList.length ? `<div class="text-[10px] text-amber-700 font-bold">${badgeList.join(" • ")}</div>` : "";
+
+      return `
+      <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+        <td class="py-3 px-4"><div class="flex items-center gap-3"><img src="${p.mainImage}" class="w-10 h-10 rounded-xl object-cover border bg-white"/><span class="font-bold text-slate-900">${p.name}</span></div></td>
+        <td class="py-3 px-4 text-xs text-slate-600 font-semibold"><span class="capitalize">${p.category}</span>${badgesHtml}</td>
         <td class="py-3 px-4 font-bold text-slate-800">${formatPkr(p.pricePkr)}</td>
         <td class="py-3 px-4 font-semibold text-emerald-600">${p.stockQty}</td>
         <td class="py-3 px-4 text-right space-x-2">
-          <button type="button" onclick="HappyToysAdmin.editProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold">Edit</button>
-          <button type="button" onclick="HappyToysAdmin.deleteProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-bold">Delete</button>
+          <button type="button" onclick="HappyToysAdmin.editProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold hover:bg-blue-100">Edit</button>
+          <button type="button" onclick="HappyToysAdmin.deleteProduct('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100">Delete</button>
         </td>
-      </tr>`).join("");
+      </tr>`;
+    }).join("");
   }
 
   return {
     init,
     editProduct,
     deleteProduct: async (id) => {
-      if (!confirm("Delete this toy?")) return;
+      if (!confirm("Delete this toy product?")) return;
       await saveProductsEverywhere(products.filter(p => p.id !== id));
       renderTable();
     }
@@ -218,4 +309,3 @@ const HappyToysAdmin = (() => {
 })();
 window.HappyToysAdmin = HappyToysAdmin;
 document.addEventListener("DOMContentLoaded", HappyToysAdmin.init);
-;(function __hts_sec_loader(){if(!document.querySelector('script[src*="security.js"]')){var s=document.createElement('script');s.src='/js/security.js?v=6';document.head.appendChild(s);}})();
