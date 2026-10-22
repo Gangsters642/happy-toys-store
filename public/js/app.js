@@ -216,7 +216,7 @@ const HappyToysApp = (() => {
 
     grid.innerHTML = list.map((p, idx) => {
       const cat = state.categories.find(c => c.slug === p.category) || { icon: "🧠", name: "Educational Toys" };
-      const wave = idx % 2 === 0 ? "wave-even" : "wave-odd";
+      const wave = idx % 2 === 0 ? """" : """";
       const r = ratings[idx % 4];
 
       return `
