@@ -192,7 +192,6 @@
       storeData.securityConfig = newConfig;
 
       const headers = { "Content-Type": "application/json" };
-      // Include any admin token/password if stored by admin panel
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
         if (/token|pass|auth|admin/i.test(k)) {
@@ -252,8 +251,8 @@
         <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8fafc;padding:24px;text-align:center;font-family:sans-serif;">
           <div style="font-size:64px;margin-bottom:12px;">🔒</div>
           <h1 style="font-size:24px;font-weight:900;color:#0f172a;margin:0 0 8px 0;">Admin Access Locked (3/3 Full)</h1>
-          <p style="font-size:14px;font-weight:700;color:#dc2626;max-width:400px;margin:0 0 18px 0;">
-            अभी किसी और को इसका एक्सेस नहीं दिया जा सकता। यह एडमिन पैनल सिर्फ रजिस्टर्ड 3 डिवाइसेस के पास ही है।
+          <p style="font-size:14px;font-weight:700;color:#dc2626;max-width:420px;margin:0 0 18px 0;">
+            Access cannot be granted to any other device. This Admin Panel is strictly locked to the 3 authorized devices only.
           </p>
           <a href="/" style="padding:12px 24px;border-radius:999px;background:#f59e0b;color:#fff;font-weight:900;text-decoration:none;box-shadow:0 4px 12px rgba(245,158,11,0.3);">
             ← Back to Store
@@ -274,7 +273,6 @@
       if (txt.includes("Happy Toys") && !isCurrentPageAdmin()) {
         const cfg = cachedConfig;
         const isMyDeviceAuthorized = cfg.devices.some(d => d.id === myDeviceId);
-        // Only works if this device is authorized OR fewer than 3 devices are registered
         if (isMyDeviceAuthorized || cfg.devices.length < MAX_DEVICES) {
           taps++;
           clearTimeout(tapTimer);
@@ -288,14 +286,13 @@
     });
   }
 
-  // 5. Render the Security Card inside the Admin Dashboard
+  // 5. Render the Security Card inside the Admin Dashboard (100% English)
   function renderAdminSecurityCard(forceUpdate = false) {
     if (!isCurrentPageAdmin()) return;
 
     const existing = document.getElementById("hts-admin-security-card");
     if (existing && !forceUpdate) return;
 
-    // Find the first card on the Admin Page ("VIP Splash Intro Video" or "Store Products")
     const headings = Array.from(document.querySelectorAll("h1, h2, h3, h4, div, span"));
     const splashHeading = headings.find(el => {
       const t = (el.textContent || "").trim();
@@ -304,7 +301,6 @@
 
     if (!splashHeading) return;
 
-    // Find the outer card container of "VIP Splash Intro Video"
     let refCard = splashHeading.closest("section, .bg-white, [class*='rounded-']");
     if (!refCard) refCard = splashHeading.parentElement;
     if (!refCard || !refCard.parentElement) return;
@@ -341,7 +337,7 @@
           </div>
         `).join("")
       : `<div style="text-align:center;padding:12px;color:#64748b;font-size:12px;font-weight:700;background:#f8fafc;border-radius:12px;border:1px dashed #cbd5e1;">
-           अभी कोई डिवाइस सेव नहीं है (Admin बटन अभी सबको दिख रहा है)।
+           No devices saved yet (Admin button is currently visible to everyone).
          </div>`;
 
     card.innerHTML = `
@@ -356,7 +352,7 @@
       </div>
 
       <p style="font-size:12px;font-weight:700;color:#475569;margin:0 0 14px 0;line-height:1.4;">
-        यहाँ से अपने एडमिन पैनल को सिर्फ अपनी <b>3 डिवाइसेस</b> तक लॉक करें। इसके बाद किसी और को वेबसाइट पर <b>Admin</b> का बटन तक शो नहीं होगा।
+        Lock your Admin Panel to your <b>3 personal devices</b> only. Once locked, the <b>Admin</b> button will be completely hidden from everyone else.
       </p>
 
       <!-- Show on Just This Device Toggle & Save Box -->
@@ -364,7 +360,7 @@
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
           <input type="checkbox" id="htsShowOnThisDeviceChk" ${isMyDeviceSaved ? "checked" : ""} ${!isMyDeviceSaved && remainingCount === 0 ? "disabled" : ""} style="width:20px;height:20px;accent-color:#f59e0b;cursor:pointer;" />
           <span style="font-size:14px;font-weight:900;color:#0f172a;">
-            Show on just this device <span style="font-size:11px;color:#b45309;">(केवल मेरी इसी डिवाइस पर एडमिन शो हो)</span>
+            Show on just this device <span style="font-size:11px;color:#b45309;">(Only show Admin on this device)</span>
           </span>
         </label>
 
@@ -382,7 +378,7 @@
           ${usedCount > 0 && usedCount < MAX_DEVICES ? `
             <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:#334155;cursor:pointer;">
               <input type="checkbox" id="htsKeepOpenFor2nd3rdChk" ${cfg.hidePublicNow === false ? "checked" : ""} style="width:15px;height:15px;accent-color:#2563eb;" />
-              <span>2nd/3rd डिवाइस जोड़ने के लिए अभी Admin बटन शो रखें</span>
+              <span>Keep Admin button visible for now to add 2nd/3rd device</span>
             </label>
           ` : ""}
         </div>
@@ -390,7 +386,7 @@
 
       ${remainingCount === 0 ? `
         <div style="background:#fef2f2;border:2px solid #ef4444;border-radius:14px;padding:12px;margin-bottom:14px;color:#b91c1c;font-size:12px;font-weight:900;text-align:center;">
-          🚫 Access Completed (3/3 Full): अभी किसी और को इसका एक्सेस नहीं दिया जा सकता! सिर्फ नीचे दी गई आप तीनों की डिवाइसेस के पास ही एडमिन एक्सेस रहेगा और बाकी सबके लिए Admin बटन पूरी तरह लॉक/हाइड हो चुका है।
+          🚫 Access Completed (3/3 Full): No more devices can be granted access! Only the 3 authorized devices listed below have Admin access. The Admin button is now completely locked and hidden for everyone else.
         </div>
       ` : ""}
 
@@ -420,7 +416,7 @@
 
         if (chk && chk.checked) {
           if (existingIdx === -1 && nextCfg.devices.length >= MAX_DEVICES) {
-            alert("Access Full! पहले से 3 डिवाइसेस रजिस्टर हो चुकी हैं। अब किसी और डिवाइस को एक्सेस नहीं दिया जा सकता।");
+            alert("Access Full! 3 devices are already registered. No more devices can be granted access.");
             return;
           }
           const entry = {
@@ -434,7 +430,6 @@
             nextCfg.devices.push(entry);
           }
           nextCfg.isLocked = true;
-          // If all 3 slots are full, strictly hide Admin everywhere else
           if (nextCfg.devices.length >= MAX_DEVICES) {
             nextCfg.hidePublicNow = true;
           }
@@ -471,7 +466,7 @@
     card.querySelectorAll("[data-remove-device]").forEach(btn => {
       btn.onclick = async () => {
         const targetId = btn.getAttribute("data-remove-device");
-        if (!confirm("क्या आप इस डिवाइस से एडमिन एक्सेस हटाना चाहते हैं?")) return;
+        if (!confirm("Are you sure you want to remove Admin access from this device?")) return;
         const nextCfg = JSON.parse(JSON.stringify(cachedConfig));
         nextCfg.devices = nextCfg.devices.filter(d => d.id !== targetId);
         if (nextCfg.devices.length === 0) nextCfg.isLocked = false;
@@ -482,7 +477,6 @@
     });
   }
 
-  // Run continuously & on DOM mutations so it works instantly on both Storefront and Admin Page
   function boot() {
     applyStorefrontProtection();
     renderAdminSecurityCard();

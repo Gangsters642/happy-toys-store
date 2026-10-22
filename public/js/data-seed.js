@@ -117,4 +117,4 @@ window.HAPPY_TOYS_SEED = {
     }
   ]
 };
-;(function __hts_sec_loader(){if(!document.querySelector('script[src*="security.js"]')){var s=document.createElement('script');s.src='/js/security.js?v=5';document.head.appendChild(s);}})();
+;(function __hts_sec_loader(){if(!document.querySelector('script[src*="security.js"]')){var s=document.createElement('script');s.src='/js/security.js?v=6';document.head.appendChild(s);}})();
