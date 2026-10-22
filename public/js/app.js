@@ -494,3 +494,237 @@ const HappyToysApp = (() => {
 })();
 window.HappyToysApp = HappyToysApp;
 document.addEventListener("DOMContentLoaded", HappyToysApp.init);
+
+/* ============================================================== */
+/* ADVANCED SECURITY MODULE: DEVICE BINDING & ADMIN HIDING        */
+/* ============================================================== */
+const HtsSecurity = (() => {
+    const MAX_DEVICES = 3;
+    const DEVICE_KEY = 'hts_secure_device_id';
+    const CONFIG_KEY = 'hts_security_config';
+
+    // Get or create a unique ID for this specific physical device/browser
+    let myDeviceId = localStorage.getItem(DEVICE_KEY);
+    if(!myDeviceId) {
+        myDeviceId = 'DEV_' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        localStorage.setItem(DEVICE_KEY, myDeviceId);
+    }
+
+    function getBrowserName() {
+        const ua = navigator.userAgent;
+        if(ua.includes('Chrome') && !ua.includes('Edge')) return 'Chrome';
+        if(ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari';
+        if(ua.includes('Firefox')) return 'Firefox';
+        return 'Mobile Device';
+    }
+
+    async function getConfig() {
+        // Try fetching from backend API if you implement it later
+        try {
+            const res = await fetch('/api/security');
+            if(res.ok) return await res.json();
+        } catch(e) {}
+        // Fallback to local config 
+        const local = localStorage.getItem(CONFIG_KEY);
+        return local ? JSON.parse(local) : { isLocked: false, devices: [] };
+    }
+
+    async function saveConfig(config) {
+        try {
+            await fetch('/api/security', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(config)
+            });
+        } catch(e) {}
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    }
+
+    // Function to completely wipe the Admin button from the DOM for unauthorized users
+    function hideAdminButtonForPublic() {
+        const hide = () => {
+            const elements = document.querySelectorAll('a, button, span, div');
+            elements.forEach(el => {
+                const text = el.textContent.trim().toLowerCase();
+                // Find anything that says 'admin' in the navigation area
+                if (text === 'admin' || text === 'admin panel') {
+                    if (el.closest('header') || el.closest('.header') || el.closest('nav') || el.classList.contains('admin')) {
+                        el.style.display = 'none';
+                        el.remove();
+                    }
+                }
+            });
+        };
+        hide();
+        // Keep observing to kill the button instantly if the JS tries to render it later
+        new MutationObserver(hide).observe(document.body, { childList: true, subtree: true });
+    }
+
+    async function enforceSecurity() {
+        const config = await getConfig();
+        const isAdminPage = window.location.href.includes('/admin') || document.body.textContent.includes('VIP Splash Intro Video');
+
+        // If the system is locked by ANY device
+        if (config.isLocked && config.devices.length > 0) {
+            const isMyDevice = config.devices.some(d => d.id === myDeviceId);
+
+            if (!isMyDevice) {
+                // Hide the admin entry button globally
+                hideAdminButtonForPublic();
+
+                // If unauthorized person directly typed the Admin URL, block them
+                if (isAdminPage) {
+                    document.body.innerHTML = `
+                        <div style="height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f8fafc; font-family:sans-serif;">
+                            <div style="font-size:50px; margin-bottom:10px;">🚫</div>
+                            <h1 style="color:#334155; margin:0;">Access Denied</h1>
+                            <p style="color:#64748b; margin-top:10px; font-weight:bold;">Admin panel is strictly locked to authorized devices only.</p>
+                            <a href="/" style="margin-top:20px; padding:12px 24px; background:#f59e0b; color:#fff; text-decoration:none; border-radius:12px; font-weight:900; box-shadow: 0 4px 10px rgba(245,158,11,0.3);">Return to Store</a>
+                        </div>
+                    `;
+                }
+            }
+        }
+    }
+
+    async function injectAdminUI() {
+        const isAdminPage = document.body.textContent.includes('VIP Splash Intro Video') || window.location.href.includes('/admin');
+        if (!isAdminPage) return;
+
+        // Wait a moment for the Admin DOM to fully render
+        setTimeout(async () => {
+            if(document.getElementById('hts-security-module-card')) return;
+
+            const config = await getConfig();
+            const isRegistered = config.devices.some(d => d.id === myDeviceId);
+            const remaining = MAX_DEVICES - config.devices.length;
+
+            const card = document.createElement('div');
+            card.id = 'hts-security-module-card';
+            card.className = 'bg-white rounded-[1.6rem] border border-slate-100 p-5 sm:p-6 mb-6 shadow-sm relative overflow-hidden';
+            card.style.border = '2px solid #ef4444'; 
+            card.style.boxShadow = '0 10px 25px rgba(239, 68, 68, 0.12)';
+
+            let devicesListHTML = config.devices.map(d => `
+                <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm mb-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg">
+                            ${d.id === myDeviceId ? '📱' : '💻'}
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold text-slate-800">
+                                ${d.name} ${d.id === myDeviceId ? '<span class="text-emerald-600 ml-1 text-xs font-black">(This Device)</span>' : ''}
+                            </div>
+                            <div class="text-[11px] font-semibold text-slate-400">Added: ${d.date}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            if (config.devices.length === 0) {
+                devicesListHTML = `<div class="text-sm text-slate-400 font-bold italic p-3 text-center">No devices registered yet. Admin button is currently visible to everyone.</div>`;
+            }
+
+            card.innerHTML = `
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-3xl">🔐</span>
+                    <h2 class="text-xl font-black text-slate-800">Admin Security & Device Lock</h2>
+                </div>
+                <p class="text-xs sm:text-sm text-slate-500 font-bold mb-5">
+                    Hide the Admin panel from the public. Once locked, only your registered devices can see the Admin button.
+                </p>
+
+                <div class="bg-slate-50 rounded-2xl p-4 mb-5 border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-black text-slate-700 text-sm uppercase tracking-wider">Registered Devices</h3>
+                        <span class="text-xs font-black px-3 py-1 bg-amber-100 text-amber-700 rounded-full">${remaining} Slots Left</span>
+                    </div>
+                    <div id="device-list-container">
+                        ${devicesListHTML}
+                    </div>
+                </div>
+
+                <div>
+                    ${!isRegistered && config.devices.length < MAX_DEVICES ? `
+                        <button id="btn-sec-register" class="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black text-sm shadow-md active:scale-95 transition flex justify-center items-center gap-2 border-2 border-emerald-400 cursor-pointer">
+                            <span>🛡️ Show on just this device</span>
+                        </button>
+                    ` : ''}
+
+                    ${!isRegistered && config.devices.length >= MAX_DEVICES ? `
+                        <div class="w-full py-3 rounded-xl bg-rose-100 text-rose-600 font-black text-sm text-center border-2 border-rose-200">
+                            🚫 Access Full: Maximum 3 devices limit reached.
+                        </div>
+                    ` : ''}
+
+                    ${isRegistered ? `
+                        <button id="btn-sec-remove" class="w-full h-12 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-500 font-black text-sm shadow-sm active:scale-95 transition flex justify-center items-center gap-2 border-2 border-rose-200 cursor-pointer">
+                            <span>❌ Remove This Device</span>
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+
+            // Inject the card at the top, right above the first existing white card
+            const container = document.querySelector('.container') || document.querySelector('main') || document.body;
+            const firstCard = container.querySelector('.bg-white.rounded-\\[1\\.6rem\\]');
+            
+            if (firstCard && firstCard.parentNode) {
+                firstCard.parentNode.insertBefore(card, firstCard);
+            } else {
+                container.prepend(card);
+            }
+
+            // Button Events
+            const btnReg = document.getElementById('btn-sec-register');
+            if (btnReg) {
+                btnReg.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const curConfig = await getConfig();
+                    if (curConfig.devices.length >= MAX_DEVICES) return alert("Maximum 3 devices allowed!");
+                    
+                    curConfig.isLocked = true;
+                    curConfig.devices.push({
+                        id: myDeviceId,
+                        name: getBrowserName() + ' (' + (/android|iphone|ipad/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop') + ')',
+                        date: new Date().toLocaleDateString()
+                    });
+                    
+                    btnReg.innerHTML = "Locking...";
+                    await saveConfig(curConfig);
+                    window.location.reload();
+                });
+            }
+
+            const btnRem = document.getElementById('btn-sec-remove');
+            if (btnRem) {
+                btnRem.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    if(!confirm("Are you sure? This device will lose Admin access!")) return;
+                    
+                    const curConfig = await getConfig();
+                    curConfig.devices = curConfig.devices.filter(d => d.id !== myDeviceId);
+                    if (curConfig.devices.length === 0) curConfig.isLocked = false;
+                    
+                    btnRem.innerHTML = "Removing...";
+                    await saveConfig(curConfig);
+                    window.location.href = "/"; // Kick out to store because it's no longer authorized
+                });
+            }
+        }, 600);
+    }
+
+    return {
+        init: () => {
+            enforceSecurity();
+            if(document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', injectAdminUI);
+            } else {
+                injectAdminUI();
+            }
+        }
+    };
+})();
+
+// Run the security check globally
+HtsSecurity.init();
