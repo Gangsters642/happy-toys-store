@@ -25,18 +25,32 @@ const HappyToysApp = (() => {
   function initScrollAnimations() {
     if (scrollObserver) scrollObserver.disconnect();
     
+    let delayCounter = 0;
+    let delayTimer = null;
+
     scrollObserver = new IntersectionObserver((entries, observer) => {
       entries.forEach((e) => {
         if (e.isIntersecting) {
-          e.target.classList.add("is-visible");
-          observer.unobserve(e.target); // Stop observing once animated for better performance
+          // Add 120ms gap for each product appearing at the same time
+          e.target.style.transitionDelay = `${delayCounter * 120}ms`;
+          
+          // Request animation frame ensures the transition applies properly
+          requestAnimationFrame(() => {
+            e.target.classList.add("is-visible");
+          });
+          
+          observer.unobserve(e.target);
+          
+          delayCounter++;
+          clearTimeout(delayTimer);
+          
+          // Reset the counter when scrolling stops so new items start from 0 delay
+          delayTimer = setTimeout(() => { delayCounter = 0; }, 200);
         }
       });
-    }, { threshold: 0.08, rootMargin: "0px 0px -20px 0px" });
+    }, { threshold: 0.05 }); // Triggers right when 5% of the card is visible
 
-    document.querySelectorAll(".toy-card-reveal").forEach((c, i) => {
-      // Changed from transitionDelay to animationDelay to work with @keyframes
-      c.style.animationDelay = `${(i % 4) * 80}ms`;
+    document.querySelectorAll(".toy-card-reveal").forEach((c) => {
       scrollObserver.observe(c);
     });
   }
@@ -201,7 +215,8 @@ const HappyToysApp = (() => {
       </article>`;
     }).join("");
 
-    setTimeout(() => initScrollAnimations(), 100);
+    // Small timeout to allow DOM insertion before observing
+    setTimeout(() => initScrollAnimations(), 50);
   }
 
   return { init, selectCategory, resetFilters, tapProductCard, toggleHeartFill, getProductById, enterStore };

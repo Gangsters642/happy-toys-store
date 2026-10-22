@@ -1,34 +1,24 @@
 .toy-card {
-  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.25s ease !important;
+  transition: border-color 0.2s ease, box-shadow 0.25s ease !important;
 }
 .toy-card:active, .toy-card.card-selected-yellow {
   border: 3px solid #f59e0b !important;
   box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.45), 0 20px 35px rgba(245, 158, 11, 0.3) !important;
-  transform: scale(1.05) translateY(-6px) !important;
+  transform: scale(1.03) translateY(-4px) !important;
   z-index: 20 !important;
 }
 
-/* 3D Pop-up Scroll Reveal Animation Setup */
+/* One-by-One Drop Down Reveal */
 .toy-card-reveal {
-  opacity: 0; /* Starts hidden */
+  opacity: 0;
+  transform: translateY(-40px) scale(0.95); /* Start from slightly above */
+  transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
   will-change: opacity, transform;
 }
 
-/* This class is added by JS when the card enters the screen */
 .toy-card-reveal.is-visible {
-  animation: reanimate3D 0.7s cubic-bezier(0.2, 1, 0.3, 1) forwards !important;
-}
-
-/* Real 3D Reveal Keyframes (No floating, just a smooth entry) */
-@keyframes reanimate3D {
-  0% { 
-    opacity: 0; 
-    transform: perspective(1000px) rotateX(15deg) translateY(50px) scale(0.9); 
-  }
-  100% { 
-    opacity: 1; 
-    transform: perspective(1000px) rotateX(0deg) translateY(0) scale(1); 
-  }
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 .card-rainbow-strip {
