@@ -26,13 +26,14 @@ const HappyToysApp = (() => {
     if (scrollObserver) scrollObserver.disconnect();
     scrollObserver = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
-        if (e.isIntersecting) e.target.classList.add("is-visible");
-        else e.target.classList.remove("is-visible");
+        if (e.isIntersecting) {
+          e.target.classList.add("is-visible");
+        }
       });
     }, { threshold: 0.08 });
 
     document.querySelectorAll(".toy-card-reveal").forEach((c, i) => {
-      c.style.transitionDelay = `${(i % 4) * 70}ms`;
+      c.style.transitionDelay = `${(i % 4) * 75}ms`;
       scrollObserver.observe(c);
     });
   }
@@ -156,11 +157,10 @@ const HappyToysApp = (() => {
 
     grid.innerHTML = list.map((p, idx) => {
       const cat = state.categories.find(c => c.slug === p.category) || { icon: "🧠", name: "Educational Toys" };
-      const wave = idx % 2 === 0 ? "wave-even" : "wave-odd";
       const r = ratings[idx % 4];
 
       return `
-      <article onclick="HappyToysApp.tapProductCard('${p.id}', this, event)" class="toy-card toy-card-reveal ${wave} bg-white rounded-[1.6rem] border border-slate-100 overflow-hidden flex flex-col justify-between shadow-sm cursor-pointer p-2 sm:p-2.5">
+      <article onclick="HappyToysApp.tapProductCard('${p.id}', this, event)" class="toy-card toy-card-reveal bg-white rounded-[1.6rem] border border-slate-100 overflow-hidden flex flex-col justify-between shadow-sm cursor-pointer p-2 sm:p-2.5">
         <div>
           <div class="relative aspect-square rounded-2xl overflow-hidden bg-slate-50 mb-2">
             <img src="${p.mainImage}" alt="${p.name}" class="w-full h-full object-cover" />
@@ -198,7 +198,7 @@ const HappyToysApp = (() => {
       </article>`;
     }).join("");
 
-    initScrollAnimations();
+    setTimeout(() => initScrollAnimations(), 100);
   }
 
   return { init, selectCategory, resetFilters, tapProductCard, toggleHeartFill, getProductById, enterStore };
