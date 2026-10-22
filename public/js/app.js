@@ -1,71 +1,24 @@
 const HappyToysApp = (() => {
   let state = { categories: [], products: [], activeCategory: "all" };
   let scrollObserver = null;
-  let audioUnlockHandler = null;
 
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
   function getProductById(id) { return state.products.find(x => x.id === id) || null; }
 
-  function setupVideoWithSound() {
-    const v = document.getElementById("splashVideoPlayer");
-    const btn = document.getElementById("unmuteNoticeBtn");
-    if (!v) return;
-
-    v.muted = false;
-    v.volume = 1.0;
-
-    const p = v.play();
-    if (p !== undefined) {
-      p.catch(() => {
-        v.muted = true;
-        v.play().catch(() => {});
-        btn?.classList.remove("hidden");
-
-        audioUnlockHandler = (e) => {
-          if (e.target && e.target.closest("[onclick*='enterStore']")) return;
-          const splash = document.getElementById("vipSplashScreen");
-          if (!splash || splash.classList.contains("hidden")) return;
-          v.muted = false;
-          v.volume = 1.0;
-          v.play().catch(() => {});
-          btn?.classList.add("hidden");
-          removeAudioListeners();
-        };
-
-        document.addEventListener("click", audioUnlockHandler);
-        document.addEventListener("touchstart", audioUnlockHandler);
-      });
-    }
-  }
-
-  function removeAudioListeners() {
-    if (audioUnlockHandler) {
-      document.removeEventListener("click", audioUnlockHandler);
-      document.removeEventListener("touchstart", audioUnlockHandler);
-      audioUnlockHandler = null;
-    }
-  }
-
-  function stopSplashVideoCompletely() {
-    removeAudioListeners();
-    const v = document.getElementById("splashVideoPlayer");
-    if (v) {
-      try { v.pause(); v.muted = true; v.removeAttribute("src"); v.load(); } catch (e) {}
-    }
-  }
-
   function enterStore() {
-    stopSplashVideoCompletely();
     const splash = document.getElementById("vipSplashScreen");
+    const v = document.getElementById("splashVideoPlayer");
+    if (v) { try { v.pause(); v.removeAttribute("src"); v.load(); } catch (e) {} }
     document.body.classList.remove("splash-active");
 
     if (splash) {
-      splash.style.pointerEvents = "none";
-      splash.style.opacity = "0";
-      setTimeout(() => { splash.classList.add("hidden"); splash.style.display = "none"; }, 350);
+      splash.style.display = "none";
+      splash.remove();
     }
 
-    if (typeof confetti === "function") confetti({ particleCount: 90, spread: 90, origin: { y: 0.6 } });
+    if (typeof confetti === "function") {
+      confetti({ particleCount: 90, spread: 90, origin: { y: 0.6 } });
+    }
     initScrollAnimations();
   }
 
@@ -89,19 +42,8 @@ const HappyToysApp = (() => {
     const svg = btn.querySelector("svg");
     if (svg) {
       const isFilled = btn.classList.toggle("text-rose-600");
-      if (isFilled) {
-        svg.style.fill = "#e11d48";
-      } else {
-        svg.style.fill = "none";
-      }
+      svg.style.fill = isFilled ? "#e11d48" : "none";
     }
-    const cards = document.querySelectorAll(".toy-card");
-    cards.forEach((card, idx) => {
-      card.classList.remove("reanimate-3d-card", "is-visible");
-      void card.offsetWidth;
-      card.style.animationDelay = `${idx * 80}ms`;
-      card.classList.add("reanimate-3d-card", "is-visible");
-    });
   }
 
   function tapProductCard(id, el, event) {
@@ -116,7 +58,6 @@ const HappyToysApp = (() => {
   }
 
   async function init() {
-    setupVideoWithSound();
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
     state.categories = seed.categories || [];
     try { state.products = JSON.parse(localStorage.getItem("hts_custom_products") || "[]"); } catch (e) {}
@@ -146,9 +87,8 @@ const HappyToysApp = (() => {
       const id = location.hash.replace("#product=", "").trim();
       const p = getProductById(id);
       if (p && window.HappyToysModal) {
-        stopSplashVideoCompletely();
         const splash = document.getElementById("vipSplashScreen");
-        if (splash) { splash.classList.add("hidden"); splash.style.display = "none"; }
+        if (splash) { splash.style.display = "none"; splash.remove(); }
         document.body.classList.remove("splash-active");
         window.HappyToysModal.open(p);
       }
@@ -216,7 +156,7 @@ const HappyToysApp = (() => {
 
     grid.innerHTML = list.map((p, idx) => {
       const cat = state.categories.find(c => c.slug === p.category) || { icon: "🧠", name: "Educational Toys" };
-      const wave = idx % 2 === 0 ? """" : """";
+      const wave = idx % 2 === 0 ? "wave-even" : "wave-odd";
       const r = ratings[idx % 4];
 
       return `
@@ -225,7 +165,7 @@ const HappyToysApp = (() => {
           <div class="relative aspect-square rounded-2xl overflow-hidden bg-slate-50 mb-2">
             <img src="${p.mainImage}" alt="${p.name}" class="w-full h-full object-cover" />
             <span class="absolute top-2 left-2 bg-gradient-to-r from-amber-300 to-yellow-400 text-slate-900 text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-xs">${badges[idx % 4]}</span>
-            <button type="button" onclick="HappyToysApp.toggleHeartFill(this, event)" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/95 text-rose-500 flex items-center justify-center shadow-md active:scale-125 transition">
+            <button type="button" onclick="HappyToysApp.toggleHeartFill(this, event)" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/95 text-rose-500 flex items-center justify-center shadow-md active:scale-125 transition cursor-pointer">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
             </button>
             <div class="card-rainbow-strip absolute bottom-0 left-0 right-0"></div>
