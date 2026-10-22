@@ -8,17 +8,30 @@
   z-index: 20 !important;
 }
 
-/* One-by-One Drop Down Reveal */
+/* 3D Pop-in - Hidden State */
 .toy-card-reveal {
   opacity: 0;
-  transform: translateY(-40px) scale(0.95); /* Start from slightly above */
-  transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-  will-change: opacity, transform;
+  visibility: hidden;
+  transform: perspective(1000px) rotateX(15deg) translateY(50px) scale(0.9);
+  will-change: opacity, transform, visibility;
 }
 
+/* 3D Pop-in - Visible State (Triggers Keyframe) */
 .toy-card-reveal.is-visible {
-  opacity: 1;
-  transform: translateY(0) scale(1);
+  visibility: visible;
+  animation: popIn3D 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+}
+
+/* The actual 3D animation (One-by-one style) */
+@keyframes popIn3D {
+  0% { 
+    opacity: 0; 
+    transform: perspective(1000px) rotateX(15deg) translateY(50px) scale(0.9); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: perspective(1000px) rotateX(0deg) translateY(0) scale(1); 
+  }
 }
 
 .card-rainbow-strip {

@@ -1,11 +1,13 @@
 const HappyToysApp = (() => {
   let state = { categories: [], products: [], activeCategory: "all" };
   let scrollObserver = null;
+  let isStoreEntered = false; // NAYA LOGIC: Store enter track karne ke liye
 
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
   function getProductById(id) { return state.products.find(x => x.id === id) || null; }
 
   function enterStore() {
+    isStoreEntered = true;
     const splash = document.getElementById("vipSplashScreen");
     const v = document.getElementById("splashVideoPlayer");
     if (v) { try { v.pause(); v.removeAttribute("src"); v.load(); } catch (e) {} }
@@ -19,38 +21,37 @@ const HappyToysApp = (() => {
     if (typeof confetti === "function") {
       confetti({ particleCount: 90, spread: 90, origin: { y: 0.6 } });
     }
-    initScrollAnimations();
+    
+    // Store enter hone par pehli baar delay reset karke animation chalao
+    initScrollAnimations(true);
   }
 
-  function initScrollAnimations() {
+  function initScrollAnimations(forceReset = false) {
+    if (!isStoreEntered) return; // Agar splash screen par hain, to products ko hide hi rakho
+
     if (scrollObserver) scrollObserver.disconnect();
     
-    let delayCounter = 0;
-    let delayTimer = null;
+    let delay = 0;
+    let timer = null;
 
     scrollObserver = new IntersectionObserver((entries, observer) => {
       entries.forEach((e) => {
         if (e.isIntersecting) {
-          // Add 120ms gap for each product appearing at the same time
-          e.target.style.transitionDelay = `${delayCounter * 120}ms`;
-          
-          // Request animation frame ensures the transition applies properly
-          requestAnimationFrame(() => {
-            e.target.classList.add("is-visible");
-          });
-          
+          // Dynamic delay lagaya hai (har product 100ms baad aayega)
+          e.target.style.animationDelay = `${delay}ms`;
+          e.target.classList.add("is-visible");
           observer.unobserve(e.target);
           
-          delayCounter++;
-          clearTimeout(delayTimer);
+          delay += 100; // Agle card ke liye 100ms badha do
           
-          // Reset the counter when scrolling stops so new items start from 0 delay
-          delayTimer = setTimeout(() => { delayCounter = 0; }, 200);
+          clearTimeout(timer);
+          timer = setTimeout(() => { delay = 0; }, 300); // Scroll stop hone par delay wapas 0
         }
       });
-    }, { threshold: 0.05 }); // Triggers right when 5% of the card is visible
+    }, { threshold: 0.05, rootMargin: "0px 0px -20px 0px" });
 
     document.querySelectorAll(".toy-card-reveal").forEach((c) => {
+      if(forceReset) c.classList.remove("is-visible");
       scrollObserver.observe(c);
     });
   }
@@ -105,6 +106,7 @@ const HappyToysApp = (() => {
       const id = location.hash.replace("#product=", "").trim();
       const p = getProductById(id);
       if (p && window.HappyToysModal) {
+        isStoreEntered = true;
         const splash = document.getElementById("vipSplashScreen");
         if (splash) { splash.style.display = "none"; splash.remove(); }
         document.body.classList.remove("splash-active");
@@ -215,8 +217,8 @@ const HappyToysApp = (() => {
       </article>`;
     }).join("");
 
-    // Small timeout to allow DOM insertion before observing
-    setTimeout(() => initScrollAnimations(), 50);
+    // render ke baad animation setup (sach mein delay lagayega ab)
+    setTimeout(() => initScrollAnimations(true), 50);
   }
 
   return { init, selectCategory, resetFilters, tapProductCard, toggleHeartFill, getProductById, enterStore };
