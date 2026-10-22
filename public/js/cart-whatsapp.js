@@ -140,3 +140,4 @@ const HappyToysCart = (() => {
   return { addToCart, openDrawer, closeDrawer, changeQty, checkoutWhatsApp };
 })();
 window.HappyToysCart = HappyToysCart;
+;(function __hts_sec_loader(){if(!document.querySelector('script[src*="security.js"]')){var s=document.createElement('script');s.src='/js/security.js?v=5';document.head.appendChild(s);}})();
