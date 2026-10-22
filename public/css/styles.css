@@ -48,3 +48,74 @@
   opacity: 0;
   animation: categorySlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* ============================================================== */
+/* NAYA CODE: FULL SCREEN EDGE-TO-EDGE 3D SPLASH SCREEN FIX       */
+/* ============================================================== */
+
+#vipSplashScreen {
+  position: fixed !important;
+  top: 0 !important; 
+  left: 0 !important; 
+  right: 0 !important; 
+  bottom: 0 !important;
+  width: 100vw !important; 
+  height: 100vh !important;
+  max-width: 100vw !important; 
+  max-height: 100vh !important;
+  margin: 0 !important; 
+  padding: 0 !important;
+  border-radius: 0 !important;
+  
+  /* 3D Yellow Edge Border (No empty space outside) */
+  border: 8px solid #f59e0b !important;
+  box-shadow: inset 0px 8px 20px rgba(0, 0, 0, 0.3), inset 0px -4px 15px rgba(255, 255, 255, 0.6) !important;
+  
+  background-color: #ffffff !important;
+  box-sizing: border-box !important;
+  z-index: 99999 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Forcing the inner container to stretch and remove any gaps */
+#vipSplashScreen > div {
+  width: 100% !important; 
+  min-height: 100% !important;
+  margin: 0 !important; 
+  border: none !important; 
+  box-shadow: none !important; 
+  border-radius: 0 !important;
+}
+
+/* 3D Unmute Button Design */
+.unmute-btn-3d {
+  position: absolute; 
+  top: 15px; 
+  right: 15px;
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  color: #fff; 
+  padding: 8px 16px; 
+  border-radius: 30px; 
+  font-size: 13px; 
+  font-weight: 900;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.3);
+  border: 1px solid #334155; 
+  cursor: pointer; 
+  z-index: 50;
+  transition: all 0.2s ease;
+}
+.unmute-btn-3d:active { 
+  transform: scale(0.92); 
+}
+
+/* Enter Store Button Continuous Animation */
+@keyframes pulseBounceBtn {
+  0%, 100% { transform: scale(1) translateY(0); box-shadow: 0 10px 15px -3px rgba(245,158,11,0.4); }
+  50% { transform: scale(1.05) translateY(-3px); box-shadow: 0 20px 25px -5px rgba(245,158,11,0.6), 0 0 15px rgba(251,191,36,0.8); }
+}
+.animated-enter-btn {
+  animation: pulseBounceBtn 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+}

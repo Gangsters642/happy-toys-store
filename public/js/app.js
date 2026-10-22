@@ -1,10 +1,69 @@
 const HappyToysApp = (() => {
   let state = { categories: [], products: [], activeCategory: "all" };
   let scrollObserver = null;
-  let isStoreEntered = false; // NAYA LOGIC: Store enter track karne ke liye
+  let isStoreEntered = false; // Purana logic waise hi hai
 
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
   function getProductById(id) { return state.products.find(x => x.id === id) || null; }
+
+  // YAHAN NAYA LOGIC HAI VIDEO AUR SPLASH FIX KE LIYE
+  function fixSplashScreen() {
+    const splash = document.getElementById("vipSplashScreen");
+    if (!splash) return;
+
+    // Remove old classes that caused white gaps
+    try {
+      const innerCard = splash.firstElementChild;
+      if (innerCard) {
+        innerCard.className = innerCard.className.replace(/m-\d+|p-\d+|rounded-\w+|max-w-\w+|shadow-\w+/g, '');
+      }
+    } catch(e) {}
+
+    // Fix Video Autoplay and Unmute Button
+    const video = document.getElementById("splashVideoPlayer");
+    if (video) {
+      video.setAttribute("playsinline", "true");
+      video.setAttribute("autoplay", "true");
+      video.setAttribute("loop", "true");
+      video.muted = true; // Browser policy ke mutabiq shuru mein mute lazmi hai
+      
+      video.style.width = "100%";
+      video.style.borderRadius = "0"; 
+      
+      // Auto-play trigger
+      let playPromise = video.play();
+      if (playPromise !== undefined) {
+          playPromise.catch(() => { /* Handle Auto-play blocks silently */ });
+      }
+
+      // Add 3D Unmute Button dynamically
+      if (!document.getElementById("unmuteToggleBtn")) {
+          const btn = document.createElement("button");
+          btn.id = "unmuteToggleBtn";
+          btn.innerHTML = "🔇 Tap to Unmute";
+          btn.className = "unmute-btn-3d";
+          btn.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              video.muted = !video.muted;
+              btn.innerHTML = video.muted ? "🔇 Tap to Unmute" : "🔊 Sound On";
+          };
+          
+          if(video.parentElement) {
+            video.parentElement.style.position = "relative";
+            video.parentElement.appendChild(btn);
+          }
+      }
+    }
+
+    // Add Animation to "Enter Store" button
+    const enterBtns = splash.querySelectorAll('button');
+    enterBtns.forEach(b => {
+      if (b.getAttribute('onclick')?.includes('enterStore') || b.textContent.includes('Enter Store')) {
+          b.classList.add("animated-enter-btn");
+      }
+    });
+  }
 
   function enterStore() {
     isStoreEntered = true;
@@ -22,12 +81,12 @@ const HappyToysApp = (() => {
       confetti({ particleCount: 90, spread: 90, origin: { y: 0.6 } });
     }
     
-    // Store enter hone par pehli baar delay reset karke animation chalao
+    // Store enter hone par wahi same purani animation chalegi
     initScrollAnimations(true);
   }
 
   function initScrollAnimations(forceReset = false) {
-    if (!isStoreEntered) return; // Agar splash screen par hain, to products ko hide hi rakho
+    if (!isStoreEntered) return; 
 
     if (scrollObserver) scrollObserver.disconnect();
     
@@ -37,15 +96,14 @@ const HappyToysApp = (() => {
     scrollObserver = new IntersectionObserver((entries, observer) => {
       entries.forEach((e) => {
         if (e.isIntersecting) {
-          // Dynamic delay lagaya hai (har product 100ms baad aayega)
           e.target.style.animationDelay = `${delay}ms`;
           e.target.classList.add("is-visible");
           observer.unobserve(e.target);
           
-          delay += 100; // Agle card ke liye 100ms badha do
+          delay += 100; 
           
           clearTimeout(timer);
-          timer = setTimeout(() => { delay = 0; }, 300); // Scroll stop hone par delay wapas 0
+          timer = setTimeout(() => { delay = 0; }, 300); 
         }
       });
     }, { threshold: 0.05, rootMargin: "0px 0px -20px 0px" });
@@ -77,6 +135,8 @@ const HappyToysApp = (() => {
   }
 
   async function init() {
+    fixSplashScreen(); // Website khulte hi splash screen ko fix karega
+
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
     state.categories = seed.categories || [];
     try { state.products = JSON.parse(localStorage.getItem("hts_custom_products") || "[]"); } catch (e) {}
@@ -217,7 +277,6 @@ const HappyToysApp = (() => {
       </article>`;
     }).join("");
 
-    // render ke baad animation setup (sach mein delay lagayega ab)
     setTimeout(() => initScrollAnimations(true), 50);
   }
 
