@@ -265,9 +265,10 @@ const HappyToysModal = (() => {
       if (related.length > 0) {
         separateBottomWindowsHtml += `
           <section class="bg-white rounded-3xl p-4 sm:p-5 border-2 border-amber-200 shadow-md mt-6 space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <span class="px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 font-black text-xs sm:text-sm">✨ You Might Also Like</span>
-              <span class="text-[11px] text-slate-400 font-bold">Similar Toys</span>
+            <div class="flex flex-col items-center justify-center border-b-2 border-amber-200 pb-4 mb-2 text-center">
+              <div class="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 text-white font-black text-lg sm:text-2xl tracking-wide shadow-md flex items-center justify-center gap-2">
+                <span>✨</span> <span>You Might Also Like</span> <span>✨</span>
+              </div>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
               ${related.map((r, i) => window.HappyToysApp.generateCardHtml(r, i)).join("")}
@@ -283,9 +284,10 @@ const HappyToysModal = (() => {
         if (rvProducts.length > 0) {
           separateBottomWindowsHtml += `
             <section class="bg-white rounded-3xl p-4 sm:p-5 border-2 border-blue-200 shadow-md mt-6 space-y-4">
-              <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                <span class="px-3.5 py-1 rounded-full bg-blue-100 text-blue-900 font-black text-xs sm:text-sm">🕒 Recently Viewed Products</span>
-                <span class="text-[11px] text-slate-400 font-bold">Your History</span>
+              <div class="flex flex-col items-center justify-center border-b-2 border-blue-200 pb-4 mb-2 text-center">
+                <div class="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white font-black text-lg sm:text-2xl tracking-wide shadow-md flex items-center justify-center gap-2">
+                  <span>🕒</span> <span>Recently Viewed Products</span>
+                </div>
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 ${rvProducts.map((r, i) => window.HappyToysApp.generateCardHtml(r, i)).join("")}
