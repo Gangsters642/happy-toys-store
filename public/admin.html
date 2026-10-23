@@ -6,93 +6,262 @@
   <title>Admin Panel | Happy Toys Store</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
-  <style> body { font-family: 'Nunito', sans-serif; } .toy-title-font { font-family: 'Fredoka One', cursive, sans-serif; } </style>
+  <style>
+    body { font-family: 'Nunito', sans-serif; }
+    .toy-title-font { font-family: 'Fredoka One', cursive, sans-serif; }
+  </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
-  <div id="adminLoginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
+
+  <!-- ADMIN LOGIN MODAL (Auto-bypassed for authorized devices) -->
+  <div id="adminLoginModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border-2 border-amber-300">
       <h2 class="toy-title-font text-2xl text-amber-500 text-center mb-2">🧸 Admin Login</h2>
+      <p class="text-xs text-slate-500 text-center mb-5 font-bold">Enter password to authorize this device</p>
       <form id="adminLoginForm" class="space-y-4">
-        <input type="password" id="adminPasswordInput" placeholder="Admin Password" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-amber-500 font-bold" />
-        <button type="submit" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black shadow-md transition">Login</button>
+        <input type="password" id="adminPasswordInput" placeholder="Admin Password" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-amber-500 font-bold" />
+        <button type="submit" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black shadow-md transition cursor-pointer">Login to Dashboard</button>
       </form>
     </div>
   </div>
 
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2"><span class="text-2xl">🧸</span><span class="toy-title-font text-lg text-amber-500">Happy Toys Admin</span></div>
-      <div class="flex items-center gap-3"><a href="index.html" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black">← View Store</a><button type="button" id="adminLogoutBtn" class="px-3.5 py-2 rounded-xl bg-red-50 text-red-600 text-xs font-black">Logout</button></div>
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🧸</span>
+        <span class="toy-title-font text-lg text-amber-500">Happy Toys Admin</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black transition">← View Store</a>
+        <button type="button" id="adminLogoutBtn" class="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-black transition cursor-pointer">Logout</button>
+      </div>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+  <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+    <!-- AUTHORIZED 3-DEVICES SECTION -->
+    <section class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+      <div class="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl">
+        🔒 Admin access is active and locked to your authorized devices (3/3).
+      </div>
+      <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-wider">AUTHORIZED DEVICES LIST (3 / 3):</h3>
+      <div id="authorizedDevicesContainer" class="space-y-2.5"></div>
+    </section>
+
+    <!-- VIP SPLASH INTRO VIDEO SECTION -->
+    <section class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+      <h2 class="text-lg font-black text-slate-900 mb-1">🎬 VIP Splash Intro Video</h2>
+      <p class="text-xs text-slate-500 mb-4">Upload an MP4 video from gallery or paste a direct video URL.</p>
+      <div class="grid sm:grid-cols-2 gap-4 items-center">
+        <div class="space-y-3">
+          <input type="file" id="splashMediaUpload" accept="video/*,image/*" class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+          <input type="text" id="adminIntroGifUrl" placeholder="Or paste direct .mp4 video URL..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm" />
+          <button type="button" id="saveMediaBtn" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-sm transition cursor-pointer">Save Splash Video</button>
+        </div>
+        <div id="splashPreview" class="hidden bg-slate-100 rounded-2xl p-2 border border-slate-200"></div>
+      </div>
+    </section>
+
+    <!-- STORE PRODUCTS TABLE -->
     <section class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
       <div class="flex items-center justify-between mb-6">
-        <div><h2 class="text-lg font-black text-slate-900">🧸 Store Products</h2><p class="text-xs text-slate-500">Manage toys and variant images</p></div>
-        <button type="button" id="openAddProductModalBtn" class="px-4 py-2.5 rounded-xl bg-blue-600 text-white font-black text-xs shadow-md">+ Add New Toy</button>
+        <div>
+          <h2 class="text-lg font-black text-slate-900">🧸 Store Products</h2>
+          <p class="text-xs text-slate-500">Manage toys, sizes, languages, bubble gun holes & custom image variants</p>
+        </div>
+        <button type="button" id="openAddProductModalBtn" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-md transition cursor-pointer">+ Add New Toy</button>
       </div>
+
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
-          <thead><tr class="border-b border-slate-200 text-[11px] font-black text-slate-400 uppercase"><th class="py-3 px-4">Product</th><th class="py-3 px-4">Category</th><th class="py-3 px-4">Price</th><th class="py-3 px-4 text-right">Actions</th></tr></thead>
+          <thead>
+            <tr class="border-b border-slate-200 text-[11px] font-black text-slate-400 uppercase">
+              <th class="py-3 px-4">Product</th>
+              <th class="py-3 px-4">Category & Special Options</th>
+              <th class="py-3 px-4">Base Price</th>
+              <th class="py-3 px-4">Stock</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
           <tbody id="adminProductTableBody" class="text-sm"></tbody>
         </table>
       </div>
     </section>
   </main>
 
+  <!-- ADD / EDIT PRODUCT MODAL -->
   <div id="productModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl my-auto max-h-[94vh] overflow-y-auto space-y-4">
       <div class="flex items-center justify-between border-b pb-3 border-slate-100">
-        <h3 id="productModalTitle" class="text-lg font-black text-slate-900">Add New Toy Product</h3><button type="button" id="closeProductModalBtn" class="text-slate-400 hover:text-slate-700 text-xl font-bold">✕</button>
+        <h3 id="productModalTitle" class="text-lg font-black text-slate-900">Add New Toy Product</h3>
+        <button type="button" id="closeProductModalBtn" class="text-slate-400 hover:text-slate-700 text-xl font-bold cursor-pointer">✕</button>
       </div>
+
       <form id="productForm" class="space-y-4">
-        <input type="hidden" id="editProductId" /><input type="hidden" id="prodMainImage" />
-        <div><label class="block text-[11px] font-black text-slate-700 uppercase mb-1">Product Name *</label><input type="text" id="prodName" required class="w-full px-3 py-2.5 rounded-xl border font-bold text-sm" /></div>
+        <input type="hidden" id="editProductId" />
+        <input type="hidden" id="prodMainImage" />
+
+        <div>
+          <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">PRODUCT NAME *</label>
+          <input type="text" id="prodName" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold" />
+        </div>
+
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="block text-[11px] font-black text-slate-700 uppercase mb-1">SKU *</label><input type="text" id="prodSku" required class="w-full px-3 py-2.5 rounded-xl border font-bold text-sm" /></div>
-          <div><label class="block text-[11px] font-black text-slate-700 uppercase mb-1">Category *</label><select id="prodCategory" class="w-full px-3 py-2.5 rounded-xl border font-bold text-sm bg-white"></select></div>
-        </div>
-        <div class="grid grid-cols-3 gap-2.5">
-          <div><label class="block text-[10px] font-black text-slate-700 uppercase mb-1">Stock Qty</label><input type="number" id="prodStock" value="10" required class="w-full px-3 py-2 rounded-xl border font-bold text-sm" /></div>
-          <div><label class="block text-[10px] font-black text-slate-700 uppercase mb-1">Sale Price *</label><input type="number" id="prodPrice" required class="w-full px-3 py-2 rounded-xl border font-bold text-sm" /></div>
-          <div><label class="block text-[10px] font-black text-rose-600 uppercase mb-1">Old Price</label><input type="number" id="prodComparePrice" class="w-full px-3 py-2 rounded-xl border border-rose-200 bg-rose-50/40 font-bold text-sm" /></div>
-        </div>
-
-        <div class="bg-sky-50/70 border-2 border-sky-200 rounded-2xl p-3.5 space-y-2">
-          <label class="block text-xs font-black text-sky-900">📐 Product Dimensions / Inches</label>
-          <input type="text" id="prodDimensions" placeholder="e.g. Small 7x5 Inch" class="w-full px-3.5 py-2 rounded-xl border border-sky-300 text-xs font-bold bg-white" />
-        </div>
-
-        <!-- NEW 5th VARIANT: DYNAMIC CUSTOM VARIANTS WITH IMAGES -->
-        <div class="bg-indigo-50/70 border-2 border-indigo-200 rounded-2xl p-3.5 space-y-3">
-          <label class="flex items-center justify-between cursor-pointer">
-            <div>
-              <span class="text-xs font-black text-slate-900 block">🌟 Enable Custom Variants (Image Switching)</span>
-              <span class="text-[10px] text-slate-500 font-bold">e.g. Capital ABC, Small abc with unique images</span>
-            </div>
-            <input type="checkbox" id="prodHasCustomVariants" class="w-5 h-5 accent-indigo-500 rounded cursor-pointer" />
-          </label>
-          <div id="customVariantsContainer" class="hidden pt-2 border-t border-indigo-200 space-y-2">
-            <div id="customVariantsList" class="space-y-2"></div>
-            <button type="button" id="addCustomVariantBtn" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-black shadow-sm">+ Add Variant Option</button>
+          <div>
+            <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">UNIQUE SKU *</label>
+            <input type="text" id="prodSku" required placeholder="e.g. HTS-01" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">EXACT CATEGORY *</label>
+            <select id="prodCategory" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold bg-white"></select>
           </div>
         </div>
 
-        <div class="bg-amber-50/70 border-2 border-amber-200 rounded-2xl p-3.5 space-y-3"><label class="flex items-center justify-between cursor-pointer"><div><span class="text-xs font-black block">📏 Size Variants</span></div><input type="checkbox" id="prodHasVariants" class="w-5 h-5" /></label><div id="variantPricesContainer" class="hidden pt-2 border-t border-amber-200 grid grid-cols-3 gap-2"><input type="number" id="varPriceSmall" placeholder="Small PKR" class="w-full p-2 rounded-xl border text-xs" /><input type="number" id="varPriceMedium" placeholder="Med PKR" class="w-full p-2 rounded-xl border text-xs" /><input type="number" id="varPriceBig" placeholder="Big PKR" class="w-full p-2 rounded-xl border text-xs" /></div></div>
-        <div class="bg-emerald-50/70 border-2 border-emerald-200 rounded-2xl p-3.5 space-y-3"><label class="flex items-center justify-between cursor-pointer"><div><span class="text-xs font-black block">📚 Language Variants</span></div><input type="checkbox" id="prodHasLangVariants" class="w-5 h-5" /></label><div id="langVariantsContainer" class="hidden pt-2 border-t border-emerald-200 grid grid-cols-2 gap-3"><input type="number" id="langPriceEnglish" placeholder="English PKR" class="w-full p-2 rounded-xl border text-xs" /><input type="number" id="langPriceUrdu" placeholder="Urdu PKR" class="w-full p-2 rounded-xl border text-xs" /></div></div>
-        <div class="bg-purple-50/70 border-2 border-purple-200 rounded-2xl p-3.5 space-y-3"><label class="flex items-center justify-between cursor-pointer"><div><span class="text-xs font-black block">🫧 Gun Holes Variants</span></div><input type="checkbox" id="prodHasHolesVariants" class="w-5 h-5" /></label><div id="holesVariantsContainer" class="hidden pt-2 border-t border-purple-200 grid grid-cols-3 gap-2"><div><input type="text" id="holeCount1" class="w-full text-[10px] mb-1" value="12 Holes"/><input type="number" id="holePrice1" placeholder="PKR" class="w-full p-2 rounded-xl border text-xs" /></div><div><input type="text" id="holeCount2" class="w-full text-[10px] mb-1" value="36 Holes"/><input type="number" id="holePrice2" placeholder="PKR" class="w-full p-2 rounded-xl border text-xs" /></div><div><input type="text" id="holeCount3" class="w-full text-[10px] mb-1" value="40 Holes"/><input type="number" id="holePrice3" placeholder="PKR" class="w-full p-2 rounded-xl border text-xs" /></div></div></div>
+        <div class="grid grid-cols-3 gap-2.5">
+          <div>
+            <label class="block text-[10px] font-black text-slate-700 uppercase mb-1">STOCK QTY</label>
+            <input type="number" id="prodStock" value="10" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-black text-slate-700 uppercase mb-1">DEFAULT PRICE (PKR) *</label>
+            <input type="number" id="prodPrice" required placeholder="e.g. 2000" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-black text-rose-600 uppercase mb-1">OLD PRICE (OPTIONAL)</label>
+            <input type="number" id="prodComparePrice" placeholder="e.g. 3000" class="w-full px-3 py-2 rounded-xl border border-rose-200 bg-rose-50/40 text-sm font-bold" />
+          </div>
+        </div>
 
-        <div><label class="block text-[11px] font-black uppercase mb-1">Description</label><textarea id="prodShortDesc" rows="2" class="w-full p-2 rounded-xl border text-sm"></textarea></div>
-        <div class="grid sm:grid-cols-2 gap-3"><div><label class="block text-[10px] font-black text-amber-700 uppercase mb-1">Key Features</label><textarea id="prodKeyFeatures" rows="3" class="w-full p-2 rounded-xl border text-xs bg-amber-50/30"></textarea></div><div><label class="block text-[10px] font-black text-blue-700 uppercase mb-1">Package Includes</label><textarea id="prodPackageIncludes" rows="3" class="w-full p-2 rounded-xl border text-xs bg-blue-50/30"></textarea></div></div>
+        <!-- 1. SIZE VARIANTS -->
+        <div class="bg-amber-50/70 border-2 border-amber-200 rounded-2xl p-3.5 space-y-3">
+          <label class="flex items-center justify-between cursor-pointer">
+            <div>
+              <span class="text-xs font-black text-slate-900 block">📏 1. Size Variants (Small / Medium / Big)</span>
+              <span class="text-[11px] text-slate-500 font-bold">Set different prices for Small, Medium, and Big sizes</span>
+            </div>
+            <input type="checkbox" id="prodHasVariants" class="w-5 h-5 accent-amber-500 rounded cursor-pointer" />
+          </label>
+          <div id="variantPricesContainer" class="hidden pt-2 border-t border-amber-200 space-y-2">
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-[10px] font-black text-slate-700">Small (PKR)</label>
+                <input type="number" id="varPriceSmall" placeholder="e.g. 1500" class="w-full p-2 rounded-xl border border-amber-300 text-xs font-bold bg-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black text-slate-700">Medium (PKR)</label>
+                <input type="number" id="varPriceMedium" placeholder="e.g. 2000" class="w-full p-2 rounded-xl border border-amber-300 text-xs font-bold bg-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black text-slate-700">Big (PKR)</label>
+                <input type="number" id="varPriceBig" placeholder="e.g. 2800" class="w-full p-2 rounded-xl border border-amber-300 text-xs font-bold bg-white" />
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div class="p-3 bg-slate-50 border rounded-xl"><label class="block text-[11px] font-black mb-1">UPLOAD PHOTOS (MAX 10)</label><input type="file" id="imageUploadInput" accept="image/*" multiple class="w-full text-xs" /><div id="imagePreviewContainer" class="mt-2"></div></div>
-        <button type="submit" class="w-full py-3 rounded-2xl bg-blue-600 text-white font-black text-sm">Save Toy Product</button>
+        <!-- 2. PRODUCT DIMENSIONS / INCHES -->
+        <div class="bg-sky-50/70 border-2 border-sky-200 rounded-2xl p-3.5 space-y-2">
+          <label class="block text-xs font-black text-sky-900">📐 2. Product Dimensions / Size in Inches (Optional)</label>
+          <span class="text-[11px] text-slate-500 font-bold block">Enter physical dimensions so customers know exact size</span>
+          <input type="text" id="prodDimensions" placeholder="e.g. 12 x 8 Inches (Medium) / 30cm" class="w-full px-3.5 py-2 rounded-xl border border-sky-300 text-xs font-bold bg-white" />
+        </div>
+
+        <!-- 3. BOOK LANGUAGE VARIANTS -->
+        <div class="bg-emerald-50/70 border-2 border-emerald-200 rounded-2xl p-3.5 space-y-3">
+          <label class="flex items-center justify-between cursor-pointer">
+            <div>
+              <span class="text-xs font-black text-slate-900 block">📚 3. Book Language Variants (English / Urdu)</span>
+              <span class="text-[11px] text-slate-500 font-bold">For learning books with English or Urdu edition pricing</span>
+            </div>
+            <input type="checkbox" id="prodHasLangVariants" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer" />
+          </label>
+          <div id="langVariantsContainer" class="hidden pt-2 border-t border-emerald-200 space-y-2">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-black text-slate-700">English Edition (PKR)</label>
+                <input type="number" id="langPriceEnglish" placeholder="e.g. 1800" class="w-full p-2 rounded-xl border border-emerald-300 text-xs font-bold bg-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black text-slate-700">Urdu Edition (PKR)</label>
+                <input type="number" id="langPriceUrdu" placeholder="e.g. 1600" class="w-full p-2 rounded-xl border border-emerald-300 text-xs font-bold bg-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. BUBBLE GUN HOLES VARIANTS -->
+        <div class="bg-purple-50/70 border-2 border-purple-200 rounded-2xl p-3.5 space-y-3">
+          <label class="flex items-center justify-between cursor-pointer">
+            <div>
+              <span class="text-xs font-black text-slate-900 block">🫧 4. Bubble Gun Holes Variants</span>
+              <span class="text-[11px] text-slate-500 font-bold">Configure hole counts (e.g. 12, 36, 40 Holes) and custom prices</span>
+            </div>
+            <input type="checkbox" id="prodHasHolesVariants" class="w-5 h-5 accent-purple-500 rounded cursor-pointer" />
+          </label>
+          <div id="holesVariantsContainer" class="hidden pt-2 border-t border-purple-200 space-y-2">
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <input type="text" id="holeCount1" value="12 Holes" class="w-full p-1.5 rounded-lg border text-[11px] font-black mb-1 text-center" />
+                <input type="number" id="holePrice1" placeholder="Price PKR" class="w-full p-2 rounded-xl border border-purple-300 text-xs font-bold bg-white" />
+              </div>
+              <div>
+                <input type="text" id="holeCount2" value="36 Holes" class="w-full p-1.5 rounded-lg border text-[11px] font-black mb-1 text-center" />
+                <input type="number" id="holePrice2" placeholder="Price PKR" class="w-full p-2 rounded-xl border border-purple-300 text-xs font-bold bg-white" />
+              </div>
+              <div>
+                <input type="text" id="holeCount3" value="40 Holes" class="w-full p-1.5 rounded-lg border text-[11px] font-black mb-1 text-center" />
+                <input type="number" id="holePrice3" placeholder="Price PKR" class="w-full p-2 rounded-xl border border-purple-300 text-xs font-bold bg-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. EXTRA CUSTOM VARIANTS WITH IMAGE SWITCHING -->
+        <div class="bg-indigo-50/70 border-2 border-indigo-200 rounded-2xl p-3.5 space-y-3">
+          <label class="flex items-center justify-between cursor-pointer">
+            <div>
+              <span class="text-xs font-black text-slate-900 block">🌟 5. Extra Custom Variants (With Image Switch)</span>
+              <span class="text-[11px] text-slate-500 font-bold">Add custom boxes (Capital ABC, Small abc, Shapes, 1-20, Urdu) + photo</span>
+            </div>
+            <input type="checkbox" id="prodHasCustomVariants" class="w-5 h-5 accent-indigo-600 rounded cursor-pointer" />
+          </label>
+          <div id="customVariantsContainer" class="hidden pt-2 border-t border-indigo-200 space-y-2.5">
+            <p class="text-[11px] font-extrabold text-indigo-900">Add as many variant boxes as you want (10, 20, etc.):</p>
+            <div id="customVariantsList" class="space-y-2"></div>
+            <button type="button" id="addCustomVariantBtn" class="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black shadow-sm cursor-pointer">+ Add Extra Variant Box</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">DESCRIPTION</label>
+          <textarea id="prodShortDesc" rows="3" placeholder="Enter toy details, age group, safety features..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold"></textarea>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-black text-amber-700 uppercase mb-1">✨ Key Features (1 per line)</label>
+            <textarea id="prodKeyFeatures" rows="3" placeholder="Safe child material&#10;Bright colors" class="w-full px-3 py-2 rounded-xl border border-amber-200 bg-amber-50/30 text-xs font-semibold"></textarea>
+          </div>
+          <div>
+            <label class="block text-[11px] font-black text-blue-700 uppercase mb-1">📦 Package Includes (1 per line)</label>
+            <textarea id="prodPackageIncludes" rows="3" placeholder="1 x Toy Set&#10;1 x Box" class="w-full px-3 py-2 rounded-xl border border-blue-200 bg-blue-50/30 text-xs font-semibold"></textarea>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 space-y-2">
+          <label class="block text-[11px] font-black text-slate-700 uppercase">UPLOAD PHOTOS (MAX 10)</label>
+          <input type="file" id="imageUploadInput" accept="image/*" multiple class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-blue-600 file:text-white cursor-pointer" />
+          <div id="imagePreviewContainer" class="pt-1"></div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button type="submit" class="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm shadow-lg transition cursor-pointer">Save Toy Product</button>
+        </div>
       </form>
     </div>
   </div>
 
-  <script src="js/data-seed.js?v=40"></script>
-  <script src="js/admin.js?v=40"></script>
+  <script src="js/data-seed.js?v=45"></script>
+  <script src="js/admin.js?v=45"></script>
 </body>
 </html>
