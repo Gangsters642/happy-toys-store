@@ -45,10 +45,12 @@ const HappyToysModal = (() => {
       curOptionType = "lang";
       curOptionValue = p.langVariants[0].lang;
       curPrice = Number(p.langVariants[0].pricePkr);
+      curImage = p.langVariants[0].image || p.mainImage;
     } else if (p.hasHoleVariants && Array.isArray(p.holeVariants) && p.holeVariants.length > 0) {
       curOptionType = "holes";
       curOptionValue = p.holeVariants[0].holes;
       curPrice = Number(p.holeVariants[0].pricePkr);
+      curImage = p.holeVariants[0].image || p.mainImage;
     } else {
       curOptionType = "standard";
       curOptionValue = "Standard";
@@ -95,6 +97,26 @@ const HappyToysModal = (() => {
     curOptionValue = iv.inches;
     curPrice = Number(iv.pricePkr);
     curImage = iv.image || prod.mainImage;
+    render();
+  }
+
+  function setLangVariant(idx) {
+    if (!prod || !prod.langVariants || !prod.langVariants[idx]) return;
+    const lv = prod.langVariants[idx];
+    curOptionType = "lang";
+    curOptionValue = lv.lang;
+    curPrice = Number(lv.pricePkr);
+    curImage = lv.image || prod.mainImage;
+    render();
+  }
+
+  function setHoleVariant(idx) {
+    if (!prod || !prod.holeVariants || !prod.holeVariants[idx]) return;
+    const hv = prod.holeVariants[idx];
+    curOptionType = "holes";
+    curOptionValue = hv.holes;
+    curPrice = Number(hv.pricePkr);
+    curImage = hv.image || prod.mainImage;
     render();
   }
 
@@ -214,16 +236,16 @@ const HappyToysModal = (() => {
       `;
     }
 
-    // 3. Book Language Variants Box
+    // 3. Book Language Variants Box (With Image Switch)
     let langBoxHtml = "";
     if (prod.hasLangVariants && Array.isArray(prod.langVariants) && prod.langVariants.length > 0) {
       langBoxHtml = `
         <div class="bg-emerald-50/80 p-4 rounded-2xl border-2 border-emerald-300 space-y-2">
           <span class="text-xs font-black text-slate-800 uppercase block">📚 Book Language: <span class="text-emerald-700">${curOptionValue}</span></span>
           <div class="grid grid-cols-2 gap-2.5">
-            ${prod.langVariants.map(l => {
+            ${prod.langVariants.map((l, idx) => {
               const act = l.lang === curOptionValue ? "bg-emerald-600 text-white border-emerald-600 shadow-md" : "bg-white text-slate-800 border-emerald-300";
-              return `<button type="button" onclick="HappyToysModal.setOption('lang', '${l.lang}', ${l.pricePkr})" class="py-3 px-2 rounded-xl border-2 font-black text-center transition cursor-pointer ${act}">
+              return `<button type="button" onclick="HappyToysModal.setLangVariant(${idx})" class="py-3 px-2 rounded-xl border-2 font-black text-center transition cursor-pointer ${act}">
                 <div class="text-xs sm:text-sm">📖 ${l.lang} Edition</div>
                 <div class="text-xs ${l.lang === curOptionValue ? 'text-emerald-100' : 'text-emerald-700'} mt-0.5">${fmt(l.pricePkr)}</div>
               </button>`;
@@ -233,16 +255,16 @@ const HappyToysModal = (() => {
       `;
     }
 
-    // 4. Bubble Gun Holes Variants Box
+    // 4. Bubble Gun Holes Variants Box (With Image Switch)
     let holesBoxHtml = "";
     if (prod.hasHoleVariants && Array.isArray(prod.holeVariants) && prod.holeVariants.length > 0) {
       holesBoxHtml = `
         <div class="bg-purple-50/80 p-4 rounded-2xl border-2 border-purple-300 space-y-2">
           <span class="text-xs font-black text-slate-800 uppercase block">🫧 Bubble Gun Holes: <span class="text-purple-700">${curOptionValue}</span></span>
           <div class="grid grid-cols-3 gap-2">
-            ${prod.holeVariants.map(h => {
+            ${prod.holeVariants.map((h, idx) => {
               const act = h.holes === curOptionValue ? "bg-purple-600 text-white border-purple-600 shadow-md" : "bg-white text-slate-800 border-purple-300";
-              return `<button type="button" onclick="HappyToysModal.setOption('holes', '${h.holes}', ${h.pricePkr})" class="py-2.5 px-1 rounded-xl border-2 font-black text-center transition cursor-pointer ${act}">
+              return `<button type="button" onclick="HappyToysModal.setHoleVariant(${idx})" class="py-2.5 px-1 rounded-xl border-2 font-black text-center transition cursor-pointer ${act}">
                 <div class="text-[11px] sm:text-xs">🫧 ${h.holes}</div>
                 <div class="text-[10px] ${h.holes === curOptionValue ? 'text-purple-100' : 'text-purple-700'}">${fmt(h.pricePkr)}</div>
               </button>`;
@@ -296,6 +318,10 @@ const HappyToysModal = (() => {
     } else if (prod.mainImage) {
       galleryList.push(prod.mainImage);
     }
+    if (Array.isArray(prod.variants)) { prod.variants.forEach(v => { if (v.image && !galleryList.includes(v.image)) galleryList.push(v.image); }); }
+    if (Array.isArray(prod.inchVariants)) { prod.inchVariants.forEach(iv => { if (iv.image && !galleryList.includes(iv.image)) galleryList.push(iv.image); }); }
+    if (Array.isArray(prod.langVariants)) { prod.langVariants.forEach(lv => { if (lv.image && !galleryList.includes(lv.image)) galleryList.push(lv.image); }); }
+    if (Array.isArray(prod.holeVariants)) { prod.holeVariants.forEach(hv => { if (hv.image && !galleryList.includes(hv.image)) galleryList.push(hv.image); }); }
     if (Array.isArray(prod.customVariants)) {
       prod.customVariants.forEach(cv => { if (cv.image && !galleryList.includes(cv.image)) galleryList.push(cv.image); });
     }
@@ -440,6 +466,6 @@ const HappyToysModal = (() => {
     if (location.hash.includes("#product=")) history.replaceState(null, "", location.pathname);
   }
 
-  return { open, close, setOption, setSizeVariant, setInchVariant, setCustomVariant, switchMainImage, setQty, buyWhatsApp };
+  return { open, close, setOption, setSizeVariant, setInchVariant, setLangVariant, setHoleVariant, setCustomVariant, switchMainImage, setQty, buyWhatsApp };
 })();
 window.HappyToysModal = HappyToysModal;

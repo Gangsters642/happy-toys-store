@@ -172,6 +172,22 @@ const HappyToysAdmin = (() => {
       if (file) file.value = "";
       if (prev) prev.innerHTML = "No Pic";
     });
+    ["English", "Urdu"].forEach(k => {
+      const inp = document.getElementById("langImg" + k);
+      const prev = document.getElementById("langPrev" + k);
+      const file = document.getElementById("langFile" + k);
+      if (inp) inp.value = "";
+      if (file) file.value = "";
+      if (prev) prev.innerHTML = "No Pic";
+    });
+    [1, 2, 3].forEach(k => {
+      const inp = document.getElementById("holeImg" + k);
+      const prev = document.getElementById("holePrev" + k);
+      const file = document.getElementById("holeFile" + k);
+      if (inp) inp.value = "";
+      if (file) file.value = "";
+      if (prev) prev.innerHTML = "No Pic";
+    });
   }
 
   function editProduct(id) {
@@ -229,17 +245,28 @@ const HappyToysAdmin = (() => {
     const hasLang = Boolean(p.hasLangVariants && p.langVariants && p.langVariants.length > 0);
     document.getElementById("prodHasLangVariants").checked = hasLang;
     document.getElementById("langVariantsContainer").classList.toggle("hidden", !hasLang);
-    const getLangPrice = (l) => (p.langVariants || []).find(v => v.lang.toLowerCase() === l.toLowerCase())?.pricePkr || "";
-    document.getElementById("langPriceEnglish").value = getLangPrice("English");
-    document.getElementById("langPriceUrdu").value = getLangPrice("Urdu");
+    const engObj = (p.langVariants || []).find(v => v.lang.toLowerCase() === "english");
+    const urdObj = (p.langVariants || []).find(v => v.lang.toLowerCase() === "urdu");
+    document.getElementById("langPriceEnglish").value = engObj ? engObj.pricePkr : "";
+    if (engObj && engObj.image) { document.getElementById("langImgEnglish").value = engObj.image; document.getElementById("langPrevEnglish").innerHTML = `<img src="${engObj.image}" class="w-full h-full object-cover">`; }
+    document.getElementById("langPriceUrdu").value = urdObj ? urdObj.pricePkr : "";
+    if (urdObj && urdObj.image) { document.getElementById("langImgUrdu").value = urdObj.image; document.getElementById("langPrevUrdu").innerHTML = `<img src="${urdObj.image}" class="w-full h-full object-cover">`; }
 
     // 4. Holes Variants
     const hasHoles = Boolean(p.hasHoleVariants && p.holeVariants && p.holeVariants.length > 0);
     document.getElementById("prodHasHolesVariants").checked = hasHoles;
     document.getElementById("holesVariantsContainer").classList.toggle("hidden", !hasHoles);
-    if (hasHoles && p.holeVariants[0]) { document.getElementById("holeCount1").value = p.holeVariants[0].holes || "12 Holes"; document.getElementById("holePrice1").value = p.holeVariants[0].pricePkr || ""; }
-    if (hasHoles && p.holeVariants[1]) { document.getElementById("holeCount2").value = p.holeVariants[1].holes || "36 Holes"; document.getElementById("holePrice2").value = p.holeVariants[1].pricePkr || ""; }
-    if (hasHoles && p.holeVariants[2]) { document.getElementById("holeCount3").value = p.holeVariants[2].holes || "40 Holes"; document.getElementById("holePrice3").value = p.holeVariants[2].pricePkr || ""; }
+    [1, 2, 3].forEach((n, idx) => {
+      const hObj = hasHoles ? p.holeVariants[idx] : null;
+      if (hObj) {
+        document.getElementById("holeCount" + n).value = hObj.holes || "";
+        document.getElementById("holePrice" + n).value = hObj.pricePkr || "";
+        if (hObj.image) {
+          document.getElementById("holeImg" + n).value = hObj.image;
+          document.getElementById("holePrev" + n).innerHTML = `<img src="${hObj.image}" class="w-full h-full object-cover">`;
+        }
+      }
+    });
 
     // 5. Extra Custom Variants
     const hasCustom = Boolean(p.hasCustomVariants && p.customVariants && p.customVariants.length > 0);
@@ -293,6 +320,36 @@ const HappyToysAdmin = (() => {
       const fileEl = document.getElementById("varFile" + k);
       const hiddenEl = document.getElementById("varImg" + k);
       const prevEl = document.getElementById("varPrev" + k);
+      fileEl?.addEventListener("change", (e) => {
+        if (e.target.files[0]) {
+          compressImage(e.target.files[0], (d) => {
+            if (hiddenEl) hiddenEl.value = d;
+            if (prevEl) prevEl.innerHTML = `<img src="${d}" class="w-full h-full object-cover">`;
+          });
+        }
+      });
+    });
+
+    // Bind English / Urdu Image File Inputs
+    ["English", "Urdu"].forEach(k => {
+      const fileEl = document.getElementById("langFile" + k);
+      const hiddenEl = document.getElementById("langImg" + k);
+      const prevEl = document.getElementById("langPrev" + k);
+      fileEl?.addEventListener("change", (e) => {
+        if (e.target.files[0]) {
+          compressImage(e.target.files[0], (d) => {
+            if (hiddenEl) hiddenEl.value = d;
+            if (prevEl) prevEl.innerHTML = `<img src="${d}" class="w-full h-full object-cover">`;
+          });
+        }
+      });
+    });
+
+    // Bind Bubble Gun Holes 1, 2, 3 Image File Inputs
+    [1, 2, 3].forEach(k => {
+      const fileEl = document.getElementById("holeFile" + k);
+      const hiddenEl = document.getElementById("holeImg" + k);
+      const prevEl = document.getElementById("holePrev" + k);
       fileEl?.addEventListener("change", (e) => {
         if (e.target.files[0]) {
           compressImage(e.target.files[0], (d) => {
@@ -398,24 +455,26 @@ const HappyToysAdmin = (() => {
         });
       }
 
-      // 3. Language Variants
+      // 3. Language Variants (with Image)
       let langVariants = [];
       if (cbLang.checked) {
         const eng = Number(document.getElementById("langPriceEnglish").value || 0);
+        const engImg = document.getElementById("langImgEnglish")?.value || "";
         const urd = Number(document.getElementById("langPriceUrdu").value || 0);
-        if (eng > 0) langVariants.push({ lang: "English", pricePkr: eng });
-        if (urd > 0) langVariants.push({ lang: "Urdu", pricePkr: urd });
+        const urdImg = document.getElementById("langImgUrdu")?.value || "";
+        if (eng > 0) langVariants.push({ lang: "English", pricePkr: eng, image: engImg });
+        if (urd > 0) langVariants.push({ lang: "Urdu", pricePkr: urd, image: urdImg });
       }
 
-      // 4. Holes Variants
+      // 4. Holes Variants (with Image)
       let holeVariants = [];
       if (cbHoles.checked) {
-        const c1 = document.getElementById("holeCount1").value.trim(); const p1 = Number(document.getElementById("holePrice1").value || 0);
-        const c2 = document.getElementById("holeCount2").value.trim(); const p2 = Number(document.getElementById("holePrice2").value || 0);
-        const c3 = document.getElementById("holeCount3").value.trim(); const p3 = Number(document.getElementById("holePrice3").value || 0);
-        if (p1 > 0) holeVariants.push({ holes: c1 || "12 Holes", pricePkr: p1 });
-        if (p2 > 0) holeVariants.push({ holes: c2 || "36 Holes", pricePkr: p2 });
-        if (p3 > 0) holeVariants.push({ holes: c3 || "40 Holes", pricePkr: p3 });
+        const c1 = document.getElementById("holeCount1").value.trim(); const p1 = Number(document.getElementById("holePrice1").value || 0); const img1 = document.getElementById("holeImg1")?.value || "";
+        const c2 = document.getElementById("holeCount2").value.trim(); const p2 = Number(document.getElementById("holePrice2").value || 0); const img2 = document.getElementById("holeImg2")?.value || "";
+        const c3 = document.getElementById("holeCount3").value.trim(); const p3 = Number(document.getElementById("holePrice3").value || 0); const img3 = document.getElementById("holeImg3")?.value || "";
+        if (p1 > 0) holeVariants.push({ holes: c1 || "12 Holes", pricePkr: p1, image: img1 });
+        if (p2 > 0) holeVariants.push({ holes: c2 || "36 Holes", pricePkr: p2, image: img2 });
+        if (p3 > 0) holeVariants.push({ holes: c3 || "40 Holes", pricePkr: p3, image: img3 });
       }
 
       // 5. Custom Variants

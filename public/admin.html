@@ -201,51 +201,87 @@
           </div>
         </div>
 
-        <!-- 3. BOOK LANGUAGE VARIANTS -->
+        <!-- 3. BOOK LANGUAGE VARIANTS (English / Urdu + Image Switch) -->
         <div class="bg-emerald-50/70 border-2 border-emerald-200 rounded-2xl p-3.5 space-y-3">
           <label class="flex items-center justify-between cursor-pointer">
             <div>
               <span class="text-xs font-black text-slate-900 block">📚 3. Book Language Variants (English / Urdu)</span>
-              <span class="text-[11px] text-slate-500 font-bold">For learning books with English or Urdu edition pricing</span>
+              <span class="text-[11px] text-slate-500 font-bold">For learning books with English or Urdu edition pricing & photos</span>
             </div>
             <input type="checkbox" id="prodHasLangVariants" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer" />
           </label>
-          <div id="langVariantsContainer" class="hidden pt-2 border-t border-emerald-200 space-y-2">
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-[10px] font-black text-slate-700">English Edition (PKR)</label>
-                <input type="number" id="langPriceEnglish" placeholder="e.g. 1800" class="w-full p-2 rounded-xl border border-emerald-300 text-xs font-bold bg-white" />
+          <div id="langVariantsContainer" class="hidden pt-2 border-t border-emerald-200 space-y-2.5">
+            <!-- English Edition -->
+            <div class="bg-white p-2.5 rounded-xl border border-emerald-200 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <label class="text-[11px] font-black text-slate-800">English Edition (PKR)</label>
+                <input type="number" id="langPriceEnglish" placeholder="e.g. 1800" class="w-36 p-1.5 rounded-lg border border-emerald-300 text-xs font-bold bg-white" />
               </div>
-              <div>
-                <label class="block text-[10px] font-black text-slate-700">Urdu Edition (PKR)</label>
-                <input type="number" id="langPriceUrdu" placeholder="e.g. 1600" class="w-full p-2 rounded-xl border border-emerald-300 text-xs font-bold bg-white" />
+              <div class="flex items-center gap-2">
+                <input type="file" id="langFileEnglish" accept="image/*" class="flex-1 text-[10px] text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-emerald-100 file:text-emerald-900" />
+                <input type="hidden" id="langImgEnglish" />
+                <div id="langPrevEnglish" class="w-9 h-9 rounded-lg bg-slate-100 border shrink-0 overflow-hidden flex items-center justify-center text-[8px] text-slate-400 font-bold">No Pic</div>
+              </div>
+            </div>
+            <!-- Urdu Edition -->
+            <div class="bg-white p-2.5 rounded-xl border border-emerald-200 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <label class="text-[11px] font-black text-slate-800">Urdu Edition (PKR)</label>
+                <input type="number" id="langPriceUrdu" placeholder="e.g. 1600" class="w-36 p-1.5 rounded-lg border border-emerald-300 text-xs font-bold bg-white" />
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="file" id="langFileUrdu" accept="image/*" class="flex-1 text-[10px] text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-emerald-100 file:text-emerald-900" />
+                <input type="hidden" id="langImgUrdu" />
+                <div id="langPrevUrdu" class="w-9 h-9 rounded-lg bg-slate-100 border shrink-0 overflow-hidden flex items-center justify-center text-[8px] text-slate-400 font-bold">No Pic</div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 4. BUBBLE GUN HOLES VARIANTS -->
+        <!-- 4. BUBBLE GUN HOLES VARIANTS (Holes + Price + Image Switch) -->
         <div class="bg-purple-50/70 border-2 border-purple-200 rounded-2xl p-3.5 space-y-3">
           <label class="flex items-center justify-between cursor-pointer">
             <div>
               <span class="text-xs font-black text-slate-900 block">🫧 4. Bubble Gun Holes Variants</span>
-              <span class="text-[11px] text-slate-500 font-bold">Configure hole counts (e.g. 12, 36, 40 Holes) and custom prices</span>
+              <span class="text-[11px] text-slate-500 font-bold">Configure hole counts (e.g. 12, 36, 40 Holes), prices & photos</span>
             </div>
             <input type="checkbox" id="prodHasHolesVariants" class="w-5 h-5 accent-purple-500 rounded cursor-pointer" />
           </label>
-          <div id="holesVariantsContainer" class="hidden pt-2 border-t border-purple-200 space-y-2">
-            <div class="grid grid-cols-3 gap-2">
-              <div>
-                <input type="text" id="holeCount1" value="12 Holes" class="w-full p-1.5 rounded-lg border text-[11px] font-black mb-1 text-center" />
-                <input type="number" id="holePrice1" placeholder="Price PKR" class="w-full p-2 rounded-xl border border-purple-300 text-xs font-bold bg-white" />
+          <div id="holesVariantsContainer" class="hidden pt-2 border-t border-purple-200 space-y-2.5">
+            <!-- Hole 1 -->
+            <div class="bg-white p-2.5 rounded-xl border border-purple-200 space-y-1.5">
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="holeCount1" value="12 Holes" placeholder="e.g. 12 Holes" class="w-full p-1.5 rounded-lg border border-slate-200 text-xs font-black" />
+                <input type="number" id="holePrice1" placeholder="Price PKR" class="w-full p-1.5 rounded-lg border border-purple-300 text-xs font-bold bg-white" />
               </div>
-              <div>
-                <input type="text" id="holeCount2" value="36 Holes" class="w-full p-1.5 rounded-lg border text-[11px] font-black mb-1 text-center" />
-                <input type="number" id="holePrice2" placeholder="Price PKR" class="w-full p-2 rounded-xl border border-purple-300 text-xs font-bold bg-white" />
+              <div class="flex items-center gap-2">
+                <input type="file" id="holeFile1" accept="image/*" class="flex-1 text-[10px] text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-purple-100 file:text-purple-900" />
+                <input type="hidden" id="holeImg1" />
+                <div id="holePrev1" class="w-9 h-9 rounded-lg bg-slate-100 border shrink-0 overflow-hidden flex items-center justify-center text-[8px] text-slate-400 font-bold">No Pic</div>
               </div>
-              <div>
-                <input type="text" id="holeCount3" value="40 Holes" class="w-full p-1.5 rounded-lg border text-[11px] font-black mb-1 text-center" />
-                <input type="number" id="holePrice3" placeholder="Price PKR" class="w-full p-2 rounded-xl border border-purple-300 text-xs font-bold bg-white" />
+            </div>
+            <!-- Hole 2 -->
+            <div class="bg-white p-2.5 rounded-xl border border-purple-200 space-y-1.5">
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="holeCount2" value="36 Holes" placeholder="e.g. 36 Holes" class="w-full p-1.5 rounded-lg border border-slate-200 text-xs font-black" />
+                <input type="number" id="holePrice2" placeholder="Price PKR" class="w-full p-1.5 rounded-lg border border-purple-300 text-xs font-bold bg-white" />
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="file" id="holeFile2" accept="image/*" class="flex-1 text-[10px] text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-purple-100 file:text-purple-900" />
+                <input type="hidden" id="holeImg2" />
+                <div id="holePrev2" class="w-9 h-9 rounded-lg bg-slate-100 border shrink-0 overflow-hidden flex items-center justify-center text-[8px] text-slate-400 font-bold">No Pic</div>
+              </div>
+            </div>
+            <!-- Hole 3 -->
+            <div class="bg-white p-2.5 rounded-xl border border-purple-200 space-y-1.5">
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="holeCount3" value="40 Holes" placeholder="e.g. 40 Holes" class="w-full p-1.5 rounded-lg border border-slate-200 text-xs font-black" />
+                <input type="number" id="holePrice3" placeholder="Price PKR" class="w-full p-1.5 rounded-lg border border-purple-300 text-xs font-bold bg-white" />
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="file" id="holeFile3" accept="image/*" class="flex-1 text-[10px] text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-purple-100 file:text-purple-900" />
+                <input type="hidden" id="holeImg3" />
+                <div id="holePrev3" class="w-9 h-9 rounded-lg bg-slate-100 border shrink-0 overflow-hidden flex items-center justify-center text-[8px] text-slate-400 font-bold">No Pic</div>
               </div>
             </div>
           </div>
@@ -296,7 +332,7 @@
     </div>
   </div>
 
-  <script src="js/data-seed.js?v=48"></script>
-  <script src="js/admin.js?v=48"></script>
+  <script src="js/data-seed.js?v=50"></script>
+  <script src="js/admin.js?v=50"></script>
 </body>
 </html>
