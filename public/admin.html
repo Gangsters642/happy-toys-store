@@ -29,23 +29,42 @@
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="text-2xl">🧸</span>
-        <span class="toy-title-font text-lg text-amber-500">Happy Toys Admin</span>
+        <span class="toy-title-font text-base sm:text-lg text-amber-500 leading-tight">Happy Toys Admin</span>
       </div>
       <div class="flex items-center gap-3">
-        <a href="index.html" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black transition">← View Store</a>
+        <a href="index.html" class="whitespace-nowrap px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-black shadow-md flex items-center gap-1.5 transition"><span>←</span><span>View Store</span></a>
         <button type="button" id="adminLogoutBtn" class="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-black transition cursor-pointer">Logout</button>
       </div>
     </div>
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
-    <!-- AUTHORIZED 3-DEVICES SECTION -->
-    <section class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
-      <div class="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl">
-        🔒 Admin access is active and locked to your authorized devices (3/3).
+    <!-- COLLAPSIBLE ADMIN & SECURITY TOGGLE BUTTONS -->
+    <div class="grid grid-cols-2 gap-3">
+      <button type="button" onclick="toggleAdminTopPanel('adminsListPanel')" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-xs sm:text-sm shadow-md flex items-center justify-between cursor-pointer active:scale-95 transition">
+        <span class="flex items-center gap-2"><span>👤</span><span>Admins (3/3)</span></span>
+        <span id="adminsListPanelArrow" class="text-xs transition-transform duration-200">▼</span>
+      </button>
+      <button type="button" onclick="toggleAdminTopPanel('adminSecurityPanel')" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs sm:text-sm shadow-md flex items-center justify-between cursor-pointer active:scale-95 transition">
+        <span class="flex items-center gap-2"><span>🔐</span><span>Admin Security</span></span>
+        <span id="adminSecurityPanelArrow" class="text-xs transition-transform duration-200">▼</span>
+      </button>
+    </div>
+
+    <!-- PANEL 1: ADMINS (3/3) LIST (Hidden by default, opens on click) -->
+    <section id="adminsListPanel" class="hidden bg-white p-5 rounded-3xl border-2 border-emerald-200 shadow-md space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl flex-1">
+          🔒 Admin access is active and locked to your authorized devices (3/3).
+        </div>
       </div>
       <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-wider">AUTHORIZED DEVICES LIST (3 / 3):</h3>
       <div id="authorizedDevicesContainer" class="space-y-2.5"></div>
+    </section>
+
+    <!-- PANEL 2: ADMIN SECURITY & DEVICE LOCK (Hidden by default, opens on click) -->
+    <section id="adminSecurityPanel" class="hidden bg-white p-5 rounded-3xl border-2 border-amber-300 shadow-md space-y-4">
+      <div id="adminSecurityMountPoint" class="space-y-4"></div>
     </section>
 
     <!-- VIP SPLASH INTRO VIDEO SECTION -->
