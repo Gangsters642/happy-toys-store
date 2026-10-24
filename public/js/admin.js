@@ -13,7 +13,6 @@ const HTS_DB = (() => {
 })();
 
 const HappyToysAdmin = (() => {
-  // Auto-authorize so the user is never locked out of their 3-device panel
   let token = localStorage.getItem("hts_admin_token") || "secure-token";
   localStorage.setItem("hts_admin_token", token);
   let products = [];
@@ -98,6 +97,39 @@ const HappyToysAdmin = (() => {
     reader.readAsDataURL(file);
   }
 
+  function addInchVariantRow(inches = "", price = "", imgData = "") {
+    const list = document.getElementById("inchVariantsList");
+    if (!list) return;
+    const div = document.createElement("div");
+    div.className = "inch-var-row bg-white p-3 rounded-xl border border-sky-200 shadow-xs space-y-2";
+    div.innerHTML = `
+      <div class="grid grid-cols-2 gap-2">
+        <input type="text" class="iv-name w-full p-2 rounded-lg border border-slate-200 text-xs font-bold" placeholder="Inches (e.g. Small 7x5 Inch)" value="${inches}">
+        <input type="number" class="iv-price w-full p-2 rounded-lg border border-slate-200 text-xs font-bold" placeholder="Price (PKR)" value="${price}">
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="file" class="iv-file flex-1 text-[10px] text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-sky-50 file:text-sky-700" accept="image/*">
+        <input type="hidden" class="iv-data" value="${imgData}">
+        <div class="iv-preview w-10 h-10 rounded-lg bg-slate-100 border shrink-0 overflow-hidden flex items-center justify-center text-[9px] text-slate-400 font-bold">
+          ${imgData ? `<img src="${imgData}" class="w-full h-full object-cover">` : 'No Pic'}
+        </div>
+        <button type="button" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 font-black text-xs" onclick="this.closest('.inch-var-row').remove()">✕</button>
+      </div>
+    `;
+    const fileInput = div.querySelector(".iv-file");
+    const dataInput = div.querySelector(".iv-data");
+    const preview = div.querySelector(".iv-preview");
+    fileInput.addEventListener("change", (e) => {
+      if (e.target.files[0]) {
+        compressImage(e.target.files[0], (d) => {
+          dataInput.value = d;
+          preview.innerHTML = `<img src="${d}" class="w-full h-full object-cover">`;
+        });
+      }
+    });
+    list.appendChild(div);
+  }
+
   function addCustomVariantRow(name = "", price = "", imgData = "") {
     const list = document.getElementById("customVariantsList");
     if (!list) return;
@@ -131,6 +163,17 @@ const HappyToysAdmin = (() => {
     list.appendChild(div);
   }
 
+  function resetSizeImagePickers() {
+    ["Small", "Medium", "Big"].forEach(k => {
+      const inp = document.getElementById("varImg" + k);
+      const prev = document.getElementById("varPrev" + k);
+      const file = document.getElementById("varFile" + k);
+      if (inp) inp.value = "";
+      if (file) file.value = "";
+      if (prev) prev.innerHTML = "No Pic";
+    });
+  }
+
   function editProduct(id) {
     const p = products.find(x => x.id === id);
     if (!p) return;
@@ -150,14 +193,37 @@ const HappyToysAdmin = (() => {
     window.tempImages = p.images || (p.mainImage ? [p.mainImage] : []);
     document.getElementById("imagePreviewContainer").innerHTML = window.tempImages.map(d => `<img src="${d}" class="w-12 h-12 rounded-lg object-cover border border-slate-200 inline-block mr-1 mb-1" />`).join("");
 
-    // 1. Size Variants
+    // 1. Size Variants (Small / Medium / Large)
+    resetSizeImagePickers();
     const hasVar = Boolean(p.hasVariants && p.variants && p.variants.length > 0);
     document.getElementById("prodHasVariants").checked = hasVar;
     document.getElementById("variantPricesContainer").classList.toggle("hidden", !hasVar);
-    const getVarPrice = (sz) => (p.variants || []).find(v => v.size.toLowerCase() === sz.toLowerCase())?.pricePkr || "";
-    document.getElementById("varPriceSmall").value = getVarPrice("Small");
-    document.getElementById("varPriceMedium").value = getVarPrice("Medium");
-    document.getElementById("varPriceBig").value = getVarPrice("Big");
+    const findSizeObj = (names) => (p.variants || []).find(v => names.includes(v.size.toLowerCase()));
+
+    const sObj = findSizeObj(["small"]);
+    const mObj = findSizeObj(["medium"]);
+    const lObj = findSizeObj(["large", "big"]);
+
+    document.getElementById("varPriceSmall").value = sObj ? sObj.pricePkr : "";
+    if (sObj && sObj.image) { document.getElementById("varImgSmall").value = sObj.image; document.getElementById("varPrevSmall").innerHTML = `<img src="${sObj.image}" class="w-full h-full object-cover">`; }
+
+    document.getElementById("varPriceMedium").value = mObj ? mObj.pricePkr : "";
+    if (mObj && mObj.image) { document.getElementById("varImgMedium").value = mObj.image; document.getElementById("varPrevMedium").innerHTML = `<img src="${mObj.image}" class="w-full h-full object-cover">`; }
+
+    document.getElementById("varPriceBig").value = lObj ? lObj.pricePkr : "";
+    if (lObj && lObj.image) { document.getElementById("varImgBig").value = lObj.image; document.getElementById("varPrevBig").innerHTML = `<img src="${lObj.image}" class="w-full h-full object-cover">`; }
+
+    // 2. Extra Inches Variants
+    const hasInch = Boolean(p.hasInchVariants && p.inchVariants && p.inchVariants.length > 0);
+    const cbInch = document.getElementById("prodHasInchVariants");
+    if (cbInch) {
+      cbInch.checked = hasInch;
+      document.getElementById("inchVariantsContainer").classList.toggle("hidden", !hasInch);
+      document.getElementById("inchVariantsList").innerHTML = "";
+      if (hasInch) {
+        p.inchVariants.forEach(iv => addInchVariantRow(iv.inches, iv.pricePkr, iv.image || ""));
+      }
+    }
 
     // 3. Language Variants
     const hasLang = Boolean(p.hasLangVariants && p.langVariants && p.langVariants.length > 0);
@@ -222,9 +288,34 @@ const HappyToysAdmin = (() => {
       alert("✅ Splash Video Saved!");
     });
 
+    // Bind Small / Medium / Large Image File Inputs
+    ["Small", "Medium", "Big"].forEach(k => {
+      const fileEl = document.getElementById("varFile" + k);
+      const hiddenEl = document.getElementById("varImg" + k);
+      const prevEl = document.getElementById("varPrev" + k);
+      fileEl?.addEventListener("change", (e) => {
+        if (e.target.files[0]) {
+          compressImage(e.target.files[0], (d) => {
+            if (hiddenEl) hiddenEl.value = d;
+            if (prevEl) prevEl.innerHTML = `<img src="${d}" class="w-full h-full object-cover">`;
+          });
+        }
+      });
+    });
+
     const cbVar = document.getElementById("prodHasVariants");
     const ctnVar = document.getElementById("variantPricesContainer");
     cbVar?.addEventListener("change", () => ctnVar.classList.toggle("hidden", !cbVar.checked));
+
+    const cbInch = document.getElementById("prodHasInchVariants");
+    const ctnInch = document.getElementById("inchVariantsContainer");
+    cbInch?.addEventListener("change", () => {
+      ctnInch.classList.toggle("hidden", !cbInch.checked);
+      if (cbInch.checked && document.getElementById("inchVariantsList").children.length === 0) {
+        addInchVariantRow();
+      }
+    });
+    document.getElementById("addInchVariantBtn")?.addEventListener("click", () => addInchVariantRow());
 
     const cbLang = document.getElementById("prodHasLangVariants");
     const ctnLang = document.getElementById("langVariantsContainer");
@@ -242,7 +333,6 @@ const HappyToysAdmin = (() => {
         addCustomVariantRow();
       }
     });
-
     document.getElementById("addCustomVariantBtn")?.addEventListener("click", () => addCustomVariantRow());
 
     const modal = document.getElementById("productModal");
@@ -250,9 +340,12 @@ const HappyToysAdmin = (() => {
       document.getElementById("productForm")?.reset();
       document.getElementById("editProductId").value = "";
       window.tempImages = [];
+      resetSizeImagePickers();
       document.getElementById("imagePreviewContainer").innerHTML = "";
       document.getElementById("customVariantsList").innerHTML = "";
+      if (document.getElementById("inchVariantsList")) document.getElementById("inchVariantsList").innerHTML = "";
       cbVar.checked = false; ctnVar.classList.add("hidden");
+      if (cbInch) { cbInch.checked = false; ctnInch.classList.add("hidden"); }
       cbLang.checked = false; ctnLang.classList.add("hidden");
       cbHoles.checked = false; ctnHoles.classList.add("hidden");
       cbCustom.checked = false; ctnCustom.classList.add("hidden");
@@ -280,16 +373,32 @@ const HappyToysAdmin = (() => {
       const basePrice = Number(document.getElementById("prodPrice").value);
       const comparePrice = Number(document.getElementById("prodComparePrice").value || 0) || null;
 
+      // 1. Size Variants (Small, Medium, Large + Image)
       let variants = [];
       if (cbVar.checked) {
         const s = Number(document.getElementById("varPriceSmall").value || 0);
+        const sImg = document.getElementById("varImgSmall")?.value || "";
         const m = Number(document.getElementById("varPriceMedium").value || 0);
-        const b = Number(document.getElementById("varPriceBig").value || 0);
-        if (s > 0) variants.push({ size: "Small", pricePkr: s });
-        if (m > 0) variants.push({ size: "Medium", pricePkr: m });
-        if (b > 0) variants.push({ size: "Big", pricePkr: b });
+        const mImg = document.getElementById("varImgMedium")?.value || "";
+        const l = Number(document.getElementById("varPriceBig").value || 0);
+        const lImg = document.getElementById("varImgBig")?.value || "";
+        if (s > 0) variants.push({ size: "Small", pricePkr: s, image: sImg });
+        if (m > 0) variants.push({ size: "Medium", pricePkr: m, image: mImg });
+        if (l > 0) variants.push({ size: "Large", pricePkr: l, image: lImg });
       }
 
+      // 2. Extra Inches Variants
+      let inchVariants = [];
+      if (cbInch && cbInch.checked) {
+        document.querySelectorAll(".inch-var-row").forEach(row => {
+          const n = row.querySelector(".iv-name").value.trim();
+          const p = Number(row.querySelector(".iv-price").value || basePrice);
+          const img = row.querySelector(".iv-data").value || "";
+          if (n) inchVariants.push({ inches: n, pricePkr: p, image: img });
+        });
+      }
+
+      // 3. Language Variants
       let langVariants = [];
       if (cbLang.checked) {
         const eng = Number(document.getElementById("langPriceEnglish").value || 0);
@@ -298,6 +407,7 @@ const HappyToysAdmin = (() => {
         if (urd > 0) langVariants.push({ lang: "Urdu", pricePkr: urd });
       }
 
+      // 4. Holes Variants
       let holeVariants = [];
       if (cbHoles.checked) {
         const c1 = document.getElementById("holeCount1").value.trim(); const p1 = Number(document.getElementById("holePrice1").value || 0);
@@ -308,6 +418,7 @@ const HappyToysAdmin = (() => {
         if (p3 > 0) holeVariants.push({ holes: c3 || "40 Holes", pricePkr: p3 });
       }
 
+      // 5. Custom Variants
       let customVariants = [];
       if (cbCustom.checked) {
         document.querySelectorAll(".custom-var-row").forEach(row => {
@@ -321,6 +432,7 @@ const HappyToysAdmin = (() => {
       let activeBasePrice = basePrice;
       if (customVariants.length > 0) activeBasePrice = customVariants[0].pricePkr;
       else if (variants.length > 0) activeBasePrice = variants[0].pricePkr;
+      else if (inchVariants.length > 0) activeBasePrice = inchVariants[0].pricePkr;
       else if (langVariants.length > 0) activeBasePrice = langVariants[0].pricePkr;
       else if (holeVariants.length > 0) activeBasePrice = holeVariants[0].pricePkr;
 
@@ -329,7 +441,7 @@ const HappyToysAdmin = (() => {
         : (products.find(x => x.id === id)?.images || []);
       const mainImage = imgArr.length > 0
         ? imgArr[0]
-        : (customVariants[0]?.image || "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=600");
+        : (variants[0]?.image || inchVariants[0]?.image || customVariants[0]?.image || "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=600");
 
       const newProduct = {
         id,
@@ -342,6 +454,8 @@ const HappyToysAdmin = (() => {
         dimensions: document.getElementById("prodDimensions").value.trim(),
         hasVariants: variants.length > 0,
         variants,
+        hasInchVariants: inchVariants.length > 0,
+        inchVariants,
         hasLangVariants: langVariants.length > 0,
         langVariants,
         hasHoleVariants: holeVariants.length > 0,
@@ -363,7 +477,7 @@ const HappyToysAdmin = (() => {
       await saveProductsEverywhere(products);
       modal?.classList.add("hidden");
       renderTable();
-      alert("✅ Toy Product & All Variants Saved Successfully!");
+      alert("✅ Toy Product Saved Successfully!");
     });
   }
 
@@ -372,8 +486,9 @@ const HappyToysAdmin = (() => {
     if (!tbody) return;
     tbody.innerHTML = products.map(p => {
       let badges = [];
-      if (p.hasCustomVariants) badges.push(`Custom Variants (${p.customVariants.length})`);
-      if (p.hasVariants) badges.push("Size Variants");
+      if (p.hasVariants) badges.push("Size (S/M/L)");
+      if (p.hasInchVariants) badges.push(`Inches (${p.inchVariants.length})`);
+      if (p.hasCustomVariants) badges.push(`Custom (${p.customVariants.length})`);
       if (p.hasLangVariants) badges.push("Book Languages");
       if (p.hasHoleVariants) badges.push("Bubble Holes");
       if (p.dimensions) badges.push(p.dimensions);

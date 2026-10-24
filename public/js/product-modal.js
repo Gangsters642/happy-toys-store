@@ -33,8 +33,14 @@ const HappyToysModal = (() => {
       curImage = p.customVariants[0].image || p.mainImage;
     } else if (p.hasVariants && Array.isArray(p.variants) && p.variants.length > 0) {
       curOptionType = "size";
-      curOptionValue = p.variants[0].size;
+      curOptionValue = p.variants[0].size === "Big" ? "Large" : p.variants[0].size;
       curPrice = Number(p.variants[0].pricePkr);
+      curImage = p.variants[0].image || p.mainImage;
+    } else if (p.hasInchVariants && Array.isArray(p.inchVariants) && p.inchVariants.length > 0) {
+      curOptionType = "inches";
+      curOptionValue = p.inchVariants[0].inches;
+      curPrice = Number(p.inchVariants[0].pricePkr);
+      curImage = p.inchVariants[0].image || p.mainImage;
     } else if (p.hasLangVariants && Array.isArray(p.langVariants) && p.langVariants.length > 0) {
       curOptionType = "lang";
       curOptionValue = p.langVariants[0].lang;
@@ -69,6 +75,26 @@ const HappyToysModal = (() => {
     curOptionValue = cv.name;
     curPrice = Number(cv.pricePkr);
     curImage = cv.image || prod.mainImage;
+    render();
+  }
+
+  function setSizeVariant(idx) {
+    if (!prod || !prod.variants || !prod.variants[idx]) return;
+    const v = prod.variants[idx];
+    curOptionType = "size";
+    curOptionValue = v.size === "Big" ? "Large" : v.size;
+    curPrice = Number(v.pricePkr);
+    curImage = v.image || prod.mainImage;
+    render();
+  }
+
+  function setInchVariant(idx) {
+    if (!prod || !prod.inchVariants || !prod.inchVariants[idx]) return;
+    const iv = prod.inchVariants[idx];
+    curOptionType = "inches";
+    curOptionValue = iv.inches;
+    curPrice = Number(iv.pricePkr);
+    curImage = iv.image || prod.mainImage;
     render();
   }
 
@@ -150,18 +176,37 @@ const HappyToysModal = (() => {
       `;
     }
 
-    // 1. Size Variants Box
+    // 1. Size Variants Box (Small / Medium / Large + Image Switch)
     let sizeBoxHtml = "";
     if (prod.hasVariants && Array.isArray(prod.variants) && prod.variants.length > 0) {
       sizeBoxHtml = `
         <div class="bg-amber-50/70 p-4 rounded-2xl border-2 border-amber-200 space-y-2">
           <span class="text-xs font-black text-slate-800 uppercase block">📏 Size: <span class="text-blue-600">${curOptionValue}</span></span>
           <div class="grid grid-cols-3 gap-2">
-            ${prod.variants.map(v => {
-              const act = v.size === curOptionValue ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-800 border-amber-300";
-              return `<button type="button" onclick="HappyToysModal.setOption('size', '${v.size}', ${v.pricePkr})" class="py-2.5 px-1 rounded-xl border-2 font-black text-center transition cursor-pointer ${act}">
-                <div class="text-xs">${v.size}</div>
-                <div class="text-[10px] ${v.size === curOptionValue ? 'text-amber-300' : 'text-blue-600'}">${fmt(v.pricePkr)}</div>
+            ${prod.variants.map((v, idx) => {
+              const dispName = v.size === "Big" ? "Large" : v.size;
+              const act = dispName === curOptionValue ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-800 border-amber-300";
+              return `<button type="button" onclick="HappyToysModal.setSizeVariant(${idx})" class="py-2.5 px-1 rounded-xl border-2 font-black text-center transition cursor-pointer ${act}">
+                <div class="text-xs">${dispName}</div>
+                <div class="text-[10px] ${dispName === curOptionValue ? 'text-amber-300' : 'text-blue-600'}">${fmt(v.pricePkr)}</div>
+              </button>`;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. Extra Inches Variants Box
+    if (prod.hasInchVariants && Array.isArray(prod.inchVariants) && prod.inchVariants.length > 0) {
+      sizeBoxHtml += `
+        <div class="bg-sky-50/80 p-4 rounded-2xl border-2 border-sky-200 space-y-2">
+          <span class="text-xs font-black text-slate-800 uppercase block">📐 Size in Inches: <span class="text-sky-700">${curOptionValue}</span></span>
+          <div class="flex flex-wrap gap-2">
+            ${prod.inchVariants.map((iv, idx) => {
+              const act = iv.inches === curOptionValue ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-800 border-sky-300";
+              return `<button type="button" onclick="HappyToysModal.setInchVariant(${idx})" class="px-3.5 py-2 rounded-xl border-2 font-black text-xs text-center transition cursor-pointer ${act}">
+                <div>${iv.inches}</div>
+                <div class="text-[10px] ${iv.inches === curOptionValue ? 'text-amber-300' : 'text-blue-600'}">${fmt(iv.pricePkr)}</div>
               </button>`;
             }).join("")}
           </div>
@@ -395,6 +440,6 @@ const HappyToysModal = (() => {
     if (location.hash.includes("#product=")) history.replaceState(null, "", location.pathname);
   }
 
-  return { open, close, setOption, setCustomVariant, switchMainImage, setQty, buyWhatsApp };
+  return { open, close, setOption, setSizeVariant, setInchVariant, setCustomVariant, switchMainImage, setQty, buyWhatsApp };
 })();
 window.HappyToysModal = HappyToysModal;
