@@ -228,8 +228,11 @@ const HappyToysAdmin = (() => {
   }
 
   function editProduct(id) {
-    const p = products.find(x => x.id === id);
-    if (!p) return;
+    const p = products.find(x => x.id == id);
+    if (!p) {
+      alert("Product not found!");
+      return;
+    }
     document.getElementById("productModalTitle").textContent = "Edit Toy Product";
     document.getElementById("editProductId").value = p.id;
     document.getElementById("prodName").value = p.name || "";
@@ -251,7 +254,7 @@ const HappyToysAdmin = (() => {
     const hasVar = Boolean(p.hasVariants && p.variants && p.variants.length > 0);
     document.getElementById("prodHasVariants").checked = hasVar;
     document.getElementById("variantPricesContainer").classList.toggle("hidden", !hasVar);
-    const findSizeObj = (names) => (p.variants || []).find(v => names.includes(v.size.toLowerCase()));
+    const findSizeObj = (names) => (p.variants || []).find(v => names.includes((v.size || "").toLowerCase()));
 
     const sObj = findSizeObj(["small"]);
     const mObj = findSizeObj(["medium"]);
@@ -282,8 +285,8 @@ const HappyToysAdmin = (() => {
     const hasLang = Boolean(p.hasLangVariants && p.langVariants && p.langVariants.length > 0);
     document.getElementById("prodHasLangVariants").checked = hasLang;
     document.getElementById("langVariantsContainer").classList.toggle("hidden", !hasLang);
-    const engObj = (p.langVariants || []).find(v => v.lang.toLowerCase() === "english");
-    const urdObj = (p.langVariants || []).find(v => v.lang.toLowerCase() === "urdu");
+    const engObj = (p.langVariants || []).find(v => (v.lang || "").toLowerCase() === "english");
+    const urdObj = (p.langVariants || []).find(v => (v.lang || "").toLowerCase() === "urdu");
     document.getElementById("langPriceEnglish").value = engObj ? engObj.pricePkr : "";
     if (engObj && engObj.image) { document.getElementById("langImgEnglish").value = engObj.image; document.getElementById("langPrevEnglish").innerHTML = `<img src="${engObj.image}" class="w-full h-full object-cover">`; }
     document.getElementById("langPriceUrdu").value = urdObj ? urdObj.pricePkr : "";
@@ -307,11 +310,14 @@ const HappyToysAdmin = (() => {
 
     // 5. Extra Custom Variants
     const hasCustom = Boolean(p.hasCustomVariants && p.customVariants && p.customVariants.length > 0);
-    document.getElementById("prodHasCustomVariants").checked = hasCustom;
-    document.getElementById("customVariantsContainer").classList.toggle("hidden", !hasCustom);
-    document.getElementById("customVariantsList").innerHTML = "";
-    if (hasCustom) {
-      p.customVariants.forEach(cv => addCustomVariantRow(cv.name, cv.pricePkr, cv.image || ""));
+    const cbCustom = document.getElementById("prodHasCustomVariants");
+    if (cbCustom) {
+      cbCustom.checked = hasCustom;
+      document.getElementById("customVariantsContainer").classList.toggle("hidden", !hasCustom);
+      document.getElementById("customVariantsList").innerHTML = "";
+      if (hasCustom) {
+        p.customVariants.forEach(cv => addCustomVariantRow(cv.name, cv.pricePkr, cv.image || ""));
+      }
     }
 
     document.getElementById("productModal")?.classList.remove("hidden");
