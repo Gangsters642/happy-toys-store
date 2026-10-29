@@ -353,6 +353,7 @@
 
   <script src="js/data-seed.js?v=50"></script>
   <script src="js/admin.js?v=50"></script>
+
 <script>
   function toggleAdminTopPanel(panelId) {
     const panel = document.getElementById(panelId);
@@ -370,38 +371,22 @@
     }
   }
 
-  function trapSecurityCardInsidePanel() {
+  function moveSecurityOnce() {
     const mount = document.getElementById("adminSecurityMountPoint");
     const main = document.querySelector("main");
     if (!mount || !main) return;
-
     Array.from(main.children).forEach(child => {
-      if (
-        child.id === "adminsListPanel" ||
-        child.id === "adminSecurityPanel" ||
-        child.querySelector("#adminsListPanelArrow")
-      ) {
-        return;
-      }
+      if (child.id === "adminsListPanel" || child.id === "adminSecurityPanel" || child.querySelector("#adminsListPanelArrow")) return;
       const txt = child.textContent || "";
-      if (
-        txt.includes("Admin Security & Device Lock") ||
-        txt.includes("Remaining Device Access") ||
-        txt.includes("Save on This Device")
-      ) {
+      if (txt.includes("Admin Security & Device Lock") || txt.includes("Save on This Device")) {
         mount.appendChild(child);
       }
     });
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    trapSecurityCardInsidePanel();
-    const obs = new MutationObserver(() => trapSecurityCardInsidePanel());
-    const main = document.querySelector("main") || document.body;
-    obs.observe(main, { childList: true, subtree: true });
-    setTimeout(trapSecurityCardInsidePanel, 100);
-    setTimeout(trapSecurityCardInsidePanel, 500);
-    setTimeout(trapSecurityCardInsidePanel, 1200);
+  window.addEventListener("load", () => {
+    moveSecurityOnce();
+    setTimeout(moveSecurityOnce, 400);
   });
 </script>
 </body>
