@@ -65,12 +65,22 @@ const HappyToysAdmin = (() => {
 
   async function saveProductsEverywhere(list) {
     products = list;
-    localStorage.setItem("hts_custom_products", JSON.stringify(products));
-    await fetch("/api/store", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ products })
-    });
+    try {
+      localStorage.setItem("hts_custom_products", JSON.stringify(products));
+    } catch (storageErr) {
+      console.warn("localStorage full, keeping data in server & memory:", storageErr);
+      try { localStorage.removeItem("hts_custom_products"); } catch (e) {}
+    }
+    try {
+      const res = await fetch("/api/store", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ products })
+      });
+      if (!res.ok) console.warn("Server returned status:", res.status);
+    } catch (netErr) {
+      console.error("Network save error:", netErr);
+    }
   }
 
   function populateCategoryDropdown() {
@@ -85,12 +95,12 @@ const HappyToysAdmin = (() => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const MAX = 800;
+        const MAX = 600;
         let w = img.width, h = img.height;
         if (w > h && w > MAX) { h *= MAX / w; w = MAX; } else if (h > MAX) { w *= MAX / h; h = MAX; }
         canvas.width = w; canvas.height = h;
         canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        cb(canvas.toDataURL("image/jpeg", 0.82));
+        cb(canvas.toDataURL("image/jpeg", 0.72));
       };
       img.src = e.target.result;
     };
@@ -426,8 +436,12 @@ const HappyToysAdmin = (() => {
 
     document.getElementById("productForm")?.addEventListener("submit", async (e) => {
       e.preventDefault();
+      const submitBtn = e.target.querySelector("button[type=\"submit\"]");
+      const origBtnText = submitBtn ? submitBtn.textContent : "Save Toy Product";
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "⏳ Saving..."; }
+      try {
       const id = document.getElementById("editProductId").value || `prod-${Date.now()}`;
-      const basePrice = Number(document.getElementById("prodPrice").value);
+      const basePrice = Number(document.getElementById("prodPrice").value || 0) || 1000;
       const comparePrice = Number(document.getElementById("prodComparePrice").value || 0) || null;
 
       // 1. Size Variants (Small, Medium, Large + Image)
@@ -505,7 +519,7 @@ const HappyToysAdmin = (() => {
       const newProduct = {
         id,
         name: document.getElementById("prodName").value,
-        sku: document.getElementById("prodSku").value,
+        sku: document.getElementById("prodSku").value.trim() || ("HTS-" + Math.floor(100 + Math.random() * 900)),
         category: document.getElementById("prodCategory").value,
         stockQty: Number(document.getElementById("prodStock").value),
         pricePkr: activeBasePrice,
@@ -534,9 +548,14 @@ const HappyToysAdmin = (() => {
       else products.unshift(newProduct);
 
       await saveProductsEverywhere(products);
-      modal?.classList.add("hidden");
+      document.getElementById("productModal")?.classList.add("hidden");
       renderTable();
       alert("✅ Toy Product Saved Successfully!");
+      } catch (err) {
+        alert("⚠️ Error saving product: " + (err.message || err));
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origBtnText; }
+      }
     });
   }
 
