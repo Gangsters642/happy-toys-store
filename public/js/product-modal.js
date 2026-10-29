@@ -5,6 +5,10 @@ const HappyToysModal = (() => {
   let curPrice = 0;
   let curImage = "";
   let qty = 1;
+  let slideTimer = null;
+  let isAutoSliding = true;
+  let currentSlideIdx = 0;
+
   const WA = "923707116317";
   const RECENT_KEY = "hts_recently_viewed_ids";
 
@@ -19,10 +23,83 @@ const HappyToysModal = (() => {
     } catch (e) {}
   }
 
+  function buildGalleryList(p) {
+    if (!p) return [];
+    const list = [];
+    if (Array.isArray(p.images) && p.images.length) {
+      p.images.forEach(img => { if (img && !list.includes(img)) list.push(img); });
+    }
+    if (p.mainImage && !list.includes(p.mainImage)) {
+      list.unshift(p.mainImage);
+    }
+    if (Array.isArray(p.variants)) { p.variants.forEach(v => { if (v.image && !list.includes(v.image)) list.push(v.image); }); }
+    if (Array.isArray(p.inchVariants)) { p.inchVariants.forEach(iv => { if (iv.image && !list.includes(iv.image)) list.push(iv.image); }); }
+    if (Array.isArray(p.langVariants)) { p.langVariants.forEach(lv => { if (lv.image && !list.includes(lv.image)) list.push(lv.image); }); }
+    if (Array.isArray(p.holeVariants)) { p.holeVariants.forEach(hv => { if (hv.image && !list.includes(hv.image)) list.push(hv.image); }); }
+    if (Array.isArray(p.customVariants)) { p.customVariants.forEach(cv => { if (cv.image && !list.includes(cv.image)) list.push(cv.image); }); }
+    return list;
+  }
+
+  function stopAutoSlider() {
+    if (slideTimer) {
+      clearInterval(slideTimer);
+      slideTimer = null;
+    }
+  }
+
+  function animateMainImageSwap(imgUrl) {
+    curImage = imgUrl;
+    const imgEl = document.getElementById("modalMainImg");
+    if (imgEl) {
+      imgEl.classList.remove("hts-slide-anim");
+      void imgEl.offsetWidth;
+      imgEl.src = imgUrl;
+      imgEl.classList.add("hts-slide-anim");
+    }
+    // Highlight active thumbnail and scroll it into view smoothly
+    const thumbs = document.querySelectorAll(".hts-gallery-thumb");
+    thumbs.forEach(t => {
+      const isMatch = t.getAttribute("data-src") === imgUrl;
+      if (isMatch) {
+        t.classList.add("border-amber-500", "scale-105", "ring-2", "ring-amber-300");
+        t.classList.remove("border-slate-200", "opacity-75");
+        const strip = document.getElementById("modalThumbStrip");
+        if (strip) {
+          const scrollLeft = t.offsetLeft - (strip.clientWidth / 2) + (t.clientWidth / 2);
+          strip.scrollTo({ left: Math.max(0, scrollLeft), behavior: "smooth" });
+        }
+      } else {
+        t.classList.remove("border-amber-500", "scale-105", "ring-2", "ring-amber-300");
+        t.classList.add("border-slate-200", "opacity-75");
+      }
+    });
+  }
+
+  function startAutoSlider() {
+    stopAutoSlider();
+    if (!isAutoSliding || !prod) return;
+    const gallery = buildGalleryList(prod);
+    if (gallery.length <= 1) return;
+
+    slideTimer = setInterval(() => {
+      if (!isAutoSliding || !prod) {
+        stopAutoSlider();
+        return;
+      }
+      const g = buildGalleryList(prod);
+      if (g.length <= 1) return;
+      currentSlideIdx = (currentSlideIdx + 1) % g.length;
+      animateMainImageSwap(g[currentSlideIdx]);
+    }, 2000);
+  }
+
   function open(p) {
     if (!p) return;
+    stopAutoSlider();
     prod = p;
     qty = 1;
+    isAutoSliding = true;
+    currentSlideIdx = 0;
     curImage = p.mainImage;
     saveRecentlyViewed(p.id);
 
@@ -68,10 +145,13 @@ const HappyToysModal = (() => {
     render();
     pg.classList.remove("hidden");
     pg.scrollTop = 0;
+    startAutoSlider();
   }
 
   function setCustomVariant(idx) {
     if (!prod || !prod.customVariants || !prod.customVariants[idx]) return;
+    isAutoSliding = false;
+    stopAutoSlider();
     const cv = prod.customVariants[idx];
     curOptionType = "custom";
     curOptionValue = cv.name;
@@ -82,6 +162,8 @@ const HappyToysModal = (() => {
 
   function setSizeVariant(idx) {
     if (!prod || !prod.variants || !prod.variants[idx]) return;
+    isAutoSliding = false;
+    stopAutoSlider();
     const v = prod.variants[idx];
     curOptionType = "size";
     curOptionValue = v.size === "Big" ? "Large" : v.size;
@@ -92,6 +174,8 @@ const HappyToysModal = (() => {
 
   function setInchVariant(idx) {
     if (!prod || !prod.inchVariants || !prod.inchVariants[idx]) return;
+    isAutoSliding = false;
+    stopAutoSlider();
     const iv = prod.inchVariants[idx];
     curOptionType = "inches";
     curOptionValue = iv.inches;
@@ -102,6 +186,8 @@ const HappyToysModal = (() => {
 
   function setLangVariant(idx) {
     if (!prod || !prod.langVariants || !prod.langVariants[idx]) return;
+    isAutoSliding = false;
+    stopAutoSlider();
     const lv = prod.langVariants[idx];
     curOptionType = "lang";
     curOptionValue = lv.lang;
@@ -112,6 +198,8 @@ const HappyToysModal = (() => {
 
   function setHoleVariant(idx) {
     if (!prod || !prod.holeVariants || !prod.holeVariants[idx]) return;
+    isAutoSliding = false;
+    stopAutoSlider();
     const hv = prod.holeVariants[idx];
     curOptionType = "holes";
     curOptionValue = hv.holes;
@@ -121,6 +209,8 @@ const HappyToysModal = (() => {
   }
 
   function setOption(type, val, pr) {
+    isAutoSliding = false;
+    stopAutoSlider();
     curOptionType = type;
     curOptionValue = val;
     curPrice = Number(pr);
@@ -128,9 +218,9 @@ const HappyToysModal = (() => {
   }
 
   function switchMainImage(imgUrl) {
-    curImage = imgUrl;
-    const imgEl = document.getElementById("modalMainImg");
-    if (imgEl) imgEl.src = imgUrl;
+    isAutoSliding = false;
+    stopAutoSlider();
+    animateMainImageSwap(imgUrl);
   }
 
   function setQty(d) {
@@ -146,6 +236,7 @@ const HappyToysModal = (() => {
     let optLine = "";
     if (curOptionType === "custom") optLine = `*🌟 Selected Option:* ${curOptionValue}\n`;
     else if (curOptionType === "size") optLine = `*📏 Selected Size:* ${curOptionValue}\n`;
+    else if (curOptionType === "inches") optLine = `*📐 Selected Inches:* ${curOptionValue}\n`;
     else if (curOptionType === "lang") optLine = `*📖 Book Language:* ${curOptionValue} Edition\n`;
     else if (curOptionType === "holes") optLine = `*🫧 Bubble Gun:* ${curOptionValue}\n`;
 
@@ -173,22 +264,22 @@ const HappyToysModal = (() => {
     const total = curPrice * qty;
     const hasDiscount = prod.comparePrice && Number(prod.comparePrice) > curPrice;
     const h = hashStr(prod.id);
-    const viewers = 1 + (h % 2); // 1 or 2 people viewing
-    const revCount = 2 + (h % 3); // 2, 3, or 4 reviews
+    const viewers = 1 + (h % 2);
+    const revCount = 2 + (h % 3);
 
-    // 5. Extra Custom Variants (Habiba Store Style Pill Buttons + Image Switch)
+    // 5. Extra Custom Variants
     let customBoxHtml = "";
     if (prod.hasCustomVariants && Array.isArray(prod.customVariants) && prod.customVariants.length > 0) {
       customBoxHtml = `
-        <div class="bg-indigo-50/70 p-4 rounded-2xl border-2 border-indigo-200 space-y-2.5">
-          <span class="text-xs font-black text-slate-800 block">🌟 Select Option: <span class="text-indigo-700">${curOptionValue}</span></span>
-          <div class="flex flex-wrap gap-2">
+        <div class="bg-indigo-50/70 p-3 rounded-2xl border-2 border-indigo-200 space-y-1.5">
+          <span class="text-[11px] font-black text-slate-800 uppercase block">🌟 Select Option: <span class="text-indigo-700">${curOptionValue}</span></span>
+          <div class="flex flex-wrap gap-1.5">
             ${prod.customVariants.map((cv, idx) => {
               const isSel = cv.name === curOptionValue;
               const cls = isSel
-                ? "bg-slate-900 text-white border-slate-900 shadow-md scale-[1.03]"
+                ? "bg-slate-900 text-white border-slate-900 shadow-md scale-[1.02]"
                 : "bg-white text-slate-800 border-slate-200 hover:border-indigo-400";
-              return `<button type="button" onclick="HappyToysModal.setCustomVariant(${idx})" class="px-3.5 py-2 rounded-xl border-2 font-black text-xs transition cursor-pointer ${cls}">
+              return `<button type="button" onclick="HappyToysModal.setCustomVariant(${idx})" class="px-3 py-1.5 rounded-xl border-2 font-black text-xs transition cursor-pointer ${cls}">
                 <div>${cv.name}</div>
                 <div class="text-[10px] ${isSel ? 'text-amber-300' : 'text-blue-600'}">${fmt(cv.pricePkr)}</div>
               </button>`;
@@ -198,17 +289,17 @@ const HappyToysModal = (() => {
       `;
     }
 
-    // 1. Size Variants Box (Small / Medium / Large + Image Switch)
+    // 1. Size Variants Box (Small / Medium / Large)
     let sizeBoxHtml = "";
     if (prod.hasVariants && Array.isArray(prod.variants) && prod.variants.length > 0) {
       sizeBoxHtml = `
-        <div class="bg-amber-50/70 p-4 rounded-2xl border-2 border-amber-200 space-y-2">
-          <span class="text-xs font-black text-slate-800 uppercase block">📏 Size: <span class="text-blue-600">${curOptionValue}</span></span>
+        <div class="bg-amber-50/70 p-3 rounded-2xl border-2 border-amber-200 space-y-1.5">
+          <span class="text-[11px] font-black text-slate-800 uppercase block">📏 Size: <span class="text-blue-600">${curOptionValue}</span></span>
           <div class="grid grid-cols-3 gap-2">
             ${prod.variants.map((v, idx) => {
               const dispName = v.size === "Big" ? "Large" : v.size;
               const act = dispName === curOptionValue ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-800 border-amber-300";
-              return `<button type="button" onclick="HappyToysModal.setSizeVariant(${idx})" class="py-2.5 px-1 rounded-xl border-2 font-black text-center transition cursor-pointer ${act}">
+              return `<button type="button" onclick="HappyToysModal.setSizeVariant(${idx})" class="py-2 px-1 rounded-xl border-2 font-black text-center transition cursor-pointer ${act}">
                 <div class="text-xs">${dispName}</div>
                 <div class="text-[10px] ${dispName === curOptionValue ? 'text-amber-300' : 'text-blue-600'}">${fmt(v.pricePkr)}</div>
               </button>`;
@@ -221,12 +312,12 @@ const HappyToysModal = (() => {
     // 2. Extra Inches Variants Box
     if (prod.hasInchVariants && Array.isArray(prod.inchVariants) && prod.inchVariants.length > 0) {
       sizeBoxHtml += `
-        <div class="bg-sky-50/80 p-4 rounded-2xl border-2 border-sky-200 space-y-2">
-          <span class="text-xs font-black text-slate-800 uppercase block">📐 Size in Inches: <span class="text-sky-700">${curOptionValue}</span></span>
-          <div class="flex flex-wrap gap-2">
+        <div class="bg-sky-50/80 p-3 rounded-2xl border-2 border-sky-200 space-y-1.5">
+          <span class="text-[11px] font-black text-slate-800 uppercase block">📐 Size in Inches: <span class="text-sky-700">${curOptionValue}</span></span>
+          <div class="flex flex-wrap gap-1.5">
             ${prod.inchVariants.map((iv, idx) => {
               const act = iv.inches === curOptionValue ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-800 border-sky-300";
-              return `<button type="button" onclick="HappyToysModal.setInchVariant(${idx})" class="px-3.5 py-2 rounded-xl border-2 font-black text-xs text-center transition cursor-pointer ${act}">
+              return `<button type="button" onclick="HappyToysModal.setInchVariant(${idx})" class="px-3 py-1.5 rounded-xl border-2 font-black text-xs text-center transition cursor-pointer ${act}">
                 <div>${iv.inches}</div>
                 <div class="text-[10px] ${iv.inches === curOptionValue ? 'text-amber-300' : 'text-blue-600'}">${fmt(iv.pricePkr)}</div>
               </button>`;
@@ -236,18 +327,18 @@ const HappyToysModal = (() => {
       `;
     }
 
-    // 3. Book Language Variants Box (With Image Switch)
+    // 3. Book Language Variants Box
     let langBoxHtml = "";
     if (prod.hasLangVariants && Array.isArray(prod.langVariants) && prod.langVariants.length > 0) {
       langBoxHtml = `
-        <div class="bg-emerald-50/80 p-4 rounded-2xl border-2 border-emerald-300 space-y-2">
-          <span class="text-xs font-black text-slate-800 uppercase block">📚 Book Language: <span class="text-emerald-700">${curOptionValue}</span></span>
-          <div class="grid grid-cols-2 gap-2.5">
+        <div class="bg-emerald-50/80 p-3 rounded-2xl border-2 border-emerald-300 space-y-1.5">
+          <span class="text-[11px] font-black text-slate-800 uppercase block">📚 Book Language: <span class="text-emerald-700">${curOptionValue}</span></span>
+          <div class="grid grid-cols-2 gap-2">
             ${prod.langVariants.map((l, idx) => {
               const act = l.lang === curOptionValue ? "bg-emerald-600 text-white border-emerald-600 shadow-md" : "bg-white text-slate-800 border-emerald-300";
-              return `<button type="button" onclick="HappyToysModal.setLangVariant(${idx})" class="py-3 px-2 rounded-xl border-2 font-black text-center transition cursor-pointer ${act}">
-                <div class="text-xs sm:text-sm">📖 ${l.lang} Edition</div>
-                <div class="text-xs ${l.lang === curOptionValue ? 'text-emerald-100' : 'text-emerald-700'} mt-0.5">${fmt(l.pricePkr)}</div>
+              return `<button type="button" onclick="HappyToysModal.setLangVariant(${idx})" class="py-2 px-2 rounded-xl border-2 font-black text-center transition cursor-pointer ${act}">
+                <div class="text-xs">📖 ${l.lang} Edition</div>
+                <div class="text-[10px] ${l.lang === curOptionValue ? 'text-emerald-100' : 'text-emerald-700'}">${fmt(l.pricePkr)}</div>
               </button>`;
             }).join("")}
           </div>
@@ -255,17 +346,17 @@ const HappyToysModal = (() => {
       `;
     }
 
-    // 4. Bubble Gun Holes Variants Box (With Image Switch)
+    // 4. Bubble Gun Holes Variants Box
     let holesBoxHtml = "";
     if (prod.hasHoleVariants && Array.isArray(prod.holeVariants) && prod.holeVariants.length > 0) {
       holesBoxHtml = `
-        <div class="bg-purple-50/80 p-4 rounded-2xl border-2 border-purple-300 space-y-2">
-          <span class="text-xs font-black text-slate-800 uppercase block">🫧 Bubble Gun Holes: <span class="text-purple-700">${curOptionValue}</span></span>
+        <div class="bg-purple-50/80 p-3 rounded-2xl border-2 border-purple-300 space-y-1.5">
+          <span class="text-[11px] font-black text-slate-800 uppercase block">🫧 Bubble Gun Holes: <span class="text-purple-700">${curOptionValue}</span></span>
           <div class="grid grid-cols-3 gap-2">
             ${prod.holeVariants.map((h, idx) => {
               const act = h.holes === curOptionValue ? "bg-purple-600 text-white border-purple-600 shadow-md" : "bg-white text-slate-800 border-purple-300";
-              return `<button type="button" onclick="HappyToysModal.setHoleVariant(${idx})" class="py-2.5 px-1 rounded-xl border-2 font-black text-center transition cursor-pointer ${act}">
-                <div class="text-[11px] sm:text-xs">🫧 ${h.holes}</div>
+              return `<button type="button" onclick="HappyToysModal.setHoleVariant(${idx})" class="py-2 px-1 rounded-xl border-2 font-black text-center transition cursor-pointer ${act}">
+                <div class="text-[11px]">🫧 ${h.holes}</div>
                 <div class="text-[10px] ${h.holes === curOptionValue ? 'text-purple-100' : 'text-purple-700'}">${fmt(h.pricePkr)}</div>
               </button>`;
             }).join("")}
@@ -275,7 +366,7 @@ const HappyToysModal = (() => {
     }
 
     let dimensionsBadgeHtml = prod.dimensions ? `
-      <div class="flex items-center gap-2 bg-sky-50 text-sky-900 border border-sky-200 px-3.5 py-2.5 rounded-xl text-xs font-bold">
+      <div class="flex items-center gap-2 bg-sky-50 text-sky-900 border border-sky-200 px-3 py-2 rounded-xl text-xs font-bold">
         <span>📐</span>
         <span><b>Size / Dimensions:</b> ${prod.dimensions}</span>
       </div>
@@ -311,27 +402,13 @@ const HappyToysModal = (() => {
       }
     }
 
-    // Build all gallery thumbnails (product images + custom variant images)
-    const galleryList = [];
-    if (Array.isArray(prod.images) && prod.images.length) {
-      prod.images.forEach(img => { if (img && !galleryList.includes(img)) galleryList.push(img); });
-    } else if (prod.mainImage) {
-      galleryList.push(prod.mainImage);
-    }
-    if (Array.isArray(prod.variants)) { prod.variants.forEach(v => { if (v.image && !galleryList.includes(v.image)) galleryList.push(v.image); }); }
-    if (Array.isArray(prod.inchVariants)) { prod.inchVariants.forEach(iv => { if (iv.image && !galleryList.includes(iv.image)) galleryList.push(iv.image); }); }
-    if (Array.isArray(prod.langVariants)) { prod.langVariants.forEach(lv => { if (lv.image && !galleryList.includes(lv.image)) galleryList.push(lv.image); }); }
-    if (Array.isArray(prod.holeVariants)) { prod.holeVariants.forEach(hv => { if (hv.image && !galleryList.includes(hv.image)) galleryList.push(hv.image); }); }
-    if (Array.isArray(prod.customVariants)) {
-      prod.customVariants.forEach(cv => { if (cv.image && !galleryList.includes(cv.image)) galleryList.push(cv.image); });
-    }
+    const galleryList = buildGalleryList(prod);
 
     // SEPARATE WINDOWS FOR "YOU MIGHT ALSO LIKE" AND "RECENTLY VIEWED PRODUCTS"
     let separateBottomWindowsHtml = "";
     if (window.HappyToysApp && typeof window.HappyToysApp.generateCardHtml === "function") {
       const allP = window.HappyToysApp.getAllProducts();
 
-      // 1. Separate Window: You Might Also Like
       const related = allP.filter(x => x.id !== prod.id && x.isPublished && (x.category === prod.category || true)).slice(0, 4);
       if (related.length > 0) {
         separateBottomWindowsHtml += `
@@ -348,7 +425,6 @@ const HappyToysModal = (() => {
         `;
       }
 
-      // 2. Separate Window: Recently Viewed Products
       try {
         const rvIds = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
         const rvProducts = rvIds.filter(id => id !== prod.id).map(id => allP.find(x => x.id === id)).filter(Boolean).slice(0, 4);
@@ -370,64 +446,79 @@ const HappyToysModal = (() => {
     }
 
     pg.innerHTML = `
-      <div class="sticky top-0 z-20 bg-white border-b border-slate-200 px-4 h-15 py-3 flex items-center justify-between shadow-xs">
-        <button type="button" onclick="HappyToysModal.close()" class="px-3.5 py-2 rounded-xl bg-amber-100 text-amber-900 font-black text-xs flex items-center gap-1 cursor-pointer">← Back to Store</button>
+      <style>
+        @keyframes htsSlideIn {
+          0% { opacity: 0.35; transform: translateX(35px) scale(0.97); }
+          100% { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        .hts-slide-anim {
+          animation: htsSlideIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      </style>
+
+      <div class="sticky top-0 z-20 bg-white border-b border-slate-200 px-4 h-14 py-2.5 flex items-center justify-between shadow-xs">
+        <button type="button" onclick="HappyToysModal.close()" class="px-3.5 py-1.5 rounded-xl bg-amber-100 text-amber-900 font-black text-xs flex items-center gap-1 cursor-pointer">← Back to Store</button>
         <span class="toy-title-font text-sm text-amber-500 truncate max-w-[180px]">${prod.name}</span>
         <button type="button" onclick="HappyToysModal.close(); HappyToysCart.openDrawer();" class="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-black text-xs cursor-pointer">🛒 Cart</button>
       </div>
 
-      <div class="max-w-4xl mx-auto w-full p-4 pb-32">
-        <!-- Main Product Image Window -->
-        <div class="bg-white rounded-3xl p-4 border-4 border-amber-300 shadow-lg relative mb-4">
-          <span class="absolute top-6 left-6 ${hasDiscount ? 'bg-red-600 text-white' : 'bg-amber-400 text-slate-900'} text-xs font-black px-3 py-1 rounded-full shadow z-10">${hasDiscount ? 'SALE' : '🔥 Hot Deal'}</span>
-          <img id="modalMainImg" src="${curImage || prod.mainImage}" class="w-full aspect-square object-cover rounded-2xl transition-all duration-300" />
+      <div class="max-w-4xl mx-auto w-full p-3 sm:p-4 pb-32">
+        <!-- Main Product Image Window (Compact so Image + Variants show together) -->
+        <div class="bg-white rounded-3xl p-3 sm:p-4 border-4 border-amber-300 shadow-lg relative mb-3 overflow-hidden">
+          <span class="absolute top-4 left-4 ${hasDiscount ? 'bg-red-600 text-white' : 'bg-amber-400 text-slate-900'} text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow z-10">${hasDiscount ? 'SALE' : '🔥 Hot Deal'}</span>
+          <div class="w-full h-56 sm:h-80 flex items-center justify-center bg-white rounded-2xl overflow-hidden">
+            <img id="modalMainImg" src="${curImage || prod.mainImage}" class="hts-slide-anim max-h-full max-w-full object-contain rounded-2xl transition-all duration-300" />
+          </div>
           ${galleryList.length > 1 ? `
-            <div class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
-              ${galleryList.map(img => `<img src="${img}" onclick="HappyToysModal.switchMainImage('${img}')" class="w-14 h-14 rounded-xl object-cover cursor-pointer border-2 ${img === curImage ? 'border-amber-500 scale-105' : 'border-slate-200'} shrink-0 transition" />`).join("")}
+            <div id="modalThumbStrip" class="flex gap-2 mt-2.5 overflow-x-auto no-scrollbar pb-1">
+              ${galleryList.map(img => `<img data-src="${img}" src="${img}" onclick="HappyToysModal.switchMainImage('${img}')" class="hts-gallery-thumb w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover cursor-pointer border-2 ${img === curImage ? 'border-amber-500 scale-105 ring-2 ring-amber-300' : 'border-slate-200 opacity-75'} shrink-0 transition" />`).join("")}
             </div>
           ` : ""}
           <div class="card-rainbow-strip rounded-b-xl mt-2"></div>
         </div>
 
-        <!-- Main Product Details Window -->
-        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-md space-y-4">
+        <!-- Main Product Details Window (Compact Title + Immediate Variants & Price) -->
+        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-md space-y-3">
           <div>
-            <div class="flex items-center gap-2 text-xs font-bold text-slate-500 mb-1">
+            <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500 mb-0.5">
               <span>🧸 ${prod.category || "Educational Toys"}</span>
               <span class="text-amber-500 ml-auto font-black">⭐ 4.8 (${revCount} reviews)</span>
             </div>
-            <h1 class="text-2xl font-black text-slate-900">${prod.name}</h1>
+            <!-- Smaller Product Name -->
+            <h1 class="text-base sm:text-lg font-black text-slate-900 leading-snug">${prod.name}</h1>
           </div>
 
-          <div class="space-y-1.5 text-xs font-bold text-slate-700 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-            <div class="flex items-center gap-2"><span>👁️</span> <span><b>${viewers} ${viewers === 1 ? 'person is' : 'people are'}</b> viewing this right now</span></div>
-            <div class="flex items-center gap-2 text-emerald-700"><span>🔥</span> <span><b>Good Selling Product!</b> Fresh Stock Available</span></div>
-          </div>
-
-          ${dimensionsBadgeHtml}
-
-          <div class="bg-blue-50/80 p-4 rounded-2xl border-2 border-blue-200 flex items-center justify-between">
-            <div>
-              <span class="text-[11px] font-black text-slate-500 uppercase block">Price (${curOptionValue})</span>
-              <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-black ${hasDiscount ? 'text-red-600' : 'text-blue-600'}">${fmt(total)}</span>
-                ${hasDiscount ? `<del class="text-sm font-bold text-slate-400">${fmt(Number(prod.comparePrice) * qty)}</del>` : ""}
-              </div>
-            </div>
-            <span class="bg-emerald-100 text-emerald-700 font-black text-xs px-3 py-1 rounded-full">✓ In Stock</span>
-          </div>
-
+          <!-- Variants Placed Right Below Product Name so Image & Variants are visible together -->
           ${customBoxHtml}
           ${sizeBoxHtml}
           ${langBoxHtml}
           ${holesBoxHtml}
 
-          <div class="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+          <!-- Price Box Right Next to Variants -->
+          <div class="bg-blue-50/80 p-3 sm:p-3.5 rounded-2xl border-2 border-blue-200 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-black text-slate-500 uppercase block">Price (${curOptionValue})</span>
+              <div class="flex items-baseline gap-2">
+                <span class="text-2xl sm:text-3xl font-black ${hasDiscount ? 'text-red-600' : 'text-blue-600'}">${fmt(total)}</span>
+                ${hasDiscount ? `<del class="text-xs sm:text-sm font-bold text-slate-400">${fmt(Number(prod.comparePrice) * qty)}</del>` : ""}
+              </div>
+            </div>
+            <span class="bg-emerald-100 text-emerald-700 font-black text-xs px-3 py-1 rounded-full">✓ In Stock</span>
+          </div>
+
+          ${dimensionsBadgeHtml}
+
+          <div class="space-y-1 text-xs font-bold text-slate-700 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
+            <div class="flex items-center gap-2"><span>👁️</span> <span><b>${viewers} ${viewers === 1 ? 'person is' : 'people are'}</b> viewing this right now</span></div>
+            <div class="flex items-center gap-2 text-emerald-700"><span>🔥</span> <span><b>Good Selling Product!</b> Fresh Stock Available</span></div>
+          </div>
+
+          <div class="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200">
             <span class="text-xs font-black text-slate-700 uppercase">🔢 Quantity:</span>
             <div class="flex items-center gap-3">
-              <button type="button" onclick="HappyToysModal.setQty(-1)" class="w-9 h-9 rounded-xl bg-white border font-black text-lg cursor-pointer">-</button>
-              <span class="text-base font-black">${qty}</span>
-              <button type="button" onclick="HappyToysModal.setQty(1)" class="w-9 h-9 rounded-xl bg-amber-400 font-black text-lg cursor-pointer">+</button>
+              <button type="button" onclick="HappyToysModal.setQty(-1)" class="w-8 h-8 rounded-xl bg-white border font-black text-base cursor-pointer">-</button>
+              <span class="text-sm font-black">${qty}</span>
+              <button type="button" onclick="HappyToysModal.setQty(1)" class="w-8 h-8 rounded-xl bg-amber-400 font-black text-base cursor-pointer">+</button>
             </div>
           </div>
 
@@ -461,6 +552,7 @@ const HappyToysModal = (() => {
   }
 
   function close() {
+    stopAutoSlider();
     document.getElementById("htsSeparateProductPage")?.classList.add("hidden");
     document.body.style.overflow = "";
     if (location.hash.includes("#product=")) history.replaceState(null, "", location.pathname);
