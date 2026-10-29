@@ -106,51 +106,32 @@ const HappyToysApp = (() => {
   }
 
   async function init() {
-    if (shouldSkipSplash()) {
-      touchSplashTime();
-      stopSplashVideoCompletely();
-      const splash = document.getElementById("vipSplashScreen");
-      if (splash) { splash.classList.add("hidden"); splash.style.display = "none"; splash.remove(); }
-      document.body.classList.remove("splash-active");
-    } else {
-      setupVideoWithSound();
-    }
-    document.addEventListener("click", () => {
-      if (!document.body.classList.contains("splash-active")) touchSplashTime();
-    }, { passive: true });
-    window.addEventListener("popstate", () => {
-      const dr = document.getElementById("categoryDrawerContainer");
-      if (dr && !dr.classList.contains("hidden")) dr.classList.add("hidden");
-    });
-    const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
-    state.categories = seed.categories || [];
-    bindEvents();
-    renderCategories();
-
-    let loadedFromServer = false;
     try {
-      const res = await fetch("/api/store?t=" + Date.now(), { cache: "no-store" });
-      if (res.ok) {
-        const d = await res.json();
-        if (d && Array.isArray(d.products) && d.products.length) {
-          state.products = d.products;
-          loadedFromServer = true;
-          try {
-            localStorage.setItem("hts_custom_products", JSON.stringify(d.products));
-          } catch (quotaErr) {
-            try { localStorage.removeItem("hts_custom_products"); } catch (e) {}
-          }
-        }
+      const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
+      state.categories = seed.categories || [];
+      if (!state.products.length) {
+        try { state.products = JSON.parse(localStorage.getItem("hts_custom_products") || "[]"); } catch (e) {}
+        if (!state.products.length) state.products = seed.products || [];
       }
-    } catch (e) {}
+      bindEvents();
+      renderCategories();
+      renderProducts();
+      checkDirectLink();
 
-    if (!loadedFromServer) {
-      try { state.products = JSON.parse(localStorage.getItem("hts_custom_products") || "[]"); } catch (e) {}
-      if (!state.products.length) state.products = seed.products || [];
+      // Background sync
+      fetch("/api/store?t=" + Date.now(), { cache: "no-store" })
+        .then(res => res.json())
+        .then(d => {
+          if (d && Array.isArray(d.products) && d.products.length) {
+            state.products = d.products;
+            try { localStorage.setItem("hts_custom_products", JSON.stringify(d.products)); } catch (err) {}
+            renderProducts();
+          }
+        })
+        .catch(e => {});
+    } catch (err) {
+      console.error("Init error:", err);
     }
-
-    renderProducts();
-    checkDirectLink();
   }
 
   function checkDirectLink() {
