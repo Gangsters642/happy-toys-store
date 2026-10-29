@@ -3,6 +3,19 @@ const HappyToysApp = (() => {
   let scrollObserver = null;
   let audioUnlockHandler = null;
 
+    const SPLASH_COOLDOWN_MS = 6 * 60 * 1000; // 6 minutes
+  function shouldSkipSplash() {
+    try {
+      if (document.referrer && document.referrer.includes("admin.html")) return true;
+      const lastTs = Number(localStorage.getItem("hts_last_splash_ts") || 0);
+      if (lastTs > 0 && (Date.now() - lastTs) < SPLASH_COOLDOWN_MS) return true;
+    } catch (e) {}
+    return false;
+  }
+  function touchSplashTime() {
+    try { localStorage.setItem("hts_last_splash_ts", String(Date.now())); } catch (e) {}
+  }
+
   function formatPkr(amount) { return "PKR " + Number(amount || 0).toLocaleString("en-PK"); }
   function getProductById(id) { return state.products.find(x => x.id === id) || null; }
   function getAllProducts() { return state.products || []; }
@@ -35,6 +48,7 @@ const HappyToysApp = (() => {
   }
 
   function enterStore() {
+    touchSplashTime();
     removeAudioListeners();
     const splash = document.getElementById("vipSplashScreen");
     const v = document.getElementById("splashVideoPlayer");
@@ -92,7 +106,22 @@ const HappyToysApp = (() => {
   }
 
   async function init() {
-    setupVideoWithSound();
+    if (shouldSkipSplash()) {
+      touchSplashTime();
+      stopSplashVideoCompletely();
+      const splash = document.getElementById("vipSplashScreen");
+      if (splash) { splash.classList.add("hidden"); splash.style.display = "none"; splash.remove(); }
+      document.body.classList.remove("splash-active");
+    } else {
+      setupVideoWithSound();
+    }
+    document.addEventListener("click", () => {
+      if (!document.body.classList.contains("splash-active")) touchSplashTime();
+    }, { passive: true });
+    window.addEventListener("popstate", () => {
+      const dr = document.getElementById("categoryDrawerContainer");
+      if (dr && !dr.classList.contains("hidden")) dr.classList.add("hidden");
+    });
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
     state.categories = seed.categories || [];
     bindEvents();

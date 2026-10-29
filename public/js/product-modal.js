@@ -8,6 +8,7 @@ const HappyToysModal = (() => {
   let slideTimer = null;
   let isAutoSliding = true;
   let currentSlideIdx = 0;
+  let modalHistoryPushed = false;
 
   const WA = "923707116317";
   const RECENT_KEY = "hts_recently_viewed_ids";
@@ -135,12 +136,24 @@ const HappyToysModal = (() => {
     }
 
     let pg = document.getElementById("htsSeparateProductPage");
+    const wasAlreadyOpen = pg && !pg.classList.contains("hidden");
     if (!pg) {
       pg = document.createElement("div");
       pg.id = "htsSeparateProductPage";
       pg.className = "fixed inset-0 z-[160] bg-slate-50 overflow-y-auto flex flex-col";
       document.body.appendChild(pg);
     }
+    try {
+      if (!wasAlreadyOpen) {
+        if (location.hash.includes("#product=")) {
+          history.replaceState({ htsStoreRoot: true }, "", location.pathname);
+        }
+        history.pushState({ htsModal: "product", id: p.id }, "", "#product=" + p.id);
+        modalHistoryPushed = true;
+      } else {
+        history.replaceState({ htsModal: "product", id: p.id }, "", "#product=" + p.id);
+      }
+    } catch (e) {}
     document.body.style.overflow = "hidden";
     render();
     pg.classList.remove("hidden");
@@ -551,12 +564,31 @@ const HappyToysModal = (() => {
     }
   }
 
-  function close() {
+  function close(fromPopState) {
     stopAutoSlider();
-    document.getElementById("htsSeparateProductPage")?.classList.add("hidden");
+    const pg = document.getElementById("htsSeparateProductPage");
+    const wasOpen = pg && !pg.classList.contains("hidden");
+    if (pg) pg.classList.add("hidden");
     document.body.style.overflow = "";
-    if (location.hash.includes("#product=")) history.replaceState(null, "", location.pathname);
+    try { localStorage.setItem("hts_last_splash_ts", String(Date.now())); } catch (e) {}
+
+    if (!fromPopState && modalHistoryPushed && wasOpen) {
+      modalHistoryPushed = false;
+      try { history.back(); } catch (e) {}
+    } else {
+      modalHistoryPushed = false;
+      if (location.hash.includes("#product=")) {
+        try { history.replaceState({ htsStoreRoot: true }, "", location.pathname); } catch (e) {}
+      }
+    }
   }
+
+  window.addEventListener("popstate", () => {
+    const pg = document.getElementById("htsSeparateProductPage");
+    if (pg && !pg.classList.contains("hidden")) {
+      close(true);
+    }
+  });
 
   return { open, close, setOption, setSizeVariant, setInchVariant, setLangVariant, setHoleVariant, setCustomVariant, switchMainImage, setQty, buyWhatsApp };
 })();
