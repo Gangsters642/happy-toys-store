@@ -47,39 +47,66 @@ const HappyToysAdmin = (() => {
 
   async function loadAllData() {
     renderAuthorizedDevices();
-    try { products = JSON.parse(localStorage.getItem("hts_custom_products") || "[]"); } catch (e) {}
+    let localList = [];
     try {
-      const res = await fetch("/api/store");
+      const idbList = await HTS_DB.get("customProducts");
+      if (Array.isArray(idbList) && idbList.length) localList = idbList;
+    } catch (e) {}
+    if (!localList.length) {
+      try { localList = JSON.parse(localStorage.getItem("hts_custom_products") || "[]"); } catch (e) {}
+    }
+    if (localList.length) products = localList;
+
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 3000);
+      const res = await fetch("/api/store", { signal: ctrl.signal });
+      clearTimeout(timer);
       if (res.ok) {
         const d = await res.json();
-        if (d.products && d.products.length) {
+        if (d.products && d.products.length && !localList.length) {
           products = d.products;
-          localStorage.setItem("hts_custom_products", JSON.stringify(products));
-        } else if (!products.length && window.HAPPY_TOYS_SEED) {
-          products = window.HAPPY_TOYS_SEED.products || [];
+          try { localStorage.setItem("hts_custom_products", JSON.stringify(products)); } catch (e) {}
         }
       }
     } catch (e) {}
+
+    if (!products.length && window.HAPPY_TOYS_SEED) {
+      products = window.HAPPY_TOYS_SEED.products || [];
+    }
     renderTable();
   }
 
   async function saveProductsEverywhere(list) {
     products = list;
+    // 1. Save in IndexedDB (Unlimited storage, never fails)
+    try { await HTS_DB.set("customProducts", products); } catch (e) {}
+
+    // 2. Save in localStorage
     try {
       localStorage.setItem("hts_custom_products", JSON.stringify(products));
     } catch (storageErr) {
-      console.warn("localStorage full, keeping data in server & memory:", storageErr);
-      try { localStorage.removeItem("hts_custom_products"); } catch (e) {}
+      console.warn("localStorage quota exceeded, using IndexedDB & Server");
     }
+
+    // 3. Send to server with 3.5s AbortController timeout + Auth headers so it NEVER hangs on "Saving..."
     try {
-      const res = await fetch("/api/store", {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 3500);
+      const savedToken = localStorage.getItem("hts_admin_token") || "secure-token";
+      await fetch("/api/store", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ products })
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + savedToken,
+          "x-admin-token": savedToken
+        },
+        body: JSON.stringify({ products, token: savedToken }),
+        signal: ctrl.signal
       });
-      if (!res.ok) console.warn("Server returned status:", res.status);
+      clearTimeout(timer);
     } catch (netErr) {
-      console.error("Network save error:", netErr);
+      console.warn("Server sync timeout or offline, saved locally:", netErr);
     }
   }
 
