@@ -95,13 +95,33 @@ const HappyToysApp = (() => {
     setupVideoWithSound();
     const seed = window.HAPPY_TOYS_SEED || { categories: [], products: [] };
     state.categories = seed.categories || [];
-    try { state.products = JSON.parse(localStorage.getItem("hts_custom_products") || "[]"); } catch (e) {}
-    if (!state.products.length) state.products = seed.products || [];
-    bindEvents(); renderCategories(); renderProducts(); checkDirectLink();
+    bindEvents();
+    renderCategories();
+
+    let loadedFromServer = false;
     try {
-      const res = await fetch("/api/store");
-      if (res.ok) { const d = await res.json(); if (d.products && d.products.length) { state.products = d.products; localStorage.setItem("hts_custom_products", JSON.stringify(d.products)); renderProducts(); checkDirectLink(); } }
+      const res = await fetch("/api/store?t=" + Date.now(), { cache: "no-store" });
+      if (res.ok) {
+        const d = await res.json();
+        if (d && Array.isArray(d.products) && d.products.length) {
+          state.products = d.products;
+          loadedFromServer = true;
+          try {
+            localStorage.setItem("hts_custom_products", JSON.stringify(d.products));
+          } catch (quotaErr) {
+            try { localStorage.removeItem("hts_custom_products"); } catch (e) {}
+          }
+        }
+      }
     } catch (e) {}
+
+    if (!loadedFromServer) {
+      try { state.products = JSON.parse(localStorage.getItem("hts_custom_products") || "[]"); } catch (e) {}
+      if (!state.products.length) state.products = seed.products || [];
+    }
+
+    renderProducts();
+    checkDirectLink();
   }
 
   function checkDirectLink() {

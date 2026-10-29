@@ -47,32 +47,33 @@ const HappyToysAdmin = (() => {
 
   async function loadAllData() {
     renderAuthorizedDevices();
-    let localList = [];
+    let loadedServer = false;
     try {
-      const idbList = await HTS_DB.get("customProducts");
-      if (Array.isArray(idbList) && idbList.length) localList = idbList;
-    } catch (e) {}
-    if (!localList.length) {
-      try { localList = JSON.parse(localStorage.getItem("hts_custom_products") || "[]"); } catch (e) {}
-    }
-    if (localList.length) products = localList;
-
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 3000);
-      const res = await fetch("/api/store", { signal: ctrl.signal });
-      clearTimeout(timer);
+      const res = await fetch("/api/store?t=" + Date.now(), { cache: "no-store" });
       if (res.ok) {
         const d = await res.json();
-        if (d.products && d.products.length && !localList.length) {
+        if (d && Array.isArray(d.products) && d.products.length) {
           products = d.products;
-          try { localStorage.setItem("hts_custom_products", JSON.stringify(products)); } catch (e) {}
+          loadedServer = true;
+          try { await HTS_DB.set("customProducts", products); } catch (e) {}
+          try { localStorage.setItem("hts_custom_products", JSON.stringify(products)); } catch (e) {
+            try { localStorage.removeItem("hts_custom_products"); } catch (err) {}
+          }
         }
       }
     } catch (e) {}
 
-    if (!products.length && window.HAPPY_TOYS_SEED) {
-      products = window.HAPPY_TOYS_SEED.products || [];
+    if (!loadedServer) {
+      try {
+        const idbList = await HTS_DB.get("customProducts");
+        if (Array.isArray(idbList) && idbList.length) products = idbList;
+      } catch (e) {}
+      if (!products.length) {
+        try { products = JSON.parse(localStorage.getItem("hts_custom_products") || "[]"); } catch (e) {}
+      }
+      if (!products.length && window.HAPPY_TOYS_SEED) {
+        products = window.HAPPY_TOYS_SEED.products || [];
+      }
     }
     renderTable();
   }
@@ -92,7 +93,7 @@ const HappyToysAdmin = (() => {
     // 3. Send to server with 3.5s AbortController timeout + Auth headers so it NEVER hangs on "Saving..."
     try {
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 3500);
+      const timer = setTimeout(() => ctrl.abort(), 20000);
       const savedToken = localStorage.getItem("hts_admin_token") || "secure-token";
       await fetch("/api/store", {
         method: "POST",
