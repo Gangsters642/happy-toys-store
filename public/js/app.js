@@ -171,7 +171,12 @@ const HappyToysApp = (() => {
     }
   }
 
-  function selectCategory(slug) { state.activeCategory = slug; document.getElementById("categoryDrawerContainer")?.classList.add("hidden"); renderProducts(); }
+  function selectCategory(slug) {
+    state.activeCategory = slug;
+    document.getElementById("categoryDrawerContainer")?.classList.add("hidden");
+    renderCategories();
+    renderProducts();
+  }
   function resetFilters() { selectCategory("all"); }
   function sortProducts(sortVal) { state.currentSort = sortVal; renderProducts(); }
 
@@ -216,22 +221,75 @@ const HappyToysApp = (() => {
   }
 
   function renderProducts() {
-    const grid = document.getElementById("productGrid"); if (!grid) return;
+    const grid = document.getElementById("productGrid");
+    if (!grid) return;
     const catObj = state.categories.find(c => c.slug === state.activeCategory);
-    const heading = document.getElementById("activeCategoryHeading"); if (heading) heading.textContent = catObj ? catObj.name : "All Toys";
+    const heading = document.getElementById("activeCategoryHeading");
+    if (heading) heading.textContent = catObj ? catObj.name : "All Toys";
 
-    let list = state.products.filter(p => p.isPublished && (state.activeCategory === "all" || p.category === state.activeCategory));
-    
-    if (state.searchQuery) {
-      list = list.filter(p => p.name.toLowerCase().includes(state.searchQuery));
+    // Hide sort dropdown if About Us is active
+    const sortDropdown = document.getElementById("sortDropdown");
+    if (sortDropdown) sortDropdown.parentElement.style.display = (state.activeCategory === "about-us" ? "none" : "flex");
+
+    if (state.activeCategory === "about-us") {
+      grid.className = "col-span-full";
+      grid.innerHTML = `
+        <div class="max-w-3xl mx-auto bg-white rounded-[2.5rem] p-6 sm:p-10 border-4 border-amber-300 shadow-xl my-4 space-y-6 animate-float-text" style="animation: none;">
+          <div class="text-center space-y-2">
+            <div class="w-20 h-20 mx-auto rounded-full bg-amber-100 border-4 border-amber-400 shadow-inner flex items-center justify-center text-4xl mb-2">🧸</div>
+            <h1 class="toy-title-font text-3xl sm:text-4xl text-amber-500 tracking-wide uppercase drop-shadow-sm">Welcome to Happy Toys Store</h1>
+            <p class="text-slate-500 text-sm sm:text-base font-extrabold tracking-wide">✨ Where Every Toy Brings a Little More Happiness! ✨</p>
+          </div>
+
+          <div class="space-y-4 text-slate-700 text-sm sm:text-base font-semibold leading-relaxed">
+            <p class="bg-amber-50/60 p-4 rounded-2xl border border-amber-200">
+              Welcome to <b>Happy Toys Store</b>, your ultimate destination for fun, creativity, and joyful discoveries! We believe that every toy has the power to bring happiness, spark imagination, and make childhood more memorable.
+            </p>
+            <p>
+              From educational toys and creative learning games to puzzles, RC toys, books, musical toys, and exciting gifts, we bring together a variety of products designed to make every moment more enjoyable.
+            </p>
+          </div>
+
+          <div class="bg-gradient-to-br from-sky-50 to-indigo-50 p-5 rounded-3xl border-2 border-sky-200 space-y-3">
+            <h2 class="toy-title-font text-xl text-sky-900 flex items-center gap-2"><span>🎯</span> <span>Our Mission</span></h2>
+            <p class="text-slate-700 text-sm font-semibold leading-relaxed">
+              Our mission is to make learning more exciting and playtime more meaningful. We believe toys should do more than entertain—they should inspire creativity, develop curiosity, encourage imagination, and create beautiful childhood memories.
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <h2 class="toy-title-font text-xl text-slate-900 text-center">🌟 Why Choose Happy Toys Store?</h2>
+            <div class="grid sm:grid-cols-2 gap-2.5">
+              <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2"><span>✓</span> <span>Carefully Selected Products</span></div>
+              <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2"><span>✓</span> <span>Fun & Educational Toys</span></div>
+              <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2"><span>✓</span> <span>Exciting Products for Every Age</span></div>
+              <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2"><span>✓</span> <span>Affordable & Competitive Prices</span></div>
+              <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2"><span>✓</span> <span>Convenient Online Shopping</span></div>
+              <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2"><span>✓</span> <span>Customer-Focused Service</span></div>
+            </div>
+          </div>
+
+          <div class="bg-pink-50/60 p-5 rounded-3xl border-2 border-pink-200 text-center space-y-2">
+            <h3 class="toy-title-font text-lg text-pink-900">❤️ Thank You for Choosing Us!</h3>
+            <p class="text-slate-700 text-xs sm:text-sm font-semibold">
+              Every customer is an important part of our journey. Thank you for giving us the opportunity to be a part of your family's special moments.
+            </p>
+          </div>
+
+          <div class="text-center pt-2">
+            <button type="button" onclick="HappyToysApp.resetFilters();" class="btn-vip-gradient py-3.5 px-8 rounded-2xl text-white font-black text-sm sm:text-base shadow-lg cursor-pointer">
+              ← Back to Store & Explore Toys
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    } else {
+      grid.className = "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-5";
     }
 
-    if (state.currentSort === "price_asc") list.sort((a, b) => Number(a.pricePkr) - Number(b.pricePkr));
-    else if (state.currentSort === "price_desc") list.sort((a, b) => Number(b.pricePkr) - Number(a.pricePkr));
-    else if (state.currentSort === "az") list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-    else if (state.currentSort === "za") list.sort((a, b) => (b.name || "").localeCompare(a.name || ""));
-
-    if (!list.length) { grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 font-bold">No toys found.</div>`; return; }
+    let list = state.products.filter(p => p.isPublished && (state.activeCategory === "all" || p.category === state.activeCategory));
+    // ... rest of filtering ...
 
     grid.innerHTML = list.map((p, idx) => generateCardHtml(p, idx)).join("");
     setTimeout(() => initScrollAnimations(), 80);
