@@ -8,23 +8,67 @@ window.HAPPY_TOYS_SEED = {
     city: "Punjab, Pakistan"
   },
   categories: [
-    { id: "cat-all", name: "All Toys", slug: "all", icon: "🧸", featured: true },
-    { id: "cat-1", name: "Educational Toys", slug: "educational-toys", icon: "🧠", featured: true },
-    { id: "cat-2", name: "Books & Early Learning", slug: "books-early-learning", icon: "📚", featured: true },
-    { id: "cat-3", name: "Puzzle Cubes", slug: "puzzle-cubes", icon: "🧩", featured: true },
-    { id: "cat-4", name: "Musical Toys", slug: "musical-toys", icon: "🎵", featured: true },
-    { id: "cat-5", name: "RC Toys", slug: "rc-toys", icon: "🏎️", featured: true },
-    { id: "cat-6", name: "Walkie-Talkies", slug: "walkie-talkies", icon: "📻", featured: true },
-    { id: "cat-7", name: "Dolls & Toys for Girls", slug: "dolls-girls-toys", icon: "🪆", featured: true },
-    { id: "cat-8", name: "Makeup & Pretend-Play Sets", slug: "makeup-pretend-play", icon: "💄", featured: false },
-    { id: "cat-9", name: "Baby & Toddler Toys", slug: "baby-toddler-toys", icon: "🍼", featured: true },
-    { id: "cat-10", name: "Outdoor Fun", slug: "outdoor-fun", icon: "⚽", featured: false },
-    { id: "cat-11", name: "Fitness & Exercise Toys", slug: "fitness-exercise-toys", icon: "🏹", featured: false },
-    { id: "cat-12", name: "Creative & Art Toys", slug: "creative-art-toys", icon: "🎨", featured: false },
-    { id: "cat-13", name: "New Arrivals", slug: "new-arrivals", icon: "✨", featured: false },
-    { id: "cat-14", name: "Best Sellers", slug: "best-sellers", icon: "🔥", featured: false },
-    { id: "cat-15", name: "Special Offers", slug: "special-offers", icon: "🏷️", featured: false }
-  ],
+  {
+    "slug": "all",
+    "name": "Home / All Toys",
+    "icon": "🏠"
+  },
+  {
+    "slug": "educational-toys",
+    "name": "Educational Toys",
+    "icon": "🧠"
+  },
+  {
+    "slug": "books-early-learning",
+    "name": "Books & Early Learning",
+    "icon": "📚"
+  },
+  {
+    "slug": "puzzle-cubes",
+    "name": "Puzzle Cubes",
+    "icon": "🧩"
+  },
+  {
+    "slug": "musical-toys",
+    "name": "Musical Toys",
+    "icon": "🎵"
+  },
+  {
+    "slug": "rc-toys",
+    "name": "RC Toys",
+    "icon": "🏎️"
+  },
+  {
+    "slug": "makeup-pretend-play-sets",
+    "name": "Makeup & Pretend-Play Sets",
+    "icon": "💄"
+  },
+  {
+    "slug": "outdoor-fun",
+    "name": "Outdoor Fun",
+    "icon": "⚽"
+  },
+  {
+    "slug": "fitness-exercise-toys",
+    "name": "Fitness & Exercise Toys",
+    "icon": "🏹"
+  },
+  {
+    "slug": "creative-art-toys",
+    "name": "Creative & Art Toys",
+    "icon": "🎨"
+  },
+  {
+    "slug": "new-arrivals",
+    "name": "New Arrivals",
+    "icon": "✨"
+  },
+  {
+    "slug": "about-us",
+    "name": "About Us",
+    "icon": "ℹ️"
+  }
+],
   products: [
     {
       id: "prod-1",
